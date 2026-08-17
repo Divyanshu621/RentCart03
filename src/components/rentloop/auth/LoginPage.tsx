@@ -1,0 +1,382 @@
+'use client';
+
+import { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import {
+  Mail,
+  Lock,
+  Eye,
+  EyeOff,
+  ArrowRight,
+  Sparkles,
+  ArrowLeft,
+  Shield,
+  Zap,
+  Clock,
+  Star,
+} from 'lucide-react';
+import { motion } from 'framer-motion';
+
+import { useAppStore } from '@/store';
+import { api } from '@/lib/api';
+import { toast } from 'sonner';
+
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import type { User as UserType } from '@/types';
+
+// ─── Zod Schema ─────────────────────────────────────────────
+const loginSchema = z.object({
+  email: z.string().min(1, 'Email is required').email('Enter a valid email'),
+  password: z.string().min(1, 'Password is required'),
+});
+
+type LoginFormData = z.infer<typeof loginSchema>;
+
+// ─── Animation variants ─────────────────────────────────────
+const fadeInUp = {
+  hidden: { opacity: 0, y: 20 },
+  visible: (i: number) => ({
+    opacity: 1,
+    y: 0,
+    transition: { delay: i * 0.1, duration: 0.5, ease: 'easeOut' },
+  }),
+};
+
+const staggerContainer = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { staggerChildren: 0.15, delayChildren: 0.2 },
+  },
+};
+
+// ─── LoginPage Component ────────────────────────────────────
+export default function LoginPage() {
+  const { setUser, navigate, setAuthModalOpen, setAuthModalView } = useAppStore();
+  const [showPassword, setShowPassword] = useState(false);
+  const [serverError, setServerError] = useState('');
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<LoginFormData>({
+    resolver: zodResolver(loginSchema),
+  });
+
+  const onSubmit = async (data: LoginFormData) => {
+    setServerError('');
+    try {
+      const res = await api.login({ email: data.email, password: data.password });
+      try {
+        const meData = await api.me();
+        setUser(meData as unknown as UserType);
+      } catch {
+        setUser(res.user as unknown as UserType);
+      }
+      toast.success('Welcome back!');
+      navigate('marketplace');
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Login failed';
+      setServerError(message);
+      toast.error(message);
+    }
+  };
+
+  const openRegister = () => {
+    setAuthModalView('register');
+    setAuthModalOpen(true);
+  };
+
+  return (
+    <div className="min-h-screen flex flex-col">
+      {/* Mobile back link */}
+      <div className="lg:hidden p-4">
+        <button
+          onClick={() => navigate('landing')}
+          className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-[#0f172a] transition-colors"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Back to home
+        </button>
+      </div>
+
+      <div className="flex-1 flex">
+        {/* Left Panel - Branding (hidden on mobile) */}
+        <div className="hidden lg:flex lg:w-1/2 xl:w-[45%] relative bg-[#0f172a] flex-col justify-between p-10 xl:p-14">
+          {/* Decorative elements */}
+          <div className="absolute inset-0 overflow-hidden pointer-events-none">
+            <div className="absolute -top-24 -right-24 w-72 h-72 bg-emerald-500/10 rounded-full blur-3xl" />
+            <div className="absolute top-1/2 -left-16 w-56 h-56 bg-emerald-500/5 rounded-full blur-3xl" />
+            <div className="absolute bottom-12 right-20 w-40 h-40 bg-emerald-400/8 rounded-full blur-2xl" />
+            <div
+              className="absolute inset-0 opacity-[0.03]"
+              style={{
+                backgroundImage: 'radial-gradient(circle, #fff 1px, transparent 1px)',
+                backgroundSize: '32px 32px',
+              }}
+            />
+          </div>
+
+          {/* Top - Logo */}
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.5 }}
+            className="relative z-10"
+          >
+            <button
+              onClick={() => navigate('landing')}
+              className="flex items-center gap-3 group"
+            >
+              <div className="w-10 h-10 rounded-xl bg-emerald-500 flex items-center justify-center shadow-lg shadow-emerald-500/30 group-hover:shadow-emerald-500/50 transition-shadow">
+                <Sparkles className="w-5 h-5 text-white" />
+              </div>
+              <span className="text-white font-bold text-2xl tracking-tight">RentLoop</span>
+            </button>
+          </motion.div>
+
+          {/* Center - Tagline and features */}
+          <motion.div
+            variants={staggerContainer}
+            initial="hidden"
+            animate="visible"
+            className="relative z-10 space-y-8"
+          >
+            <div>
+              <motion.h1
+                variants={fadeInUp}
+                custom={0}
+                className="text-3xl xl:text-4xl font-bold text-white leading-tight"
+              >
+                Rent anything,{' '}
+                <span className="text-emerald-400">anywhere</span>
+              </motion.h1>
+              <motion.p
+                variants={fadeInUp}
+                custom={1}
+                className="mt-4 text-slate-300 text-base xl:text-lg leading-relaxed max-w-md"
+              >
+                Join thousands of people saving money and reducing waste by renting instead of buying.
+              </motion.p>
+            </div>
+
+            {/* Feature cards */}
+            <motion.div variants={staggerContainer} className="space-y-3">
+              {[
+                { icon: Shield, title: 'Verified Owners', desc: 'All listings vetted for quality' },
+                { icon: Zap, title: 'Instant Booking', desc: 'Book in seconds, receive fast' },
+                { icon: Clock, title: 'Flexible Rentals', desc: 'Rent by day, week, or month' },
+                { icon: Star, title: 'Top Rated', desc: '4.9 average across 25K+ rentals' },
+              ].map((feature) => (
+                <motion.div
+                  key={feature.title}
+                  variants={fadeInUp}
+                  custom={2}
+                  className="flex items-center gap-3 bg-white/5 border border-white/10 rounded-xl px-4 py-3 hover:bg-white/10 transition-colors"
+                >
+                  <div className="w-9 h-9 rounded-lg bg-emerald-500/20 flex items-center justify-center shrink-0">
+                    <feature.icon className="w-4 h-4 text-emerald-400" />
+                  </div>
+                  <div>
+                    <p className="text-white text-sm font-medium">{feature.title}</p>
+                    <p className="text-slate-400 text-xs">{feature.desc}</p>
+                  </div>
+                </motion.div>
+              ))}
+            </motion.div>
+          </motion.div>
+
+          {/* Bottom - Testimonial */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.8, duration: 0.5 }}
+            className="relative z-10"
+          >
+            <div className="bg-white/5 border border-white/10 rounded-xl p-5">
+              <p className="text-slate-300 text-sm italic leading-relaxed">
+                &ldquo;RentLoop saved me ₹50,000 last year. I rented a camera for my wedding instead of buying one. Brilliant platform!&rdquo;
+              </p>
+              <div className="mt-3 flex items-center gap-3">
+                <div className="w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-400 text-xs font-bold">
+                  PR
+                </div>
+                <div>
+                  <p className="text-white text-sm font-medium">Priya R.</p>
+                  <p className="text-slate-400 text-xs">Mumbai · 12 rentals</p>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+
+        {/* Right Panel - Login Form */}
+        <div className="flex-1 flex items-center justify-center p-6 sm:p-8 lg:p-12">
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4 }}
+            className="w-full max-w-sm"
+          >
+            {/* Mobile logo */}
+            <div className="lg:hidden flex items-center gap-2.5 mb-8 justify-center">
+              <div className="w-9 h-9 rounded-lg bg-emerald-500 flex items-center justify-center">
+                <Sparkles className="w-4.5 h-4.5 text-white" />
+              </div>
+              <span className="text-[#0f172a] font-bold text-xl">RentLoop</span>
+            </div>
+
+            {/* Header */}
+            <div className="mb-8">
+              <h2 className="text-2xl font-bold text-[#0f172a]">Welcome back</h2>
+              <p className="mt-1.5 text-sm text-muted-foreground">
+                Sign in to access your account
+              </p>
+            </div>
+
+            {/* Error display */}
+            {serverError && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                className="mb-5 p-3.5 rounded-xl bg-red-50 border border-red-200 text-red-700 text-sm"
+              >
+                {serverError}
+              </motion.div>
+            )}
+
+            {/* Form */}
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+              {/* Email */}
+              <div className="space-y-2">
+                <Label htmlFor="page-login-email" className="text-sm font-medium text-[#0f172a]">
+                  Email
+                </Label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input
+                    id="page-login-email"
+                    type="email"
+                    placeholder="you@example.com"
+                    className="pl-10 h-11"
+                    {...register('email')}
+                  />
+                </div>
+                {errors.email && (
+                  <p className="text-sm text-red-500">{errors.email.message}</p>
+                )}
+              </div>
+
+              {/* Password */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="page-login-password" className="text-sm font-medium text-[#0f172a]">
+                    Password
+                  </Label>
+                  <button
+                    type="button"
+                    onClick={() => toast.info('Password reset link sent to your email!')}
+                    className="text-sm text-emerald-600 hover:text-emerald-700 font-medium"
+                  >
+                    Forgot Password?
+                  </button>
+                </div>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input
+                    id="page-login-password"
+                    type={showPassword ? 'text' : 'password'}
+                    placeholder="Enter your password"
+                    className="pl-10 pr-10 h-11"
+                    {...register('password')}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-[#0f172a] transition-colors"
+                  >
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+                {errors.password && (
+                  <p className="text-sm text-red-500">{errors.password.message}</p>
+                )}
+              </div>
+
+              {/* Login button */}
+              <Button
+                type="submit"
+                disabled={isSubmitting}
+                className="w-full h-11 bg-[#0f172a] hover:bg-[#0f172a]/90 text-white font-medium"
+              >
+                {isSubmitting ? (
+                  <>
+                    <motion.span
+                      animate={{ rotate: 360 }}
+                      transition={{ repeat: Infinity, duration: 1, ease: 'linear' }}
+                    >
+                      <LoaderIcon />
+                    </motion.span>
+                    Signing in...
+                  </>
+                ) : (
+                  <>
+                    Sign In
+                    <ArrowRight className="w-4 h-4" />
+                  </>
+                )}
+              </Button>
+            </form>
+
+            {/* Divider */}
+            <div className="relative my-6">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t" />
+              </div>
+              <div className="relative flex justify-center text-xs">
+                <span className="px-3 bg-white text-muted-foreground uppercase tracking-wider">
+                  or
+                </span>
+              </div>
+            </div>
+
+            {/* Sign up link */}
+            <p className="text-center text-sm text-muted-foreground">
+              Don&apos;t have an account?{' '}
+              <button
+                onClick={openRegister}
+                className="text-emerald-600 hover:text-emerald-700 font-semibold transition-colors"
+              >
+                Create one
+              </button>
+            </p>
+
+            {/* Desktop back link */}
+            <div className="hidden lg:block mt-8 text-center">
+              <button
+                onClick={() => navigate('landing')}
+                className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-[#0f172a] transition-colors"
+              >
+                <ArrowLeft className="w-3.5 h-3.5" />
+                Back to home
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Inline loader icon (to avoid importing Loader2 with motion wrapper issues) ──
+function LoaderIcon() {
+  return <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none">
+    <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" className="opacity-25" />
+    <path d="M4 12a8 8 0 018-8" stroke="currentColor" strokeWidth="4" strokeLinecap="round" className="opacity-75" />
+  </svg>;
+}
