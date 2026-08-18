@@ -231,7 +231,7 @@ export default function LoginPage() {
               <div className="w-10 h-10 rounded-xl bg-emerald-500 flex items-center justify-center shadow-lg shadow-emerald-500/30 group-hover:shadow-emerald-500/50 transition-shadow">
                 <Sparkles className="w-5 h-5 text-white" />
               </div>
-              <span className="text-white font-bold text-2xl tracking-tight">RentLoop</span>
+              <span className="text-white font-bold text-2xl tracking-tight">RentCart</span>
             </button>
           </motion.div>
 
@@ -295,7 +295,7 @@ export default function LoginPage() {
           >
             <div className="bg-white/5 border border-white/10 rounded-xl p-5">
               <p className="text-slate-300 text-sm italic leading-relaxed">
-                &ldquo;RentLoop saved me ₹50,000 last year. I rented a camera for my wedding instead of buying one. Brilliant platform!&rdquo;
+                &ldquo;RentCart saved me ₹50,000 last year. I rented a camera for my wedding instead of buying one. Brilliant platform!&rdquo;
               </p>
               <div className="mt-3 flex items-center gap-3">
                 <div className="w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-400 text-xs font-bold">
@@ -323,7 +323,7 @@ export default function LoginPage() {
               <div className="w-9 h-9 rounded-lg bg-emerald-500 flex items-center justify-center">
                 <Sparkles className="w-4.5 h-4.5 text-white" />
               </div>
-              <span className="text-[#0f172a] font-bold text-xl">RentLoop</span>
+              <span className="text-[#0f172a] font-bold text-xl">RentCart</span>
             </div>
 
             {/* Header */}

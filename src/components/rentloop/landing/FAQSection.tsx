@@ -10,7 +10,7 @@ import {
 
 const faqs = [
   {
-    question: 'How does renting work on RentLoop?',
+    question: 'How does renting work on RentCart?',
     answer: 'Simply browse items, select your rental dates, pay securely online, and either pick up the item or get it delivered. Once your rental period ends, return the item in the same condition. It\'s that simple!',
   },
   {
@@ -50,7 +50,7 @@ export default function FAQSection() {
       <div
         className="absolute inset-0 opacity-[0.03]"
         style={{
-          backgroundImage: 'radial-gradient(circle, #1e40af 1px, transparent 1px)',
+          backgroundImage: 'radial-gradient(circle, #059669 1px, transparent 1px)',
           backgroundSize: '20px 20px',
         }}
       />
@@ -67,7 +67,7 @@ export default function FAQSection() {
             Frequently Asked Questions
           </h2>
           <p className="mt-3 text-[#64748b] text-lg max-w-xl mx-auto">
-            Everything you need to know about renting on RentLoop
+            Everything you need to know about renting on RentCart
           </p>
         </motion.div>
 
@@ -82,9 +82,9 @@ export default function FAQSection() {
               <AccordionItem
                 key={index}
                 value={`item-${index}`}
-                className="bg-white rounded-xl border border-[#e2e8f0] px-6 mb-3 data-[state=open]:shadow-sm data-[state=open]:border-[#3b82f6]/40 transition-all"
+                className="bg-white rounded-xl border border-[#e2e8f0] px-6 mb-3 data-[state=open]:shadow-sm data-[state=open]:border-[#10b981]/40 transition-all"
               >
-                <AccordionTrigger className="text-left text-[#0f172a] font-medium hover:no-underline py-4 text-sm sm:text-base data-[state=open]:text-[#1e40af] transition-colors">
+                <AccordionTrigger className="text-left text-[#0f172a] font-medium hover:no-underline py-4 text-sm sm:text-base data-[state=open]:text-[#059669] transition-colors">
                   {faq.question}
                 </AccordionTrigger>
                 <AccordionContent className="text-[#64748b] text-sm leading-relaxed pb-4">

@@ -234,7 +234,7 @@
    234→                  <Store className="w-5 h-5 text-white" />
    235→                </div>
    236→                <span className="text-xl font-bold tracking-tight text-white">
-   237→                  Rent<span className="text-blue-300">Loop</span>
+   237→                  Rent<span className="text-emerald-300">Cart</span>
    238→                </span>
    239→              </button>
    240→
@@ -367,7 +367,7 @@
    367→                <Store className="w-5 h-5 text-white" />
    368→              </div>
    369→              <span className="text-xl font-bold tracking-tight text-[#0f172a]">
-   370→                Rent<span className="text-[#1e40af]">Loop</span>
+   370→                Rent<span className="text-emerald-600">Cart</span>
    371→              </span>
    372→            </button>
    373→
@@ -889,7 +889,7 @@
    889→              <Store className="w-4 h-4 text-white" />
    890→            </div>
    891→            <span className="text-[#0f172a]">
-   892→              Rent<span className="text-[#1e40af]">Loop</span>
+   892→              Rent<span className="text-emerald-600">Cart</span>
    893→            </span>
    894→          </SheetTitle>
    895→        </SheetHeader>

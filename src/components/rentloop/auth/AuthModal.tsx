@@ -112,7 +112,7 @@ export default function AuthModal() {
             <div className="w-8 h-8 rounded-lg bg-emerald-500 flex items-center justify-center">
               <Sparkles className="w-4 h-4 text-white" />
             </div>
-            <span className="text-white font-bold text-lg">RentLoop</span>
+            <span className="text-white font-bold text-lg">RentCart</span>
           </div>
           <div className="flex items-center gap-1 bg-white/10 rounded-lg p-0.5">
             <button
@@ -259,7 +259,7 @@ function LoginForm({
 
       <h2 className="text-xl font-bold text-[#0f172a] mb-1">Welcome back</h2>
       <p className="text-sm text-muted-foreground mb-6">
-        Sign in to your RentLoop account
+        Sign in to your RentCart account
       </p>
 
       {serverError && (
@@ -500,7 +500,7 @@ function RegisterForm({
     <div>
       <h2 className="text-xl font-bold text-[#0f172a] mb-1">Create your account</h2>
       <p className="text-sm text-muted-foreground mb-5">
-        Join RentLoop and start renting today
+        Join RentCart and start renting today
       </p>
 
       {serverError && (

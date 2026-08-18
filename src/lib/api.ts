@@ -75,6 +75,9 @@ export const api = {
   checkAvailability: (productId: string, startDate: string, endDate: string) =>
     request<{ available: boolean; unavailableDates: string[] }>(`/api/products/${productId}/availability?startDate=${startDate}&endDate=${endDate}`),
 
+  getCalendarAvailability: (productId: string) =>
+    request<{ unavailableDates: string[] }>(`/api/products/${productId}/calendar-availability`),
+
   getProductReviews: (productId: string, page = 1) =>
     request<{ reviews: Record<string, unknown>[]; total: number; totalPages: number }>(`/api/products/${productId}/reviews?page=${page}`),
 

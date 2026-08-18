@@ -44,12 +44,14 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Calendar } from '@/components/ui/calendar';
+import { Calendar, CalendarDayButton } from '@/components/ui/calendar';
+import { DayButton } from 'react-day-picker';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useAppStore } from '@/store';
 import { api } from '@/lib/api';
 import type { Product, Review } from '@/types';
 import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
 
 const categoryIcons: Record<string, LucideIcon> = {
   'cameras': Camera,
@@ -101,12 +103,35 @@ const conditionColors: Record<string, string> = {
   DAMAGED: 'bg-red-100 text-red-700',
 };
 
+// Module-level ref holder for availability calendar (safe in 'use client')
+const _calendarUnavailable = { current: new Set<string>() };
+
+function AvailabilityDayButton({ day, modifiers, ...props }: React.ComponentProps<typeof DayButton>) {
+  const dateStr = format(day.date, 'yyyy-MM-dd');
+  const isUnavailable = _calendarUnavailable.current.has(dateStr);
+  const isDisabled = modifiers.disabled;
+
+  return (
+    <CalendarDayButton
+      day={day}
+      modifiers={modifiers}
+      {...props}
+      className={cn(
+        isDisabled
+          ? 'opacity-40 text-slate-300'
+          : isUnavailable
+            ? 'bg-red-100 text-red-600 line-through hover:bg-red-100'
+            : 'bg-emerald-50 hover:bg-emerald-100',
+      )}
+    />
+  );
+}
+
 export default function ProductDetailPage() {
   const goBack = useAppStore((s) => s.goBack);
   const navigate = useAppStore((s) => s.navigate);
   const user = useAppStore((s) => s.user);
   const setAuthModalOpen = useAppStore((s) => s.setAuthModalOpen);
-  const selectedState = useAppStore((s) => s.selectedState);
   const viewData = useAppStore((s) => s.viewData);
 
   const productId = viewData.productId as string;
@@ -150,6 +175,22 @@ export default function ProductDetailPage() {
 
   const isAvailable = availabilityData?.available ?? true;
   const unavailableDates = (availabilityData?.unavailableDates ?? []) as string[];
+
+  // Fetch calendar availability (all unavailable dates for next 90 days)
+  const { data: calendarAvailData } = useQuery({
+    queryKey: ['calendar-availability', productId],
+    queryFn: () => api.getCalendarAvailability(productId!),
+    enabled: !!productId,
+  });
+  const calendarUnavailableDates = useMemo(() => {
+    const dates = calendarAvailData?.unavailableDates ?? [];
+    return new Set(dates as string[]);
+  }, [calendarAvailData]);
+
+  // Sync module-level ref for the calendar Day component (via effect to satisfy lint)
+  React.useEffect(() => {
+    _calendarUnavailable.current = calendarUnavailableDates;
+  }, [calendarUnavailableDates]);
 
   // Create rental mutation
   const queryClient = useQueryClient();
@@ -222,7 +263,7 @@ export default function ProductDetailPage() {
 
   // State match check
   const isNotApproved = product?.status !== 'APPROVED';
-  const stateMismatch = selectedState && product?.stateId && selectedState.id !== product.stateId;
+  // State match check (informational only - cross-state rentals allowed)
 
   const handleRentNow = () => {
     if (!user) {
@@ -233,7 +274,6 @@ export default function ProductDetailPage() {
       toast.error('This product is not available for rental');
       return;
     }
-    if (stateMismatch) return;
     if (!startDate || !endDate || !isDateValid) return;
     createRentalMutation.mutate({
       productId,
@@ -512,22 +552,6 @@ export default function ProductDetailPage() {
               </div>
             </div>
 
-            {stateMismatch && (
-              <motion.div
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="flex items-start gap-3 p-4 rounded-xl bg-amber-50 border border-amber-200"
-              >
-                <AlertTriangle className="h-5 w-5 text-amber-600 mt-0.5 shrink-0" />
-                <div>
-                  <p className="text-sm font-semibold text-amber-800">This item is not available in your state</p>
-                  <p className="text-xs text-amber-600 mt-1">
-                    This item is listed in {product.state?.name}. You selected {selectedState?.name} as your location. Rental is only available within your state.
-                  </p>
-                </div>
-              </motion.div>
-            )}
-
             <Separator />
 
             {/* Tabs: Description, Rules, Cancellation */}
@@ -741,27 +765,25 @@ export default function ProductDetailPage() {
                 <Button
                   size="lg"
                   className={`w-full h-12 text-base font-semibold ${
-                    isNotApproved || stateMismatch || !startDate || !endDate || !isDateValid
+                    isNotApproved || !startDate || !endDate || !isDateValid
                       ? 'bg-slate-300 text-slate-500 cursor-not-allowed'
                       : 'bg-emerald-600 hover:bg-emerald-700 text-white'
                   }`}
                   onClick={handleRentNow}
-                  disabled={isNotApproved || stateMismatch || !startDate || !endDate || !isDateValid || createRentalMutation.isPending}
+                  disabled={isNotApproved || !startDate || !endDate || !isDateValid || createRentalMutation.isPending}
                 >
                   {createRentalMutation.isPending
                     ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />Creating Rental...</>
                     : isNotApproved
                       ? 'Not Available for Rental'
-                      : stateMismatch
-                      ? 'Not Available in Your State'
                       : !startDate
-                        ? 'Select Start Date'
-                        : !endDate
-                          ? 'Select End Date'
+                      ? 'Select Start Date'
+                      : !endDate
+                        ? 'Select End Date'
                           : dateValidationError || 'Rent Now'}
                 </Button>
 
-                {!user && startDate && endDate && rentalCalc.days > 0 && !stateMismatch && (
+                {!user && startDate && endDate && rentalCalc.days > 0 && (
                   <p className="text-xs text-center text-slate-500">
                     You&apos;ll need to sign in to complete the rental
                   </p>
@@ -790,19 +812,16 @@ export default function ProductDetailPage() {
                 <div className="flex justify-center">
                   <Calendar
                     mode="default"
-                    modifiers={{
-                      unavailable: unavailableDates.map((d) => new Date(d + 'T00:00:00')),
-                    }}
-                    modifiersClassNames={{
-                      unavailable: 'bg-red-100 text-red-600 line-through opacity-60',
-                    }}
                     disabled={[{ before: today }]}
                     className="rounded-md border"
+                    components={{
+                      DayButton: AvailabilityDayButton,
+                    }}
                   />
                 </div>
                 <div className="flex items-center gap-4 mt-4 text-xs text-slate-500">
                   <div className="flex items-center gap-1.5">
-                    <div className="w-3 h-3 rounded bg-emerald-200 border border-emerald-300" />
+                    <div className="w-3 h-3 rounded bg-emerald-100 border border-emerald-200" />
                     <span>Available</span>
                   </div>
                   <div className="flex items-center gap-1.5">

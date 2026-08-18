@@ -22,8 +22,8 @@ export default function CTASection() {
 
   return (
     <section className="relative py-20 sm:py-24 overflow-hidden">
-      {/* Orange-to-blue gradient background */}
-      <div className="absolute inset-0 bg-gradient-to-r from-[#f97316] via-[#ea580c] to-[#1e40af]" />
+      {/* Emerald-to-teal gradient background */}
+      <div className="absolute inset-0 bg-gradient-to-r from-[#059669] via-[#047857] to-[#0f766e]" />
 
       {/* Subtle dot overlay */}
       <div
@@ -57,7 +57,7 @@ export default function CTASection() {
           <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
             <Button
               size="lg"
-              className="bg-[#1e40af] hover:bg-[#1e3a5f] text-white px-8 py-6 text-base font-semibold rounded-xl shadow-lg shadow-black/20 transition-all hover:shadow-xl"
+              className="bg-white hover:bg-gray-100 text-[#059669] px-8 py-6 text-base font-semibold rounded-xl shadow-lg shadow-black/20 transition-all hover:shadow-xl"
               onClick={() => navigate('marketplace')}
             >
               Browse Rentals
@@ -65,7 +65,7 @@ export default function CTASection() {
             </Button>
             <Button
               size="lg"
-              className="bg-white hover:bg-gray-100 text-[#ea580c] px-8 py-6 text-base font-semibold rounded-xl shadow-lg shadow-black/10 transition-all hover:shadow-xl"
+              className="bg-[#0f172a] hover:bg-[#1e293b] text-white px-8 py-6 text-base font-semibold rounded-xl shadow-lg shadow-black/10 transition-all hover:shadow-xl"
               onClick={handleListClick}
             >
               List Your Item

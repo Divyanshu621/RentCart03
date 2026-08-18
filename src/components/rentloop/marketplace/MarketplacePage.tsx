@@ -243,22 +243,22 @@ export default function MarketplacePage() {
 
   const catPillClass = (active: boolean) =>
     active
-      ? 'shrink-0 px-4 py-1.5 rounded-full text-sm font-medium transition-all bg-[#1e40af] text-white shadow-sm'
-      : 'shrink-0 px-4 py-1.5 rounded-full text-sm font-medium transition-all bg-white text-[#64748b] border border-[#e2e8f0] hover:border-[#1e40af] hover:text-[#1e40af]';
+      ? 'shrink-0 px-4 py-1.5 rounded-full text-sm font-medium transition-all bg-[#059669] text-white shadow-sm'
+      : 'shrink-0 px-4 py-1.5 rounded-full text-sm font-medium transition-all bg-white text-[#64748b] border border-[#e2e8f0] hover:border-[#059669] hover:text-[#059669]';
 
   const condPillClass = (active: boolean, color: string) =>
     active
-      ? color || 'bg-[#1e40af] text-white border-[#1e40af]'
+      ? color || 'bg-[#059669] text-white border-[#059669]'
       : 'bg-white text-[#64748b] border-[#e2e8f0] hover:border-[#94a3b8] px-3 py-1.5 rounded-full text-xs font-medium border transition-all';
 
   return (
     <div className="min-h-[60vh] bg-[#f8fafc]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {locationLabel && (
-          <div className="mb-4 flex items-center gap-2 px-4 py-2.5 rounded-lg bg-blue-50 border border-blue-100 text-sm text-blue-800">
-            <MapPin className="h-4 w-4 shrink-0 text-blue-500" />
+          <div className="mb-4 flex items-center gap-2 px-4 py-2.5 rounded-lg bg-emerald-50 border border-emerald-100 text-sm text-emerald-800">
+            <MapPin className="h-4 w-4 shrink-0 text-emerald-500" />
             <span>Showing rentals in <strong>{locationLabel}</strong></span>
-            <button onClick={() => { setSelectedState(null); setSelectedCity(null); setSelectedArea(null); setPage(1); }} className="ml-auto text-xs text-blue-600 hover:text-blue-800 font-medium underline">Change</button>
+            <button onClick={() => { setSelectedState(null); setSelectedCity(null); setSelectedArea(null); setPage(1); }} className="ml-auto text-xs text-emerald-600 hover:text-emerald-800 font-medium underline">Change</button>
           </div>
         )}
 
@@ -298,17 +298,17 @@ export default function MarketplacePage() {
           <div className="flex items-center gap-2">
             <Popover open={filtersOpen} onOpenChange={setFiltersOpen}>
               <PopoverTrigger asChild>
-                <Button variant="outline" className={hasActiveFilters ? 'h-9 gap-2 text-sm bg-blue-50 border-blue-300 text-blue-700' : 'h-9 gap-2 text-sm border-[#e2e8f0] text-[#64748b]'}>
+                <Button variant="outline" className={hasActiveFilters ? 'h-9 gap-2 text-sm bg-emerald-50 border-emerald-300 text-emerald-700' : 'h-9 gap-2 text-sm border-[#e2e8f0] text-[#64748b]'}>
                   <SlidersHorizontal className="h-4 w-4" />
                   <span>Filters</span>
-                  {hasActiveFilters && <span className="h-5 w-5 rounded-full bg-[#1e40af] text-white text-[10px] flex items-center justify-center">{activeFilterCount}</span>}
+                  {hasActiveFilters && <span className="h-5 w-5 rounded-full bg-[#059669] text-white text-[10px] flex items-center justify-center">{activeFilterCount}</span>}
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-80 p-5" align="end">
                 <div className="space-y-5">
                   <div className="flex items-center justify-between">
                     <h3 className="font-semibold text-[#0f172a]">Filters</h3>
-                    {hasActiveFilters && <button onClick={clearFilters} className="text-xs text-[#1e40af] hover:text-blue-800 font-medium">Clear all</button>}
+                    {hasActiveFilters && <button onClick={clearFilters} className="text-xs text-[#059669] hover:text-emerald-800 font-medium">Clear all</button>}
                   </div>
                   <div className="space-y-2">
                     <Label className="text-sm font-medium text-[#0f172a]">Condition</Label>
@@ -333,7 +333,7 @@ export default function MarketplacePage() {
                     </div>
                     <Switch checked={deliveryOnly} onCheckedChange={(v) => { setDeliveryOnly(v); setPage(1); }} />
                   </div>
-                  <Button className="w-full bg-[#1e40af] hover:bg-[#1e3a8a] text-white" onClick={() => setFiltersOpen(false)}>Apply Filters</Button>
+                  <Button className="w-full bg-[#059669] hover:bg-[#047857] text-white" onClick={() => setFiltersOpen(false)}>Apply Filters</Button>
                 </div>
               </PopoverContent>
             </Popover>
@@ -355,7 +355,7 @@ export default function MarketplacePage() {
             {search && <> for &ldquo;<span className="font-medium text-[#0f172a]">{search}</span>&rdquo;</>}
           </p>
           {hasActiveFilters && (
-            <button onClick={clearFilters} className="text-xs text-[#1e40af] hover:text-blue-800 font-medium flex items-center gap-1">
+            <button onClick={clearFilters} className="text-xs text-[#059669] hover:text-emerald-800 font-medium flex items-center gap-1">
               <X className="h-3 w-3" /> Clear all
             </button>
           )}
@@ -386,7 +386,7 @@ export default function MarketplacePage() {
                     else if (page >= totalPages - 3) pageNum = totalPages - 6 + idx;
                     else pageNum = page - 3 + idx;
                     return (
-                      <Button key={pageNum} variant={page === pageNum ? 'default' : 'outline'} size="sm" onClick={() => setPage(pageNum)} className={page === pageNum ? 'bg-[#1e40af] hover:bg-[#1e3a8a] text-white' : 'border-[#e2e8f0] text-[#64748b]'}>{pageNum}</Button>
+                      <Button key={pageNum} variant={page === pageNum ? 'default' : 'outline'} size="sm" onClick={() => setPage(pageNum)} className={page === pageNum ? 'bg-[#059669] hover:bg-[#047857] text-white' : 'border-[#e2e8f0] text-[#64748b]'}>{pageNum}</Button>
                     );
                   })}
                 </div>

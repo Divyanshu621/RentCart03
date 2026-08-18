@@ -109,8 +109,8 @@ export default function HeroSection() {
 
   return (
     <section className="relative min-h-[600px] lg:min-h-[700px] flex flex-col justify-center overflow-hidden">
-      {/* Blue gradient background */}
-      <div className="absolute inset-0 bg-gradient-to-br from-[#1e40af] via-[#1e3a6f] to-[#1e3a5f]" />
+      {/* Emerald gradient background */}
+      <div className="absolute inset-0 bg-gradient-to-br from-[#064e3b] via-[#065f46] to-[#0f172a]" />
 
       {/* Subtle dot pattern overlay */}
       <div
@@ -123,7 +123,7 @@ export default function HeroSection() {
 
       {/* Subtle geometric shapes */}
       <div className="absolute top-20 right-10 w-72 h-72 rounded-full bg-white/[0.03] blur-2xl" />
-      <div className="absolute bottom-20 left-10 w-96 h-96 rounded-full bg-[#3b82f6]/[0.05] blur-3xl" />
+      <div className="absolute bottom-20 left-10 w-96 h-96 rounded-full bg-[#10b981]/[0.05] blur-3xl" />
 
       {/* Content */}
       <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center pt-28 pb-8 w-full">
@@ -142,12 +142,12 @@ export default function HeroSection() {
           <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-[3.5rem] font-bold tracking-tight leading-[1.1] text-white">
             Find &amp; Rent Anything
             <br />
-            <span className="text-[#f97316]">Across India</span>
+            <span className="text-[#10b981]">Across India</span>
           </h1>
 
           {/* Subheading */}
           <motion.p
-            className="mt-5 text-lg sm:text-xl text-blue-100/80 max-w-2xl mx-auto leading-relaxed"
+            className="mt-5 text-lg sm:text-xl text-emerald-100/80 max-w-2xl mx-auto leading-relaxed"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.15, ease: 'easeOut' }}
@@ -177,7 +177,7 @@ export default function HeroSection() {
                   <div className="absolute top-full left-0 mt-1 w-56 bg-white rounded-lg shadow-xl border border-[#e2e8f0] py-1 z-50 max-h-72 overflow-y-auto">
                     <button
                       onClick={() => { setSelectedCategory(''); setShowCategoryDropdown(false); }}
-                      className={`w-full px-3 py-2 text-left text-sm hover:bg-[#eff6ff] hover:text-[#1e40af] transition-colors ${!selectedCategory ? 'text-[#1e40af] font-medium' : 'text-[#0f172a]'}`}
+                      className={`w-full px-3 py-2 text-left text-sm hover:bg-[#ecfdf5] hover:text-[#059669] transition-colors ${!selectedCategory ? 'text-[#059669] font-medium' : 'text-[#0f172a]'}`}
                     >
                       All Categories
                     </button>
@@ -185,7 +185,7 @@ export default function HeroSection() {
                       <button
                         key={cat.id}
                         onClick={() => { setSelectedCategory(cat.id); setShowCategoryDropdown(false); }}
-                        className={`w-full px-3 py-2 text-left text-sm hover:bg-[#eff6ff] hover:text-[#1e40af] transition-colors ${selectedCategory === cat.id ? 'text-[#1e40af] font-medium' : 'text-[#64748b]'}`}
+                        className={`w-full px-3 py-2 text-left text-sm hover:bg-[#ecfdf5] hover:text-[#059669] transition-colors ${selectedCategory === cat.id ? 'text-[#059669] font-medium' : 'text-[#64748b]'}`}
                       >
                         {cat.name}
                       </button>
@@ -207,7 +207,7 @@ export default function HeroSection() {
               {/* Search button */}
               <button
                 onClick={handleSearchNavigate}
-                className="w-12 sm:w-14 h-full bg-[#f97316] hover:bg-[#ea580c] text-white flex items-center justify-center transition-colors shrink-0"
+                className="w-12 sm:w-14 h-full bg-[#059669] hover:bg-[#047857] text-white flex items-center justify-center transition-colors shrink-0"
                 aria-label="Search"
               >
                 <Search className="w-5 h-5" />
@@ -222,7 +222,7 @@ export default function HeroSection() {
             animate={{ opacity: 1 }}
             transition={{ duration: 0.8, delay: 0.5 }}
           >
-            <span className="text-blue-200/60">Popular:</span>
+            <span className="text-emerald-200/60">Popular:</span>
             {['Cameras', 'Laptops', 'Bikes', 'Furniture', 'Gaming'].map((term) => (
               <button
                 key={term}
@@ -230,7 +230,7 @@ export default function HeroSection() {
                   setSearchQuery(term);
                   navigate('marketplace', { searchQuery: term });
                 }}
-                className="text-blue-100/80 hover:text-white transition-colors underline-offset-2 hover:underline"
+                className="text-emerald-100/80 hover:text-white transition-colors underline-offset-2 hover:underline"
               >
                 {term}
               </button>
@@ -246,7 +246,7 @@ export default function HeroSection() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8, delay: 0.6, ease: 'easeOut' }}
       >
-        <div className="border-t border-white/10 bg-[#1e3a5f]/60 backdrop-blur-sm">
+        <div className="border-t border-white/10 bg-[#064e3b]/60 backdrop-blur-sm">
           <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8">
               {stats.map((stat) => (
@@ -255,7 +255,7 @@ export default function HeroSection() {
                     {stat.value === 4.8 ? (
                       <>
                         <AnimatedCounter target={stat.value * 10} />
-                        <span className="text-base text-blue-200/60">/10</span>
+                        <span className="text-base text-emerald-200/60">/10</span>
                       </>
                     ) : (
                       <AnimatedCounter
@@ -265,7 +265,7 @@ export default function HeroSection() {
                       />
                     )}
                   </div>
-                  <div className="text-sm text-blue-200/60 mt-1">{stat.label}</div>
+                  <div className="text-sm text-emerald-200/60 mt-1">{stat.label}</div>
                 </div>
               ))}
             </div>

@@ -24,7 +24,7 @@ const categories = [
 ];
 
 const iconColors: Record<string, string> = {
-  'Electronics': 'bg-blue-50 text-[#1e40af] group-hover:bg-[#1e40af] group-hover:text-white',
+  'Electronics': 'bg-emerald-50 text-[#059669] group-hover:bg-[#059669] group-hover:text-white',
   'Cameras': 'bg-rose-50 text-rose-600 group-hover:bg-rose-600 group-hover:text-white',
   'Laptops': 'bg-violet-50 text-violet-600 group-hover:bg-violet-600 group-hover:text-white',
   'Gaming': 'bg-indigo-50 text-indigo-600 group-hover:bg-indigo-600 group-hover:text-white',
@@ -66,7 +66,7 @@ export default function CategoriesSection() {
       <div
         className="absolute inset-0 opacity-[0.03]"
         style={{
-          backgroundImage: 'radial-gradient(circle, #1e40af 1px, transparent 1px)',
+          backgroundImage: 'radial-gradient(circle, #059669 1px, transparent 1px)',
           backgroundSize: '20px 20px',
         }}
       />
@@ -101,13 +101,13 @@ export default function CategoriesSection() {
               whileHover={{ scale: 1.03, y: -4 }}
               whileTap={{ scale: 0.97 }}
               onClick={() => handleClick(cat.slug)}
-              className="group cursor-pointer bg-white rounded-xl border border-[#e2e8f0] p-5 sm:p-6 flex flex-col items-center gap-3 transition-all hover:shadow-lg hover:border-[#3b82f6]/30"
+              className="group cursor-pointer bg-white rounded-xl border border-[#e2e8f0] p-5 sm:p-6 flex flex-col items-center gap-3 transition-all hover:shadow-lg hover:border-[#10b981]/30"
             >
-              <div className={`w-14 h-14 rounded-full flex items-center justify-center transition-colors duration-200 ${iconColors[cat.name] || 'bg-blue-50 text-[#1e40af] group-hover:bg-[#1e40af] group-hover:text-white'}`}>
+              <div className={`w-14 h-14 rounded-full flex items-center justify-center transition-colors duration-200 ${iconColors[cat.name] || 'bg-emerald-50 text-[#059669] group-hover:bg-[#059669] group-hover:text-white'}`}>
                 <cat.icon className="h-6 w-6" />
               </div>
               <div className="text-center">
-                <span className="text-sm font-semibold text-[#0f172a] group-hover:text-[#1e40af] transition-colors">
+                <span className="text-sm font-semibold text-[#0f172a] group-hover:text-[#059669] transition-colors">
                   {cat.name}
                 </span>
                 <p className="text-xs text-[#94a3b8] mt-0.5">

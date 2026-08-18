@@ -292,7 +292,7 @@ export default function ProductCard({
         {/* Pricing block */}
         <div className="flex flex-col gap-0.5">
           <div className="flex items-baseline gap-1">
-            <span className="text-lg font-bold text-[#1e40af]">
+            <span className="text-lg font-bold text-[#059669]">
               ₹{formatINR(product.dailyPrice)}
             </span>
             <span className="text-xs text-[#64748b]">/day</span>
@@ -319,7 +319,7 @@ export default function ProductCard({
         {/* Owner section */}
         <div className="flex items-center gap-2">
           <Avatar className="h-6 w-6">
-            <AvatarFallback className="bg-[#1e40af] text-white text-[11px] font-semibold">
+            <AvatarFallback className="bg-[#059669] text-white text-[11px] font-semibold">
               {ownerInitial}
             </AvatarFallback>
           </Avatar>
@@ -344,7 +344,7 @@ export default function ProductCard({
             e.stopPropagation();
             handleView();
           }}
-          className="text-xs font-semibold text-[#1e40af] hover:text-[#3b82f6] hover:underline transition-colors text-left self-start"
+          className="text-xs font-semibold text-[#059669] hover:text-[#047857] hover:underline transition-colors text-left self-start"
         >
           View Details →
         </button>

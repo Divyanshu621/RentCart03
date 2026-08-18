@@ -35,7 +35,7 @@ const reviews = [
     initials: 'VS',
     rating: 5,
     location: 'Delhi, NCR',
-    text: "I'm a freelancer who occasionally needs power tools. Renting through RentLoop saves me so much money and storage space. The security deposit refund was processed within 24 hours.",
+    text: "I'm a freelancer who occasionally needs power tools. Renting through RentCart saves me so much money and storage space. The security deposit refund was processed within 24 hours.",
   },
   {
     id: '5',
@@ -92,13 +92,13 @@ export default function ReviewsSection() {
           {reviews.map((review, index) => (
             <motion.div
               key={review.id}
-              className="relative bg-[#f8fafc] rounded-xl border border-[#e2e8f0] p-6 hover:shadow-md hover:border-[#3b82f6]/20 transition-all"
+              className="relative bg-[#f8fafc] rounded-xl border border-[#e2e8f0] p-6 hover:shadow-md hover:border-[#10b981]/20 transition-all"
               initial={{ opacity: 0, y: 24 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, amount: 0.2 }}
               transition={{ duration: 0.45, delay: index * 0.08 }}
             >
-              <Quote className="absolute top-5 right-5 h-8 w-8 text-[#1e40af]/10" />
+              <Quote className="absolute top-5 right-5 h-8 w-8 text-[#059669]/10" />
 
               <StarRating rating={review.rating} />
 
@@ -108,7 +108,7 @@ export default function ReviewsSection() {
 
               <div className="mt-5 flex items-center gap-3">
                 <Avatar className="h-10 w-10 border-2 border-white shadow-sm">
-                  <AvatarFallback className="bg-[#1e40af] text-white text-sm font-semibold">
+                  <AvatarFallback className="bg-[#059669] text-white text-sm font-semibold">
                     {review.initials}
                   </AvatarFallback>
                 </Avatar>

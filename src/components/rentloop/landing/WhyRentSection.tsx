@@ -58,7 +58,7 @@ export default function WhyRentSection() {
             <h2 className="text-3xl sm:text-4xl font-bold text-[#0f172a] leading-tight">
               Why Rent
               <br />
-              <span className="text-[#1e40af]">Instead of Buy?</span>
+              <span className="text-[#059669]">Instead of Buy?</span>
             </h2>
             <p className="mt-4 text-[#64748b] leading-relaxed">
               Smart people choose renting for a more flexible and sustainable lifestyle. Join thousands who have already made the switch.
@@ -74,8 +74,8 @@ export default function WhyRentSection() {
                   viewport={{ once: true, amount: 0.3 }}
                   transition={{ duration: 0.5, delay: index * 0.1 }}
                 >
-                  <div className="w-12 h-12 rounded-xl bg-[#eff6ff] flex items-center justify-center shrink-0">
-                    <stat.icon className="h-6 w-6 text-[#1e40af]" />
+                  <div className="w-12 h-12 rounded-xl bg-[#ecfdf5] flex items-center justify-center shrink-0">
+                    <stat.icon className="h-6 w-6 text-[#059669]" />
                   </div>
                   <div>
                     <div className="text-2xl font-bold text-[#0f172a]">{stat.value}</div>
@@ -92,14 +92,14 @@ export default function WhyRentSection() {
               {benefits.map((benefit, index) => (
                 <motion.div
                   key={benefit.title}
-                  className="bg-[#f8fafc] rounded-xl p-5 border border-[#e2e8f0] hover:border-[#3b82f6]/30 hover:shadow-md transition-all"
+                  className="bg-[#f8fafc] rounded-xl p-5 border border-[#e2e8f0] hover:border-[#10b981]/30 hover:shadow-md transition-all"
                   initial={{ opacity: 0, y: 24 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true, amount: 0.2 }}
                   transition={{ duration: 0.5, delay: index * 0.08 }}
                 >
-                  <div className="w-11 h-11 rounded-lg bg-[#eff6ff] flex items-center justify-center mb-3">
-                    <benefit.icon className="h-5 w-5 text-[#1e40af]" />
+                  <div className="w-11 h-11 rounded-lg bg-[#ecfdf5] flex items-center justify-center mb-3">
+                    <benefit.icon className="h-5 w-5 text-[#059669]" />
                   </div>
                   <h3 className="text-base font-semibold text-[#0f172a] mb-1.5">
                     {benefit.title}

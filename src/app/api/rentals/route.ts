@@ -92,14 +92,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Product is not available for rental' }, { status: 400 });
     }
 
-    // CRITICAL: Check user.stateId matches product.stateId
-    const user = await db.user.findUnique({ where: { id: session.userId } });
-    // State check: only block if user HAS a state and it differs from product's state
-    // If user has no state, allow them to rent from any state
-    if (user?.stateId && product.stateId && user.stateId !== product.stateId) {
-      console.error('[RENTAL 400] State mismatch:', { userStateId: user.stateId, productStateId: product.stateId });
-      return NextResponse.json({ error: 'Product is not available in your state' }, { status: 400 });
-    }
+    // Note: Cross-state rentals are allowed (delivery available for many items)
 
     // Can't rent own product
     if (product.ownerId === session.userId) {

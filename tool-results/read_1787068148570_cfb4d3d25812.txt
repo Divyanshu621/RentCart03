@@ -522,3 +522,54 @@
    522→- Auth callback route ready for production Google OAuth credentials
    523→- Browser verified: testuser@gmail.com successfully signed in and redirected to marketplace
    524→
+   525→---
+   526→Task ID: 11
+   527→Agent: Main + 3 Sub-agents
+   528→Task: IndiaMart-inspired UI redesign
+   529→
+   530→Work Log:
+   531→- Analyzed IndiaMart website design patterns (color scheme, layout, information density)
+   532→- Defined shared design system: Primary #1e40af, Accent #f97316, Background #f8fafc
+   533→- Sub-agent 1: Redesigned AppHeader with IndiaMart-style top utility bar, prominent search bar, category pills, orange CTA
+   534→- Sub-agent 2: Redesigned ProductCard with condition badges, price overlay, owner info, verified badges, orange Rent Now
+   535→- Sub-agent 3: Redesigned all 10 landing page sections (Hero, Categories, Trending, HowItWorks, WhyRent, Trust, Reviews, FAQ, CTA) + AppFooter
+   536→- Rewrote MarketplacePage to match new theme (blue/orange, removed duplicate search, clean filter UI)
+   537→- Fixed template literal parsing issues in JSX (Turbopack/ESLint compatibility)
+   538→- Fixed React Compiler lint error for setState in effect
+   539→- Browser verified: Landing page, Marketplace, Product cards, Header, Footer all render correctly
+   540→
+   541→Stage Summary:
+   542→- Complete IndiaMart-inspired UI redesign across all pages
+   543→- Color scheme: Deep blue (#1e40af) primary, orange (#f97316) CTAs, #f8fafc backgrounds
+   544→- New header: Top utility bar, unified search bar, category pills, orange 'List Item Free' button
+   545→- New product cards: Condition badges, price overlay, owner info with verified badge, orange Rent Now CTA
+   546→- New landing page: Blue gradient hero with search, category grid, trust section, dense footer
+   547→- Lint: 0 errors, 2 pre-existing warnings
+   548→
+   549→---
+   550→Task ID: 2
+   551→Agent: Sub-agent (availability-calendar)
+   552→Task: Fix availability calendar not showing color coding for available/unavailable dates
+   553→
+   554→Work Log:
+   555→- Read worklog.md and existing codebase (ProductDetailPage.tsx, api.ts, availability route, calendar.tsx)
+   556→- Analyzed root cause: availability API required both startDate and endDate, but calendar loaded without date selection, leaving unavailableDates always empty
+   557→- Created new API endpoint `/api/products/[id]/calendar-availability/route.ts` that takes only productId and returns all unavailable dates for the next 90 days
+   558→- Added `getCalendarAvailability` method to `/src/lib/api.ts`
+   559→- Updated ProductDetailPage.tsx:
+   560→  - Added imports for `CalendarDayButton` from calendar, `DayButton` from react-day-picker, `cn` from utils
+   561→  - Created custom `AvailabilityDayButton` component using module-level ref pattern to avoid re-creating component identity on each render
+   562→  - Added `useQuery` for `calendar-availability` endpoint (enabled: !!productId, fires on mount)
+   563→  - Used `useMemo` to convert unavailable dates array to Set for O(1) lookups
+   564→  - Used `useEffect` to sync data to module-level ref (satisfies React Compiler lint rules)
+   565→  - Replaced old calendar section with new Calendar using custom DayButton via `components` prop
+   566→  - Custom DayButton renders: emerald-50 bg for available dates, red-100 bg + red-600 text + line-through for unavailable, muted/disabled for past dates
+   567→- Verified API returns correct unavailable dates for products with active rentals (tested with Canon EOS R10 and MacBook Pro M3)
+   568→- Lint passes: 0 errors, 2 pre-existing warnings
+   569→
+   570→Stage Summary:
+   571→- New endpoint: `/api/products/[id]/calendar-availability` - returns 90-day unavailable dates from active rentals
+   572→- Calendar now shows green (available) and red (unavailable) color coding immediately on product page load
+   573→- Uses custom DayButton component via shadcn Calendar's `components` prop for reliable date styling
+   574→- No breaking changes to existing functionality
+   575→

@@ -14,7 +14,7 @@ const trustItems = [
     icon: Lock,
     title: 'Secure Payments',
     description: 'Bank-grade encryption with escrow protection. Your money is safe until you receive the item.',
-    color: 'bg-[#1e40af]/10 text-[#1e40af]',
+    color: 'bg-[#059669]/10 text-[#059669]',
   },
   {
     icon: Headphones,
@@ -26,7 +26,7 @@ const trustItems = [
     icon: Undo2,
     title: 'Easy Returns',
     description: 'Hassle-free returns with doorstep pickup. Security deposit refunded within 48 hours.',
-    color: 'bg-[#1e40af]/10 text-[#1e40af]',
+    color: 'bg-[#047857]/10 text-[#047857]',
   },
 ];
 
@@ -37,7 +37,7 @@ export default function TrustSection() {
       <div
         className="absolute inset-0 opacity-[0.03]"
         style={{
-          backgroundImage: 'radial-gradient(circle, #1e40af 1px, transparent 1px)',
+          backgroundImage: 'radial-gradient(circle, #059669 1px, transparent 1px)',
           backgroundSize: '20px 20px',
         }}
       />
@@ -54,7 +54,7 @@ export default function TrustSection() {
             Built on Trust &amp; Security
           </h2>
           <p className="mt-3 text-[#64748b] text-lg max-w-xl mx-auto">
-            Every transaction on RentLoop is protected and verified
+            Every transaction on RentCart is protected and verified
           </p>
         </motion.div>
 
@@ -62,7 +62,7 @@ export default function TrustSection() {
           {trustItems.map((item, index) => (
             <motion.div
               key={item.title}
-              className="bg-white rounded-xl border border-[#e2e8f0] p-6 text-center hover:shadow-md hover:border-[#3b82f6]/20 transition-all"
+              className="bg-white rounded-xl border border-[#e2e8f0] p-6 text-center hover:shadow-md hover:border-[#10b981]/20 transition-all"
               initial={{ opacity: 0, y: 24 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, amount: 0.3 }}

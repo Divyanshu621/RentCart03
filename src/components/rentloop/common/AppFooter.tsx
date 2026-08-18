@@ -16,11 +16,11 @@ export default function AppFooter() {
           {/* Brand */}
           <div>
             <div className="flex items-center gap-2 mb-4">
-              <div className="w-9 h-9 bg-[#1e40af] rounded-lg flex items-center justify-center">
+              <div className="w-9 h-9 bg-[#059669] rounded-lg flex items-center justify-center">
                 <Store className="w-5 h-5 text-white" />
               </div>
               <span className="text-xl font-bold text-white">
-                Rent<span className="text-[#3b82f6]">Loop</span>
+                Rent<span className="text-emerald-400">Cart</span>
               </span>
             </div>
             <p className="text-sm text-gray-400 leading-relaxed">
@@ -36,7 +36,7 @@ export default function AppFooter() {
               {[Facebook, Twitter, Instagram, Linkedin, Youtube].map((Icon, i) => (
                 <button
                   key={i}
-                  className="w-9 h-9 rounded-lg bg-white/5 hover:bg-[#1e40af] flex items-center justify-center text-gray-400 hover:text-white transition-colors"
+                  className="w-9 h-9 rounded-lg bg-white/5 hover:bg-[#059669] flex items-center justify-center text-gray-400 hover:text-white transition-colors"
                   aria-label="Social link"
                 >
                   <Icon className="w-4 h-4" />
@@ -50,27 +50,27 @@ export default function AppFooter() {
             <h3 className="text-sm font-semibold text-white uppercase tracking-wider mb-4">For Renters</h3>
             <ul className="space-y-2.5">
               <li>
-                <button onClick={() => navigate('marketplace')} className="text-sm text-gray-400 hover:text-[#3b82f6] transition-colors">
+                <button onClick={() => navigate('marketplace')} className="text-sm text-gray-400 hover:text-[#10b981] transition-colors">
                   Browse Rentals
                 </button>
               </li>
               <li>
-                <button onClick={() => navigate('marketplace')} className="text-sm text-gray-400 hover:text-[#3b82f6] transition-colors">
+                <button onClick={() => navigate('marketplace')} className="text-sm text-gray-400 hover:text-[#10b981] transition-colors">
                   How It Works
                 </button>
               </li>
               <li>
-                <button onClick={() => navigate('marketplace')} className="text-sm text-gray-400 hover:text-[#3b82f6] transition-colors">
+                <button onClick={() => navigate('marketplace')} className="text-sm text-gray-400 hover:text-[#10b981] transition-colors">
                   Safety Guide
                 </button>
               </li>
               <li>
-                <button onClick={() => navigate('marketplace')} className="text-sm text-gray-400 hover:text-[#3b82f6] transition-colors">
+                <button onClick={() => navigate('marketplace')} className="text-sm text-gray-400 hover:text-[#10b981] transition-colors">
                   Pricing
                 </button>
               </li>
               <li>
-                <button onClick={() => navigate('favorites')} className="text-sm text-gray-400 hover:text-[#3b82f6] transition-colors">
+                <button onClick={() => navigate('favorites')} className="text-sm text-gray-400 hover:text-[#10b981] transition-colors">
                   My Favourites
                 </button>
               </li>
@@ -82,27 +82,27 @@ export default function AppFooter() {
             <h3 className="text-sm font-semibold text-white uppercase tracking-wider mb-4">For Owners</h3>
             <ul className="space-y-2.5">
               <li>
-                <button onClick={() => navigate('list-item')} className="text-sm text-gray-400 hover:text-[#3b82f6] transition-colors">
+                <button onClick={() => navigate('list-item')} className="text-sm text-gray-400 hover:text-[#10b981] transition-colors">
                   List Your Item
                 </button>
               </li>
               <li>
-                <button onClick={() => navigate('dashboard')} className="text-sm text-gray-400 hover:text-[#3b82f6] transition-colors">
+                <button onClick={() => navigate('dashboard')} className="text-sm text-gray-400 hover:text-[#10b981] transition-colors">
                   Owner Dashboard
                 </button>
               </li>
               <li>
-                <button onClick={() => navigate('my-listings')} className="text-sm text-gray-400 hover:text-[#3b82f6] transition-colors">
+                <button onClick={() => navigate('my-listings')} className="text-sm text-gray-400 hover:text-[#10b981] transition-colors">
                   My Listings
                 </button>
               </li>
               <li>
-                <button onClick={() => navigate('dashboard')} className="text-sm text-gray-400 hover:text-[#3b82f6] transition-colors">
+                <button onClick={() => navigate('dashboard')} className="text-sm text-gray-400 hover:text-[#10b981] transition-colors">
                   Earnings
                 </button>
               </li>
               <li>
-                <button onClick={() => navigate('dashboard')} className="text-sm text-gray-400 hover:text-[#3b82f6] transition-colors">
+                <button onClick={() => navigate('dashboard')} className="text-sm text-gray-400 hover:text-[#10b981] transition-colors">
                   Trust & Verification
                 </button>
               </li>
@@ -115,11 +115,11 @@ export default function AppFooter() {
             <ul className="space-y-3">
               <li className="flex items-center gap-2 text-sm text-gray-400">
                 <Mail className="w-4 h-4 shrink-0" />
-                <span>support@rentloop.in</span>
+                <span>support@rentcart.in</span>
               </li>
               <li className="flex items-center gap-2 text-sm text-gray-400">
                 <Phone className="w-4 h-4 shrink-0" />
-                <span>+91 1800-RENT-LOOP</span>
+                <span>+91 1800-736-8227</span>
               </li>
               <li className="flex items-center gap-2 text-sm text-gray-400">
                 <MapPin className="w-4 h-4 shrink-0" />
@@ -127,13 +127,13 @@ export default function AppFooter() {
               </li>
             </ul>
             <div className="mt-4 space-y-2">
-              <button className="block text-sm text-gray-400 hover:text-[#3b82f6] transition-colors">
+              <button className="block text-sm text-gray-400 hover:text-[#10b981] transition-colors">
                 Help Center
               </button>
-              <button className="block text-sm text-gray-400 hover:text-[#3b82f6] transition-colors">
+              <button className="block text-sm text-gray-400 hover:text-[#10b981] transition-colors">
                 Privacy Policy
               </button>
-              <button className="block text-sm text-gray-400 hover:text-[#3b82f6] transition-colors">
+              <button className="block text-sm text-gray-400 hover:text-[#10b981] transition-colors">
                 Terms of Service
               </button>
             </div>
@@ -143,7 +143,7 @@ export default function AppFooter() {
         {/* Bottom bar */}
         <div className="border-t border-gray-800 mt-10 pt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-xs text-gray-500">
-            &copy; {new Date().getFullYear()} RentLoop. All rights reserved.
+            &copy; {new Date().getFullYear()} RentCart. All rights reserved.
           </p>
           <div className="flex items-center gap-4 text-xs text-gray-500">
             <button className="hover:text-gray-300 transition-colors">Privacy</button>

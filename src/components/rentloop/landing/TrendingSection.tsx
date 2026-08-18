@@ -18,8 +18,8 @@ export default function TrendingSection() {
   useEffect(() => {
     api.getProducts({ page: 1, limit: 6, sort: 'trending' })
       .then((res) => {
-        const data = res as unknown as { data: Product[] };
-        setProducts(data.data || []);
+        const data = res as unknown as { products: Product[] };
+        setProducts(data.products || []);
       })
       .catch(() => {})
       .finally(() => setLoading(false));
@@ -46,7 +46,7 @@ export default function TrendingSection() {
           </div>
           <button
             onClick={() => navigate('marketplace')}
-            className="hidden sm:flex items-center gap-1.5 text-sm font-semibold text-[#1e40af] hover:text-[#3b82f6] transition-colors shrink-0"
+            className="hidden sm:flex items-center gap-1.5 text-sm font-semibold text-[#059669] hover:text-[#047857] transition-colors shrink-0"
           >
             View All
             <ArrowRight className="w-4 h-4" />
@@ -58,7 +58,7 @@ export default function TrendingSection() {
           <Button
             variant="outline"
             size="sm"
-            className="w-full border-[#e2e8f0] text-[#1e40af] hover:bg-[#eff6ff]"
+            className="w-full border-[#e2e8f0] text-[#059669] hover:bg-[#ecfdf5]"
             onClick={() => navigate('marketplace')}
           >
             View All Rentals <ArrowRight className="w-4 h-4 ml-1" />

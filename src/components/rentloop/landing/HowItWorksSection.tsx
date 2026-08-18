@@ -37,7 +37,7 @@ export default function HowItWorksSection() {
       <div
         className="absolute inset-0 opacity-[0.03]"
         style={{
-          backgroundImage: 'radial-gradient(circle, #1e40af 1px, transparent 1px)',
+          backgroundImage: 'radial-gradient(circle, #059669 1px, transparent 1px)',
           backgroundSize: '20px 20px',
         }}
       />
@@ -51,7 +51,7 @@ export default function HowItWorksSection() {
           transition={{ duration: 0.6 }}
         >
           <h2 className="text-3xl sm:text-4xl font-bold text-[#0f172a]">
-            How RentLoop Works
+            How RentCart Works
           </h2>
           <p className="mt-3 text-[#64748b] text-lg max-w-xl mx-auto">
             Renting is simple, secure, and hassle-free in four easy steps
@@ -61,7 +61,7 @@ export default function HowItWorksSection() {
         {/* Steps */}
         <div className="relative">
           {/* Dotted connector line (desktop) */}
-          <div className="hidden lg:block absolute top-16 left-[12.5%] right-[12.5%] border-t-2 border-dashed border-[#1e40af]/20" />
+          <div className="hidden lg:block absolute top-16 left-[12.5%] right-[12.5%] border-t-2 border-dashed border-[#059669]/20" />
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-6">
             {steps.map((item, index) => (
@@ -74,13 +74,13 @@ export default function HowItWorksSection() {
                 transition={{ duration: 0.5, delay: index * 0.15 }}
               >
                 {/* Step number circle */}
-                <div className="relative z-10 w-14 h-14 rounded-full bg-[#1e40af] text-white flex items-center justify-center text-lg font-bold shadow-lg shadow-[#1e40af]/20">
+                <div className="relative z-10 w-14 h-14 rounded-full bg-[#059669] text-white flex items-center justify-center text-lg font-bold shadow-lg shadow-[#059669]/20">
                   {item.step}
                 </div>
 
                 {/* Icon circle */}
                 <div className="mt-5 w-16 h-16 rounded-2xl bg-white border border-[#e2e8f0] shadow-sm flex items-center justify-center">
-                  <item.icon className="h-7 w-7 text-[#1e40af]" />
+                  <item.icon className="h-7 w-7 text-[#059669]" />
                 </div>
 
                 <h3 className="mt-4 text-lg font-semibold text-[#0f172a]">

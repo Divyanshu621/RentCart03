@@ -15,22 +15,22 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "RentLoop - Rent Anything You Need | Rent it. Use it. Return it.",
+  title: "RentCart - Rent Anything You Need | Rent it. Use it. Return it.",
   description: "India's premier rental marketplace. Rent cameras, laptops, gaming consoles, tools, furniture and more. Save money, reduce waste, and access premium items at a fraction of the cost.",
-  keywords: ["RentLoop", "rental marketplace", "rent items", "India", "rent camera", "rent laptop", "rent tools", "peer to peer rental", "rental platform"],
-  authors: [{ name: "RentLoop Team" }],
+  keywords: ["RentCart", "rental marketplace", "rent items", "India", "rent camera", "rent laptop", "rent tools", "peer to peer rental", "rental platform"],
+  authors: [{ name: "RentCart Team" }],
   icons: {
     icon: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔄</text></svg>",
   },
   openGraph: {
-    title: "RentLoop - Rent Anything You Need",
+    title: "RentCart - Rent Anything You Need",
     description: "Get the things you need for a few days without buying them permanently.",
-    siteName: "RentLoop",
+    siteName: "RentCart",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "RentLoop - Rent Anything You Need",
+    title: "RentCart - Rent Anything You Need",
     description: "Get the things you need for a few days without buying them permanently.",
   },
 };

@@ -234,7 +234,7 @@ export default function AppHeader() {
                   <Store className="w-5 h-5 text-white" />
                 </div>
                 <span className="text-xl font-bold tracking-tight text-white">
-                  Rent<span className="text-blue-300">Loop</span>
+                  Rent<span className="text-emerald-300">Cart</span>
                 </span>
               </button>
 
@@ -277,7 +277,7 @@ export default function AppHeader() {
                       <DropdownMenuTrigger asChild>
                         <button className="flex items-center gap-2 p-1 rounded-lg hover:bg-white/10 transition-colors">
                           <Avatar className="h-8 w-8 border-2 border-white/40">
-                            <AvatarFallback className="bg-blue-600 text-white text-sm font-semibold">
+                            <AvatarFallback className="bg-[#059669] text-white text-sm font-semibold">
                               {user.name?.charAt(0)?.toUpperCase() || 'U'}
                             </AvatarFallback>
                           </Avatar>
@@ -363,17 +363,17 @@ export default function AppHeader() {
               onClick={() => navigate('landing')}
               className="flex items-center gap-2 group shrink-0"
             >
-              <div className="w-8 h-8 bg-[#1e40af] rounded-lg flex items-center justify-center">
+              <div className="w-8 h-8 bg-[#059669] rounded-lg flex items-center justify-center">
                 <Store className="w-5 h-5 text-white" />
               </div>
               <span className="text-xl font-bold tracking-tight text-[#0f172a]">
-                Rent<span className="text-[#1e40af]">Loop</span>
+                Rent<span className="text-emerald-600">Cart</span>
               </span>
             </button>
 
             {/* Desktop: Unified search bar */}
             <div className="hidden md:flex flex-1 max-w-2xl mx-6">
-              <div className="flex items-center w-full border-2 border-blue-500 rounded-lg h-10 overflow-hidden bg-white">
+              <div className="flex items-center w-full border-2 border-emerald-500 rounded-lg h-10 overflow-hidden bg-white">
                 {/* Category dropdown */}
                 <div ref={categoryDropdownRef} className="relative">
                   <button
@@ -387,7 +387,7 @@ export default function AppHeader() {
                     <div className="absolute top-full left-0 mt-1 w-56 bg-white rounded-lg shadow-xl border border-gray-100 py-1 z-50 max-h-72 overflow-y-auto">
                       <button
                         onClick={() => { navigate('marketplace'); setShowCategoryDropdown(false); }}
-                        className="w-full px-3 py-2 text-left text-sm text-[#0f172a] hover:bg-blue-50 hover:text-blue-700 transition-colors"
+                        className="w-full px-3 py-2 text-left text-sm text-[#0f172a] hover:bg-emerald-50 hover:text-emerald-700 transition-colors"
                       >
                         All Categories
                       </button>
@@ -395,7 +395,7 @@ export default function AppHeader() {
                         <button
                           key={cat.id}
                           onClick={() => { navigate('marketplace', { categoryId: cat.id }); setShowCategoryDropdown(false); }}
-                          className="w-full px-3 py-2 text-left text-sm text-[#64748b] hover:bg-blue-50 hover:text-blue-700 transition-colors"
+                          className="w-full px-3 py-2 text-left text-sm text-[#64748b] hover:bg-emerald-50 hover:text-emerald-700 transition-colors"
                         >
                           {cat.name}
                         </button>
@@ -414,7 +414,7 @@ export default function AppHeader() {
                         : 'text-[#94a3b8]'
                     }`}
                   >
-                    <MapPin className={`w-3.5 h-3.5 shrink-0 ${hasLocationSelection ? 'text-[#1e40af]' : 'text-[#94a3b8]'}`} />
+                    <MapPin className={`w-3.5 h-3.5 shrink-0 ${hasLocationSelection ? 'text-[#059669]' : 'text-[#94a3b8]'}`} />
                     <span className="truncate">{locationLabel}</span>
                     <ChevronDown className={`w-3 h-3 shrink-0 transition-transform ${showLocationPopover ? 'rotate-180' : ''}`} />
                   </button>
@@ -476,7 +476,7 @@ export default function AppHeader() {
                               setShowLocationPopover(false);
                               navigate('marketplace');
                             }}
-                            className="text-xs text-[#1e40af] hover:text-blue-700 font-medium"
+                            className="text-xs text-[#059669] hover:text-emerald-700 font-medium"
                           >
                             Clear location
                           </button>
@@ -500,7 +500,7 @@ export default function AppHeader() {
                 {/* Search button */}
                 <button
                   onClick={handleSearchNavigate}
-                  className="w-12 h-full bg-[#1e40af] hover:bg-[#3b82f6] text-white flex items-center justify-center transition-colors shrink-0"
+                  className="w-12 h-full bg-[#059669] hover:bg-[#10b981] text-white flex items-center justify-center transition-colors shrink-0"
                   aria-label="Search"
                 >
                   <Search className="w-4.5 h-4.5" />
@@ -523,7 +523,7 @@ export default function AppHeader() {
                 onClick={() => setShowLocationMobile(true)}
                 className={`md:hidden flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs border transition-colors ${
                   hasLocationSelection
-                    ? 'border-blue-200 bg-blue-50 text-[#1e40af]'
+                    ? 'border-emerald-200 bg-emerald-50 text-[#059669]'
                     : 'border-gray-200 text-[#64748b] hover:border-gray-300'
                 }`}
               >
@@ -577,8 +577,8 @@ export default function AppHeader() {
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <button className="flex items-center gap-2 p-1 rounded-lg hover:bg-gray-100 transition-colors">
-                        <Avatar className="h-8 w-8 border-2 border-blue-100">
-                          <AvatarFallback className="bg-blue-100 text-[#1e40af] text-sm font-semibold">
+                        <Avatar className="h-8 w-8 border-2 border-emerald-100">
+                          <AvatarFallback className="bg-emerald-100 text-[#059669] text-sm font-semibold">
                             {user.name?.charAt(0)?.toUpperCase() || 'U'}
                           </AvatarFallback>
                         </Avatar>
@@ -637,7 +637,7 @@ export default function AppHeader() {
             >
               <button
                 onClick={() => navigate('marketplace')}
-                className="shrink-0 px-4 py-1.5 rounded-full text-xs font-medium transition-colors bg-white text-[#64748b] border border-[#e2e8f0] hover:border-blue-300 hover:text-blue-600"
+                className="shrink-0 px-4 py-1.5 rounded-full text-xs font-medium transition-colors bg-white text-[#64748b] border border-[#e2e8f0] hover:border-emerald-300 hover:text-emerald-600"
               >
                 All
               </button>
@@ -645,7 +645,7 @@ export default function AppHeader() {
                 <button
                   key={cat.id}
                   onClick={() => handleCategoryPillClick(cat.id)}
-                  className="shrink-0 px-4 py-1.5 rounded-full text-xs font-medium transition-colors text-[#64748b] hover:bg-blue-50 hover:text-blue-600 border border-transparent"
+                  className="shrink-0 px-4 py-1.5 rounded-full text-xs font-medium transition-colors text-[#64748b] hover:bg-emerald-50 hover:text-emerald-600 border border-transparent"
                 >
                   {cat.name}
                 </button>
@@ -660,7 +660,7 @@ export default function AppHeader() {
         <SheetContent side="bottom" className="rounded-t-2xl">
           <SheetHeader className="p-4 pb-2">
             <SheetTitle className="flex items-center gap-2 text-base">
-              <MapPin className="w-4 h-4 text-[#1e40af]" />
+              <MapPin className="w-4 h-4 text-[#059669]" />
               Select Location
             </SheetTitle>
           </SheetHeader>
@@ -771,7 +771,7 @@ function NotificationPanel({
         {unreadCount > 0 && (
           <button
             onClick={onMarkAllRead}
-            className="text-xs text-[#1e40af] hover:text-blue-700"
+            className="text-xs text-[#059669] hover:text-emerald-700"
           >
             Mark all read
           </button>
@@ -785,7 +785,7 @@ function NotificationPanel({
             <button
               key={n.id}
               onClick={onNotifClick}
-              className={`w-full px-4 py-3 text-left hover:bg-gray-50 border-b border-gray-50 last:border-0 transition-colors ${!n.isRead ? 'bg-blue-50/50' : ''}`}
+              className={`w-full px-4 py-3 text-left hover:bg-gray-50 border-b border-gray-50 last:border-0 transition-colors ${!n.isRead ? 'bg-emerald-50/50' : ''}`}
             >
               <p className="text-sm font-medium text-[#0f172a]">{n.title}</p>
               <p className="text-xs text-[#64748b] mt-0.5 line-clamp-1">{n.message}</p>
@@ -795,7 +795,7 @@ function NotificationPanel({
       </ScrollArea>
       <button
         onClick={onViewAll}
-        className="w-full p-2.5 text-center text-xs font-medium text-[#1e40af] hover:bg-blue-50 border-t border-gray-100 transition-colors"
+        className="w-full p-2.5 text-center text-xs font-medium text-[#059669] hover:bg-emerald-50 border-t border-gray-100 transition-colors"
       >
         View all notifications
       </button>
@@ -885,11 +885,11 @@ function MobileSideSheet({
       <SheetContent side="right" className="w-72 p-0">
         <SheetHeader className="p-4 border-b border-[#e2e8f0]">
           <SheetTitle className="flex items-center gap-2">
-            <div className="w-7 h-7 bg-[#1e40af] rounded-lg flex items-center justify-center">
+            <div className="w-7 h-7 bg-[#059669] rounded-lg flex items-center justify-center">
               <Store className="w-4 h-4 text-white" />
             </div>
             <span className="text-[#0f172a]">
-              Rent<span className="text-[#1e40af]">Loop</span>
+              Rent<span className="text-emerald-600">Cart</span>
             </span>
           </SheetTitle>
         </SheetHeader>
