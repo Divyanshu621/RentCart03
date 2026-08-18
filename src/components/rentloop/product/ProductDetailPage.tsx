@@ -209,8 +209,7 @@ export default function ProductDetailPage() {
     const dailyRate = product.dailyPrice;
     const rentalAmount = days * dailyRate;
     const platformFee = Math.round(rentalAmount * 0.1);
-    const taxableAmount = rentalAmount + platformFee;
-    const tax = Math.round(taxableAmount * 0.18);
+    const tax = Math.round(rentalAmount * 0.18);
     const deliveryFee = product.deliveryAvailable ? product.deliveryFee : 0;
     const securityDeposit = product.securityDeposit;
     const discount = couponApplied ? couponDiscount : 0;

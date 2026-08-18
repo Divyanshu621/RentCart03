@@ -179,7 +179,7 @@ export async function POST(request: NextRequest) {
       couponUsed = coupon;
     }
 
-    const tax = (rentalAmount + platformFee - discount) * 0.18;
+    const tax = rentalAmount * 0.18;
     const totalAmount = rentalAmount + platformFee + deliveryFee + tax - discount;
 
     // Create rental

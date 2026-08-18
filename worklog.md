@@ -407,3 +407,23 @@ Stage Summary:
 - Simulated Google OAuth: generates fake email (google_{timestamp}@gmail.com) and name (Google User)
 - No new packages installed
 - Lint passes with 0 errors (2 pre-existing warnings)
+
+---
+Task ID: 10
+Agent: Main
+Task: Remove GST from platform fee calculation
+
+Work Log:
+- Investigated current GST calculation in ProductDetailPage.tsx (frontend) and api/rentals/route.ts (backend)
+- Found GST was calculated on (rentalAmount + platformFee) at 18%
+- Fixed frontend: Changed `const taxableAmount = rentalAmount + platformFee; const tax = Math.round(taxableAmount * 0.18);` to `const tax = Math.round(rentalAmount * 0.18);`
+- Fixed backend: Changed `const tax = (rentalAmount + platformFee - discount) * 0.18;` to `const tax = rentalAmount * 0.18;`
+- Verified both LoginPage and AuthModal already have "Continue with Google" button
+- Verified no lint errors after changes
+- Ran lint check: 0 errors, 2 pre-existing warnings
+
+Stage Summary:
+- GST now calculated only on rentalAmount, not including platform fee
+- Example: ₹200/day × 5 days → Rental ₹1,000, Platform Fee ₹100, GST ₹180 (was ₹198), saving ₹18
+- Both frontend display and backend API calculation are consistent
+
