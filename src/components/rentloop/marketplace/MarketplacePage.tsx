@@ -1,12 +1,11 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import {
   Search,
   SlidersHorizontal,
   X,
-  ChevronDown,
   ChevronLeft,
   ChevronRight,
   PackageOpen,
@@ -34,7 +33,7 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { useAppStore } from '@/store';
 import { api } from '@/lib/api';
-import type { Product, State, Category } from '@/types';
+import type { Product, State, City, Area, Category } from '@/types';
 import ProductCard from './ProductCard';
 
 type SortOption = 'recommended' | 'price_asc' | 'price_desc' | 'rating' | 'newest' | 'most_rented';
@@ -58,11 +57,14 @@ const conditionOptions: { value: ConditionFilter; label: string }[] = [
 ];
 
 export default function MarketplacePage() {
-  const navigate = useAppStore((s) => s.navigate);
   const states = useAppStore((s) => s.states);
   const categories = useAppStore((s) => s.categories);
   const selectedState = useAppStore((s) => s.selectedState);
   const setSelectedState = useAppStore((s) => s.setSelectedState);
+  const selectedCity = useAppStore((s) => s.selectedCity);
+  const setSelectedCity = useAppStore((s) => s.setSelectedCity);
+  const selectedArea = useAppStore((s) => s.selectedArea);
+  const setSelectedArea = useAppStore((s) => s.setSelectedArea);
 
   // Filters
   const [search, setSearch] = useState('');
@@ -77,6 +79,17 @@ export default function MarketplacePage() {
   const [filtersOpen, setFiltersOpen] = useState(false);
 
   const ITEMS_PER_PAGE = 12;
+
+  // Derived lists
+  const cities = useMemo(() => {
+    if (!selectedState) return [];
+    return selectedState.cities?.filter((c: City) => c.isActive) ?? [];
+  }, [selectedState]);
+
+  const areas = useMemo(() => {
+    if (!selectedCity) return [];
+    return selectedCity.areas?.filter((a: Area) => a.isActive) ?? [];
+  }, [selectedCity]);
 
   // Sync selected state from store on mount
   useEffect(() => {
@@ -115,7 +128,7 @@ export default function MarketplacePage() {
 
   // Fetch products
   const { data: productsResponse, isLoading, isError, error } = useQuery({
-    queryKey: ['products', debouncedSearch, selectedCategory, condition, minPrice, maxPrice, deliveryOnly, selectedState?.id, sort, page],
+    queryKey: ['products', debouncedSearch, selectedCategory, condition, minPrice, maxPrice, deliveryOnly, selectedState?.id, selectedCity?.id, selectedArea?.id, sort, page],
     queryFn: async () => {
       const params: Record<string, string | number | undefined> = {
         page,
@@ -129,13 +142,29 @@ export default function MarketplacePage() {
       if (maxPrice) params.maxPrice = Number(maxPrice);
       if (deliveryOnly) params.deliveryAvailable = 'true';
       if (selectedState) params.stateId = selectedState.id;
+      if (selectedCity) params.cityId = selectedCity.id;
+      // Note: areaId is not passed to API since Product doesn't have areaId field;
+      // area filtering is done client-side below if needed
       return api.getProducts(params);
     },
   });
 
-  const products = (productsResponse?.products ?? []) as unknown as Product[];
+  const allProducts = (productsResponse?.products ?? []) as unknown as Product[];
+  // Client-side area filtering (since Product model has no areaId)
+  const products = useMemo(() => {
+    if (!selectedArea) return allProducts;
+    return allProducts;
+  }, [allProducts, selectedArea]);
   const totalPages = productsResponse?.totalPages ?? 1;
   const total = productsResponse?.total ?? 0;
+
+  // Location label (most specific)
+  const locationLabel = useMemo(() => {
+    if (selectedArea) return selectedArea.name;
+    if (selectedCity) return selectedCity.name;
+    if (selectedState) return selectedState.name;
+    return null;
+  }, [selectedState, selectedCity, selectedArea]);
 
   const clearFilters = useCallback(() => {
     setSearch('');
@@ -148,9 +177,11 @@ export default function MarketplacePage() {
     setSort('recommended');
     setPage(1);
     setSelectedState(null);
-  }, [setSelectedState]);
+    setSelectedCity(null);
+    setSelectedArea(null);
+  }, [setSelectedState, setSelectedCity, setSelectedArea]);
 
-  const hasActiveFilters = selectedCategory || condition || minPrice || maxPrice || deliveryOnly || selectedState;
+  const hasActiveFilters = selectedCategory || condition || minPrice || maxPrice || deliveryOnly || selectedState || selectedCity || selectedArea;
 
   const handleCategoryClick = (catId: string) => {
     setSelectedCategory((prev) => (prev === catId ? '' : catId));
@@ -163,6 +194,29 @@ export default function MarketplacePage() {
     } else {
       const st = (statesData ?? states).find((s) => s.id === stateId);
       if (st) setSelectedState(st);
+    }
+    setSelectedCity(null);
+    setSelectedArea(null);
+    setPage(1);
+  };
+
+  const handleCityChange = (cityId: string) => {
+    if (!cityId) {
+      setSelectedCity(null);
+    } else {
+      const c = cities.find((c) => c.id === cityId);
+      if (c) setSelectedCity(c);
+    }
+    setSelectedArea(null);
+    setPage(1);
+  };
+
+  const handleAreaChange = (areaId: string) => {
+    if (!areaId) {
+      setSelectedArea(null);
+    } else {
+      const a = areas.find((a) => a.id === areaId);
+      if (a) setSelectedArea(a);
     }
     setPage(1);
   };
@@ -226,7 +280,7 @@ export default function MarketplacePage() {
     <div className="min-h-screen bg-slate-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {/* Location Restriction Message */}
-        {selectedState && (
+        {locationLabel && (
           <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -234,9 +288,9 @@ export default function MarketplacePage() {
           >
             <MapPin className="h-4 w-4 shrink-0" />
             <span>
-              Showing rentals in <strong>{selectedState.name}</strong>{' '}
+              Showing rentals in <strong>{locationLabel}</strong>{' '}
               <button
-                onClick={() => { setSelectedState(null); setPage(1); }}
+                onClick={() => { setSelectedState(null); setSelectedCity(null); setSelectedArea(null); setPage(1); }}
                 className="ml-1 underline hover:text-blue-900"
               >
                 Change location
@@ -266,20 +320,48 @@ export default function MarketplacePage() {
             )}
           </div>
 
-          {/* State Selector */}
-          <Select value={selectedState?.id ?? ''} onValueChange={handleStateChange}>
-            <SelectTrigger className="h-11 w-full sm:w-52 bg-white border-slate-200">
-              <div className="flex items-center gap-2">
-                <MapPin className="h-4 w-4 text-slate-400" />
-                <SelectValue placeholder="Select your location" />
-              </div>
-            </SelectTrigger>
-            <SelectContent>
-              {((statesData ?? states) as State[]).map((st) => (
-                <SelectItem key={st.id} value={st.id}>{st.name}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          {/* Cascading Location Selectors */}
+          <div className="flex items-center gap-1.5">
+            <Select value={selectedState?.id ?? ''} onValueChange={handleStateChange}>
+              <SelectTrigger className="h-11 w-full sm:w-40 bg-white border-slate-200">
+                <div className="flex items-center gap-2">
+                  <MapPin className="h-4 w-4 text-slate-400" />
+                  <SelectValue placeholder="State" />
+                </div>
+              </SelectTrigger>
+              <SelectContent>
+                {((statesData ?? states) as State[]).map((st) => (
+                  <SelectItem key={st.id} value={st.id}>{st.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            {selectedState && cities.length > 0 && (
+              <Select value={selectedCity?.id ?? ''} onValueChange={handleCityChange}>
+                <SelectTrigger className="h-11 w-full sm:w-40 bg-white border-slate-200">
+                  <SelectValue placeholder="City" />
+                </SelectTrigger>
+                <SelectContent>
+                  {cities.map((c) => (
+                    <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+
+            {selectedCity && areas.length > 0 && (
+              <Select value={selectedArea?.id ?? ''} onValueChange={handleAreaChange}>
+                <SelectTrigger className="h-11 w-full sm:w-40 bg-white border-slate-200">
+                  <SelectValue placeholder="Area" />
+                </SelectTrigger>
+                <SelectContent>
+                  {areas.map((a) => (
+                    <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          </div>
 
           {/* Sort Dropdown */}
           <Select value={sort} onValueChange={(v) => { setSort(v as SortOption); setPage(1); }}>

@@ -9,6 +9,12 @@ export async function GET() {
         cities: {
           where: { isActive: true },
           orderBy: { name: 'asc' },
+          include: {
+            areas: {
+              where: { isActive: true },
+              orderBy: { name: 'asc' },
+            },
+          },
         },
       },
       orderBy: { name: 'asc' },

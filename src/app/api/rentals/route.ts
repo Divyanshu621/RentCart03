@@ -94,22 +94,28 @@ export async function POST(request: NextRequest) {
 
     // CRITICAL: Check user.stateId matches product.stateId
     const user = await db.user.findUnique({ where: { id: session.userId } });
+    // State check: only block if user HAS a state and it differs from product's state
+    // If user has no state, allow them to rent from any state
     if (user?.stateId && product.stateId && user.stateId !== product.stateId) {
+      console.error('[RENTAL 400] State mismatch:', { userStateId: user.stateId, productStateId: product.stateId });
       return NextResponse.json({ error: 'Product is not available in your state' }, { status: 400 });
     }
 
     // Can't rent own product
     if (product.ownerId === session.userId) {
+      console.error('[RENTAL 400] Own product:', { ownerId: product.ownerId, userId: session.userId });
       return NextResponse.json({ error: 'Cannot rent your own product' }, { status: 400 });
     }
 
     const rentalDays = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
 
     if (rentalDays < product.minRentalDays) {
+      console.error('[RENTAL 400] Min days:', { rentalDays, minDays: product.minRentalDays });
       return NextResponse.json({ error: `Minimum rental period is ${product.minRentalDays} days` }, { status: 400 });
     }
 
     if (rentalDays > product.maxRentalDays) {
+      console.error('[RENTAL 400] Max days:', { rentalDays, maxDays: product.maxRentalDays });
       return NextResponse.json({ error: `Maximum rental period is ${product.maxRentalDays} days` }, { status: 400 });
     }
 
@@ -125,6 +131,7 @@ export async function POST(request: NextRequest) {
     });
 
     if (overlappingRentals.length > 0) {
+      console.error('[RENTAL 400] Availability:', { productId, overlappingCount: overlappingRentals.length });
       return NextResponse.json({ error: 'Product is not available for the selected dates' }, { status: 400 });
     }
 

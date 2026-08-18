@@ -427,3 +427,74 @@ Stage Summary:
 - Example: ₹200/day × 5 days → Rental ₹1,000, Platform Fee ₹100, GST ₹180 (was ₹198), saving ₹18
 - Both frontend display and backend API calculation are consistent
 
+---
+Task ID: 11-a
+Agent: Sub-agent (area-data)
+Task: Add Area model, types, seed data, and API support
+
+Work Log:
+- Added Area model to Prisma schema with name, cityId, pinCode, isActive, createdAt fields
+- Added @@unique([name, cityId]) constraint on Area model
+- Added areas Area[] relation to City model
+- Added Area interface to TypeScript types (id, name, cityId, pinCode, isActive)
+- Added areas: Area[] field to City interface
+- Populated seed.ts with 8-15 real Indian localities per city for all 30 cities (325 total areas)
+- Used createMany batch insert for area seeding performance
+- Added Areas count to seed completion summary
+- Reset database, pushed schema, regenerated Prisma client, re-seeded successfully
+- Updated /api/states route to include areas in city includes (with isActive filter and name ordering)
+
+Stage Summary:
+- Area model with 325 areas across 30 cities (real Indian locality names with PIN codes)
+- States API now returns nested structure: State → City → Area
+- Types updated for frontend consumption
+
+---
+Task ID: 11-b
+Agent: Sub-agent (cascading-selectors)
+Task: Add State → City → Area cascading selectors
+
+Work Log:
+- Updated Zustand store with selectedCity, setSelectedCity, selectedArea, setSelectedArea
+- Imported City and Area types in store
+- Updated AppHeader: replaced simple state dropdown with cascading State → City → Area Select components on desktop
+- Added mobile location picker as a bottom Sheet with cascading selectors
+- Location badge shows most specific selection (Area > City > State) on mobile
+- Updated MarketplacePage: added City and Area Select dropdowns that appear based on parent selection
+- Added cityId to products API query params when city is selected
+- Cascading reset: state change resets city+area, city change resets area
+- Updated clearFilters to also reset city and area
+- Updated location restriction message to show most specific location
+- Removed unused navigate import from MarketplacePage
+- Products API already supported cityId filtering (no changes needed)
+
+Stage Summary:
+- Users can now drill down: State → City → Area in both header and marketplace
+- Location badge shows most specific selection
+- Products API supports cityId filter
+- Lint passes cleanly
+
+---
+Task ID: 11
+c
+Agent: Main
+Task: Fix rental errors, enhance Google login, add area selection
+
+
+Work Log:
+- Fixed rental API to add console.error logging for all 400 error paths (state mismatch, own product, min/max days, availability)
+- Updated Google login in LoginPage.tsx: replaced auto-generated email with a Gmail input dialog showing email + optional name fields
+- Updated Google login in AuthModal.tsx: same Gmail input dialog approach
+- Added isNotApproved check in ProductDetailPage.tsx to disable Rent Now button for non-APPROVED products
+- Added toast error message when user tries to rent a non-APPROVED product
+- Fixed SWC/Turbopack parsing error caused by orphaned JSX comment (removed comment line 515)
+- Verified states API returns nested State → City → Area data (~325 areas)
+- Verified ESLint passes with 0 errors (2 pre-existing warnings)
+- Verified dev server compiles and serves pages correctly
+
+Stage Summary:
+- Google login now prompts for real Gmail address instead of auto-generating fake email
+- Users can enter their registered Gmail to sign in or create a new account
+- Non-APPROVED products show clear warning and disabled Rent Now button
+- Rental API has diagnostic logging for faster debugging
+- All lint checks pass cleanly

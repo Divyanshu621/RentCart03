@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useMemo } from 'react';
 import { useAppStore } from '@/store';
 import { api } from '@/lib/api';
 import { Button } from '@/components/ui/button';
@@ -21,35 +21,42 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
   Search,
   Bell,
   Menu,
-  X,
   User,
   LogOut,
   LayoutDashboard,
   Package,
   Heart,
   MessageCircle,
-  Settings,
   Shield,
   Plus,
-  ChevronDown,
   MapPin,
   Store,
 } from 'lucide-react';
-import type { User as UserType, State, Notification } from '@/types';
+import type { State, City, Area, Notification } from '@/types';
 import { toast } from 'sonner';
 
 export default function AppHeader() {
   const {
     user, setUser, currentView, navigate, setAuthModalOpen, setAuthModalView,
-    selectedState, setSelectedState, states, setStates,
+    selectedState, setSelectedState,
+    selectedCity, setSelectedCity,
+    selectedArea, setSelectedArea,
+    states, setStates,
     notifications, setNotifications, unreadCount, setUnreadCount,
   } = useAppStore();
   const [showNotif, setShowNotif] = useState(false);
   const [showMobile, setShowMobile] = useState(false);
-  const [showStatePicker, setShowStatePicker] = useState(false);
+  const [showLocationMobile, setShowLocationMobile] = useState(false);
   const notifRef = useRef<HTMLDivElement>(null);
   const isAdmin = user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN';
 
@@ -103,6 +110,63 @@ export default function AppHeader() {
   };
 
   const isLanding = currentView === 'landing';
+
+  // Derived lists
+  const cities = useMemo(() => {
+    if (!selectedState) return [];
+    return selectedState.cities?.filter((c: City) => c.isActive) ?? [];
+  }, [selectedState]);
+
+  const areas = useMemo(() => {
+    if (!selectedCity) return [];
+    return selectedCity.areas?.filter((a: Area) => a.isActive) ?? [];
+  }, [selectedCity]);
+
+  // Location label (most specific)
+  const locationLabel = useMemo(() => {
+    if (selectedArea) return selectedArea.name;
+    if (selectedCity) return selectedCity.name;
+    if (selectedState) return selectedState.name;
+    return 'Location';
+  }, [selectedState, selectedCity, selectedArea]);
+
+  const hasLocationSelection = !!(selectedState || selectedCity || selectedArea);
+
+  const handleStateChange = (stateId: string) => {
+    if (!stateId) {
+      setSelectedState(null);
+      setSelectedCity(null);
+      setSelectedArea(null);
+    } else {
+      const st = states.find((s) => s.id === stateId);
+      if (st) setSelectedState(st);
+      setSelectedCity(null);
+      setSelectedArea(null);
+    }
+    navigate('marketplace');
+  };
+
+  const handleCityChange = (cityId: string) => {
+    if (!cityId) {
+      setSelectedCity(null);
+      setSelectedArea(null);
+    } else {
+      const c = cities.find((c) => c.id === cityId);
+      if (c) setSelectedCity(c);
+      setSelectedArea(null);
+    }
+    navigate('marketplace');
+  };
+
+  const handleAreaChange = (areaId: string) => {
+    if (!areaId) {
+      setSelectedArea(null);
+    } else {
+      const a = areas.find((a) => a.id === areaId);
+      if (a) setSelectedArea(a);
+    }
+    navigate('marketplace');
+  };
 
   return (
     <>
@@ -166,43 +230,64 @@ export default function AppHeader() {
 
             {/* Right section */}
             <div className="flex items-center gap-2">
-              {/* State Picker */}
+              {/* Desktop Cascading Location Pickers */}
               {!isLanding && (
-                <div className="relative hidden sm:block">
-                  <button
-                    onClick={() => setShowStatePicker(!showStatePicker)}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm border transition-colors ${
-                      selectedState
-                        ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
-                        : 'border-gray-200 text-gray-500 hover:border-gray-300'
-                    }`}
-                  >
-                    <MapPin className="w-3.5 h-3.5" />
-                    <span className="max-w-[100px] truncate">
-                      {selectedState ? selectedState.name : 'Location'}
-                    </span>
-                    <ChevronDown className="w-3 h-3" />
-                  </button>
-                  {showStatePicker && (
-                    <div className="absolute top-full mt-1 right-0 w-56 bg-white rounded-xl shadow-xl border border-gray-100 py-1 z-50 max-h-80 overflow-y-auto">
-                      <button
-                        onClick={() => { setSelectedState(null); setShowStatePicker(false); }}
-                        className="w-full px-4 py-2 text-left text-sm text-gray-500 hover:bg-gray-50"
-                      >
-                        All Locations
-                      </button>
-                      {states.map(s => (
-                        <button
-                          key={s.id}
-                          onClick={() => { setSelectedState(s); setShowStatePicker(false); navigate('marketplace'); }}
-                          className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-emerald-50 hover:text-emerald-700"
-                        >
-                          {s.name}
-                        </button>
+                <div className="hidden lg:flex items-center gap-1.5">
+                  <Select value={selectedState?.id ?? ''} onValueChange={handleStateChange}>
+                    <SelectTrigger className="h-8 w-[130px] text-xs border-emerald-200 bg-emerald-50/50 focus:ring-emerald-500/20 focus:border-emerald-500">
+                      <div className="flex items-center gap-1.5">
+                        <MapPin className="w-3 h-3 text-emerald-500 shrink-0" />
+                        <SelectValue placeholder="State" />
+                      </div>
+                    </SelectTrigger>
+                    <SelectContent>
+                      {states.map((s) => (
+                        <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
                       ))}
-                    </div>
+                    </SelectContent>
+                  </Select>
+
+                  {selectedState && cities.length > 0 && (
+                    <Select value={selectedCity?.id ?? ''} onValueChange={handleCityChange}>
+                      <SelectTrigger className="h-8 w-[130px] text-xs border-emerald-200 bg-emerald-50/50 focus:ring-emerald-500/20 focus:border-emerald-500">
+                        <SelectValue placeholder="City" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {cities.map((c) => (
+                          <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+
+                  {selectedCity && areas.length > 0 && (
+                    <Select value={selectedArea?.id ?? ''} onValueChange={handleAreaChange}>
+                      <SelectTrigger className="h-8 w-[130px] text-xs border-emerald-200 bg-emerald-50/50 focus:ring-emerald-500/20 focus:border-emerald-500">
+                        <SelectValue placeholder="Area" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {areas.map((a) => (
+                          <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   )}
                 </div>
+              )}
+
+              {/* Mobile Location Button */}
+              {!isLanding && (
+                <button
+                  onClick={() => setShowLocationMobile(true)}
+                  className={`lg:hidden flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs border transition-colors ${
+                    hasLocationSelection
+                      ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+                      : 'border-gray-200 text-gray-500 hover:border-gray-300'
+                  }`}
+                >
+                  <MapPin className="w-3 h-3" />
+                  <span className="max-w-[80px] truncate">{locationLabel}</span>
+                </button>
               )}
 
               {/* Search (navigate to marketplace) */}
@@ -383,6 +468,82 @@ export default function AppHeader() {
           </div>
         </div>
       </header>
+
+      {/* Mobile Location Picker Sheet */}
+      <Sheet open={showLocationMobile} onOpenChange={setShowLocationMobile}>
+        <SheetContent side="bottom" className="rounded-t-2xl">
+          <SheetHeader className="p-4 pb-2">
+            <SheetTitle className="flex items-center gap-2 text-base">
+              <MapPin className="w-4 h-4 text-emerald-500" />
+              Select Location
+            </SheetTitle>
+          </SheetHeader>
+          <div className="px-4 pb-6 space-y-4">
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium text-gray-500">State</label>
+              <Select value={selectedState?.id ?? ''} onValueChange={(val) => { handleStateChange(val); }}>
+                <SelectTrigger className="h-10 w-full">
+                  <SelectValue placeholder="Select a state" />
+                </SelectTrigger>
+                <SelectContent>
+                  {states.map((s) => (
+                    <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {selectedState && cities.length > 0 && (
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-gray-500">City</label>
+                <Select value={selectedCity?.id ?? ''} onValueChange={(val) => { handleCityChange(val); }}>
+                  <SelectTrigger className="h-10 w-full">
+                    <SelectValue placeholder="Select a city" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {cities.map((c) => (
+                      <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
+            {selectedCity && areas.length > 0 && (
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-gray-500">Area</label>
+                <Select value={selectedArea?.id ?? ''} onValueChange={(val) => { handleAreaChange(val); setShowLocationMobile(false); }}>
+                  <SelectTrigger className="h-10 w-full">
+                    <SelectValue placeholder="Select an area" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {areas.map((a) => (
+                      <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
+            {(selectedState || selectedCity || selectedArea) && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="w-full text-sm text-gray-500"
+                onClick={() => {
+                  setSelectedState(null);
+                  setSelectedCity(null);
+                  setSelectedArea(null);
+                  navigate('marketplace');
+                  setShowLocationMobile(false);
+                }}
+              >
+                Clear location selection
+              </Button>
+            )}
+          </div>
+        </SheetContent>
+      </Sheet>
 
       {/* Mobile Side Sheet */}
       <Sheet open={showMobile} onOpenChange={setShowMobile}>

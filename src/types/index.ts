@@ -16,11 +16,20 @@ export interface State {
   cities: City[];
 }
 
+export interface Area {
+  id: string;
+  name: string;
+  cityId: string;
+  pinCode?: string;
+  isActive: boolean;
+}
+
 export interface City {
   id: string;
   name: string;
   stateId: string;
   isActive: boolean;
+  areas: Area[];
 }
 
 // ─── Category ────────────────────────────────────────────────

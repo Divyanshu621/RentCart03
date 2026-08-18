@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { AppView, User, Product, Rental, State, Category, Conversation, ChatMessage, Notification, DashboardStats, AdminDashboard } from '@/types';
+import type { AppView, User, Product, Rental, State, City, Area, Category, Conversation, ChatMessage, Notification, DashboardStats, AdminDashboard } from '@/types';
 
 interface AppState {
   // Navigation
@@ -18,6 +18,10 @@ interface AppState {
   // Location
   selectedState: State | null;
   setSelectedState: (state: State | null) => void;
+  selectedCity: City | null;
+  setSelectedCity: (city: City | null) => void;
+  selectedArea: Area | null;
+  setSelectedArea: (area: Area | null) => void;
   states: State[];
   setStates: (states: State[]) => void;
 
@@ -96,6 +100,10 @@ export const useAppStore = create<AppState>((set) => ({
   // Location
   selectedState: null,
   setSelectedState: (state) => set({ selectedState: state }),
+  selectedCity: null,
+  setSelectedCity: (city) => set({ selectedCity: city }),
+  selectedArea: null,
+  setSelectedArea: (area) => set({ selectedArea: area }),
   states: [],
   setStates: (states) => set({ states }),
 

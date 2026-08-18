@@ -221,11 +221,16 @@ export default function ProductDetailPage() {
   const rentalCalc = computeRentalCalc();
 
   // State match check
+  const isNotApproved = product?.status !== 'APPROVED';
   const stateMismatch = selectedState && product?.stateId && selectedState.id !== product.stateId;
 
   const handleRentNow = () => {
     if (!user) {
       setAuthModalOpen(true);
+      return;
+    }
+    if (isNotApproved) {
+      toast.error('This product is not available for rental');
       return;
     }
     if (stateMismatch) return;
@@ -507,7 +512,6 @@ export default function ProductDetailPage() {
               </div>
             </div>
 
-            {/* State Mismatch Warning */}
             {stateMismatch && (
               <motion.div
                 initial={{ opacity: 0, y: -10 }}
@@ -737,16 +741,18 @@ export default function ProductDetailPage() {
                 <Button
                   size="lg"
                   className={`w-full h-12 text-base font-semibold ${
-                    stateMismatch || !startDate || !endDate || !isDateValid
+                    isNotApproved || stateMismatch || !startDate || !endDate || !isDateValid
                       ? 'bg-slate-300 text-slate-500 cursor-not-allowed'
                       : 'bg-emerald-600 hover:bg-emerald-700 text-white'
                   }`}
                   onClick={handleRentNow}
-                  disabled={stateMismatch || !startDate || !endDate || !isDateValid || createRentalMutation.isPending}
+                  disabled={isNotApproved || stateMismatch || !startDate || !endDate || !isDateValid || createRentalMutation.isPending}
                 >
                   {createRentalMutation.isPending
                     ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />Creating Rental...</>
-                    : stateMismatch
+                    : isNotApproved
+                      ? 'Not Available for Rental'
+                      : stateMismatch
                       ? 'Not Available in Your State'
                       : !startDate
                         ? 'Select Start Date'

@@ -28,9 +28,22 @@ model City {
   isActive    Boolean @default(true)
   users       User[]
   products    Product[]
+  areas       Area[]
   createdAt   DateTime @default(now())
 
   @@unique([name, stateId])
+}
+
+model Area {
+  id        String  @id @default(cuid())
+  name      String
+  cityId    String
+  city      City    @relation(fields: [cityId], references: [id])
+  pinCode   String?
+  isActive  Boolean @default(true)
+  createdAt DateTime @default(now())
+
+  @@unique([name, cityId])
 }
 
 // ─── Category ───────────────────────────────────────────────
