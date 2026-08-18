@@ -325,3 +325,27 @@ Stage Summary:
 - Responsive design with mobile bottom nav
 - Error boundaries for graceful error handling
 - All core flows verified in browser
+
+---
+Task ID: 9
+Agent: Main
+Task: Fix Rental Calculator section - same-day date selection causing 0-day rental
+
+Work Log:
+- Analyzed user screenshot showing Rental Calculator with disabled Rent Now button, no pricing breakdown, no validation feedback
+- Identified root cause: end date calendar used `disabled={{ before: startDate || today }}` which allowed picking same day as start date (react-day-picker `before` is exclusive, so startDate itself was selectable)
+- Added `addDays` import from date-fns
+- Changed end date calendar disabled to `addDays(startDate!, product?.minRentalDays ? product.minRentalDays : 1)` - this enforces minimum 1-day (or product's minRentalDays) by disabling all dates up to and including the minimum required start date
+- Added `dateValidationError` useMemo that validates: days > 0, respects minRentalDays and maxRentalDays from product
+- Added `isDateValid` derived state used consistently across Rent Now button, coupon input, and Apply button
+- Added red validation error banner (with XCircle icon) that appears when both dates are selected but invalid
+- Improved Rent Now button disabled text: "Select Start Date" → "Select End Date" → error message → "Rent Now"
+- Updated coupon input and Apply button to use `isDateValid` instead of `rentalCalc.days <= 0`
+- Updated `handleRentNow` to check `!isDateValid` instead of `rentalCalc.days <= 0`
+
+Stage Summary:
+- End date calendar now prevents same-day selection and respects product's minRentalDays
+- Clear red validation error shown when dates are invalid (e.g. "End date must be after start date.")
+- Rent Now button shows contextual disabled text (Select Start Date / Select End Date / validation error)
+- Coupon input properly disabled when dates are invalid
+- Browser verified: Aug 20 start → Aug 20 DISABLED in end calendar, Aug 21+ enabled, pricing breakdown appears, green Rent Now button active

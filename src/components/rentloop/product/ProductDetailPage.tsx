@@ -33,7 +33,7 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import { useQuery, useMutation } from '@tanstack/react-query';
-import { format, differenceInDays, startOfDay } from 'date-fns';
+import { format, differenceInDays, startOfDay, addDays } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -212,7 +212,7 @@ export default function ProductDetailPage() {
       return;
     }
     if (stateMismatch) return;
-    if (!startDate || !endDate || rentalCalc.days <= 0) return;
+    if (!startDate || !endDate || !isDateValid) return;
     // Navigate to create rental flow
     navigate('dashboard', { createRental: { productId, startDate: format(startDate, 'yyyy-MM-dd'), endDate: format(endDate, 'yyyy-MM-dd'), couponCode: couponApplied ? couponCode : undefined } });
   };
@@ -230,6 +230,20 @@ export default function ProductDetailPage() {
     if (!couponCode.trim()) return;
     couponMutation.mutate();
   };
+
+  // Validation messages
+  const dateValidationError = useMemo(() => {
+    if (!startDate || !endDate) return null;
+    const days = differenceInDays(endDate, startDate);
+    if (days <= 0) return 'End date must be after start date.';
+    if (product?.minRentalDays && days < product.minRentalDays)
+      return `Minimum rental is ${product.minRentalDays} day${product.minRentalDays > 1 ? 's' : ''}.`;
+    if (product?.maxRentalDays && days > product.maxRentalDays)
+      return `Maximum rental is ${product.maxRentalDays} days.`;
+    return null;
+  }, [startDate, endDate, product?.minRentalDays, product?.maxRentalDays]);
+
+  const isDateValid = !dateValidationError;
 
   // Star breakdown
   const starBreakdown = useMemo(() => {
@@ -594,12 +608,24 @@ export default function ProductDetailPage() {
                             setEndDate(d);
                             setCalOpen(null);
                           }}
-                          disabled={{ before: startDate || today }}
+                          disabled={{ before: addDays(startDate!, product?.minRentalDays ? product.minRentalDays : 1) }}
                         />
                       </PopoverContent>
                     </Popover>
                   </div>
                 </div>
+
+                {/* Date Validation Error */}
+                {startDate && endDate && dateValidationError && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="flex items-center gap-2 p-3 rounded-lg bg-red-50 border border-red-200"
+                  >
+                    <XCircle className="h-4 w-4 text-red-500 shrink-0" />
+                    <span className="text-sm text-red-700">{dateValidationError}</span>
+                  </motion.div>
+                )}
 
                 {/* Calculation Breakdown */}
                 {startDate && endDate && rentalCalc.days > 0 && (
@@ -661,13 +687,13 @@ export default function ProductDetailPage() {
                       value={couponCode}
                       onChange={(e) => { setCouponCode(e.target.value); setCouponApplied(false); setCouponDiscount(0); }}
                       className="pl-9 h-10 border-slate-200"
-                      disabled={!startDate || !endDate || rentalCalc.days <= 0}
+                      disabled={!startDate || !endDate || !isDateValid}
                     />
                   </div>
                   <Button
                     variant="outline"
                     onClick={handleApplyCoupon}
-                    disabled={!couponCode.trim() || !startDate || !endDate || rentalCalc.days <= 0 || couponMutation.isPending}
+                    disabled={!couponCode.trim() || !startDate || !endDate || !isDateValid || couponMutation.isPending}
                     className="h-10 border-slate-200"
                   >
                     {couponMutation.isPending ? 'Applying...' : 'Apply'}
@@ -690,18 +716,20 @@ export default function ProductDetailPage() {
                 <Button
                   size="lg"
                   className={`w-full h-12 text-base font-semibold ${
-                    stateMismatch || !startDate || !endDate || rentalCalc.days <= 0
+                    stateMismatch || !startDate || !endDate || !isDateValid
                       ? 'bg-slate-300 text-slate-500 cursor-not-allowed'
                       : 'bg-emerald-600 hover:bg-emerald-700 text-white'
                   }`}
                   onClick={handleRentNow}
-                  disabled={stateMismatch || !startDate || !endDate || rentalCalc.days <= 0}
+                  disabled={stateMismatch || !startDate || !endDate || !isDateValid}
                 >
                   {stateMismatch
                     ? 'Not Available in Your State'
-                    : !startDate || !endDate
-                      ? 'Select Dates to Rent'
-                      : 'Rent Now'}
+                    : !startDate
+                      ? 'Select Start Date'
+                      : !endDate
+                        ? 'Select End Date'
+                        : dateValidationError || 'Rent Now'}
                 </Button>
 
                 {!user && startDate && endDate && rentalCalc.days > 0 && !stateMismatch && (
