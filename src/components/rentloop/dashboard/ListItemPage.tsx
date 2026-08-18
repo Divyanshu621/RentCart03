@@ -3,7 +3,7 @@
 import { useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
-import { useForm, Controller } from 'react-hook-form';
+import { useForm, Controller, useWatch } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
@@ -127,9 +127,9 @@ export default function ListItemPage() {
     },
   });
 
-  const { register, handleSubmit, control, watch, setValue, formState: { errors } } = form;
-  const selectedStateId = watch('stateId');
-  const deliveryAvailable = watch('deliveryAvailable');
+  const { register, handleSubmit, control, setValue, formState: { errors } } = form;
+  const selectedStateId = useWatch({ control: form.control, name: 'stateId' });
+  const deliveryAvailable = useWatch({ control: form.control, name: 'deliveryAvailable' });
 
   // Get cities for selected state
   const selectedState = states.find((s) => s.id === selectedStateId);

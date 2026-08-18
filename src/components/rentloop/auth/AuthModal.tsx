@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { useForm, Controller } from 'react-hook-form';
+import { useForm, Controller, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Loader2, Mail, Lock, Eye, EyeOff, User, Phone, MapPin, Home, FileCheck, ArrowRight, Sparkles, X } from 'lucide-react';
@@ -466,7 +466,7 @@ function RegisterForm({
     },
   });
 
-  const selectedStateId = watch('stateId');
+  const selectedStateId = useWatch({ control: form.control, name: 'stateId' });
   const selectedState = states.find((s) => s.id === selectedStateId);
   const cities = selectedState?.cities?.filter((c) => c.isActive) || [];
 

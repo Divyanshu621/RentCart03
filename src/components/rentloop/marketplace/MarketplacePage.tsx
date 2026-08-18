@@ -321,9 +321,9 @@ export default function MarketplacePage() {
                   <div className="space-y-2">
                     <Label className="text-sm font-medium text-[#0f172a] flex items-center gap-1"><IndianRupee className="w-3.5 h-3.5" /> Price Range / day</Label>
                     <div className="flex items-center gap-2">
-                      <Input placeholder="Min" type="number" min={0} value={minPrice} onChange={(e) => { setMinPrice(e.target.value); setPage(1); }} className="h-9 text-sm" />
+                      <Input placeholder="Min" type="text" inputMode="numeric" pattern="[0-9]*" value={minPrice} onChange={(e) => { const v = e.target.value.replace(/[^0-9]/g, ''); setMinPrice(v); setPage(1); }} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); setFiltersOpen(false); } }} className="h-9 text-sm" />
                       <span className="text-[#94a3b8] text-sm">to</span>
-                      <Input placeholder="Max" type="number" min={0} value={maxPrice} onChange={(e) => { setMaxPrice(e.target.value); setPage(1); }} className="h-9 text-sm" />
+                      <Input placeholder="Max" type="text" inputMode="numeric" pattern="[0-9]*" value={maxPrice} onChange={(e) => { const v = e.target.value.replace(/[^0-9]/g, ''); setMaxPrice(v); setPage(1); }} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); setFiltersOpen(false); } }} className="h-9 text-sm" />
                     </div>
                   </div>
                   <div className="flex items-center justify-between">

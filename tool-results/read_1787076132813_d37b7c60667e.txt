@@ -546,3 +546,148 @@
    546→- New landing page: Blue gradient hero with search, category grid, trust section, dense footer
    547→- Lint: 0 errors, 2 pre-existing warnings
    548→
+   549→---
+   550→Task ID: 2
+   551→Agent: Sub-agent (availability-calendar)
+   552→Task: Fix availability calendar not showing color coding for available/unavailable dates
+   553→
+   554→Work Log:
+   555→- Read worklog.md and existing codebase (ProductDetailPage.tsx, api.ts, availability route, calendar.tsx)
+   556→- Analyzed root cause: availability API required both startDate and endDate, but calendar loaded without date selection, leaving unavailableDates always empty
+   557→- Created new API endpoint `/api/products/[id]/calendar-availability/route.ts` that takes only productId and returns all unavailable dates for the next 90 days
+   558→- Added `getCalendarAvailability` method to `/src/lib/api.ts`
+   559→- Updated ProductDetailPage.tsx:
+   560→  - Added imports for `CalendarDayButton` from calendar, `DayButton` from react-day-picker, `cn` from utils
+   561→  - Created custom `AvailabilityDayButton` component using module-level ref pattern to avoid re-creating component identity on each render
+   562→  - Added `useQuery` for `calendar-availability` endpoint (enabled: !!productId, fires on mount)
+   563→  - Used `useMemo` to convert unavailable dates array to Set for O(1) lookups
+   564→  - Used `useEffect` to sync data to module-level ref (satisfies React Compiler lint rules)
+   565→  - Replaced old calendar section with new Calendar using custom DayButton via `components` prop
+   566→  - Custom DayButton renders: emerald-50 bg for available dates, red-100 bg + red-600 text + line-through for unavailable, muted/disabled for past dates
+   567→- Verified API returns correct unavailable dates for products with active rentals (tested with Canon EOS R10 and MacBook Pro M3)
+   568→- Lint passes: 0 errors, 2 pre-existing warnings
+   569→
+   570→Stage Summary:
+   571→- New endpoint: `/api/products/[id]/calendar-availability` - returns 90-day unavailable dates from active rentals
+   572→- Calendar now shows green (available) and red (unavailable) color coding immediately on product page load
+   573→- Uses custom DayButton component via shadcn Calendar's `components` prop for reliable date styling
+   574→- No breaking changes to existing functionality
+   575→
+   576→---
+   577→Task ID: 4
+   578→Agent: Main
+   579→Task: Enhance Website Theme - IndiaMart-Inspired Professional Marketplace Look (Emerald/Green Color Scheme)
+   580→
+   581→Work Log:
+   582→- Read worklog.md for project context
+   583→- Read all 12 target files before editing
+   584→- Added smooth-scroll behavior and custom scrollbar styles to globals.css
+   585→- Updated HeroSection.tsx: Changed gradient from blue (#1e40af) to emerald (#064e3b/#065f46), orange accent (#f97316) to emerald (#10b981), search button to emerald, popular links and stats bar to emerald tones
+   586→- Updated CategoriesSection.tsx: Changed dot pattern, hover borders, Electronics icon color, and fallback icon colors from blue to emerald (#059669)
+   587→- Updated HowItWorksSection.tsx: Changed step circles, connector line, icon colors, and dot pattern from blue (#1e40af) to emerald (#059669)
+   588→- Updated TrustSection.tsx: Changed remaining blue icon color to emerald, dot pattern, and hover border from blue to emerald
+   589→- Updated ReviewsSection.tsx: Changed Quote icon, avatar fallback, and hover border from blue to emerald
+   590→- Updated FAQSection.tsx: Changed accordion open state border and text, dot pattern from blue to emerald
+   591→- Updated CTASection.tsx: Changed gradient from orange-to-blue to emerald-to-teal (#059669/#047857/#0f766e), buttons to white/dark on emerald
+   592→- Updated TrendingSection.tsx: Changed View All link colors from blue (#1e40af/#3b82f6) to emerald (#059669/#047857)
+   593→- Updated MarketplacePage.tsx: Changed category pills, condition pills, filter badge, filter button, clear all links, apply button, location banner, pagination buttons from blue to emerald
+   594→- Updated AppHeader.tsx: Changed logo bg, search border, search button, category dropdown hovers, location icon/text, mobile location button, user avatar, notification panel, mobile sheet logo from blue to emerald
+   595→- Updated AppFooter.tsx: Changed footer logo bg, social link hovers, all footer link hovers from blue (#1e40af/#3b82f6) to emerald (#059669/#10b981)
+   596→- Fixed two template literal syntax errors (extra `}`) in HeroSection.tsx and AppHeader.tsx
+   597→- Verified with ESLint: 0 errors, 2 pre-existing warnings (in untouched files)
+   598→
+   599→Stage Summary:
+   600→- Complete blue-to-emerald color migration across 12 files
+   601→- Color mapping: #1e40af→#059669, #1e3a8a→#047857, #3b82f6→#10b981, #eff6ff→#ecfdf5
+   602→- Hero gradient changed from blue to rich emerald-to-dark-slate
+   603→- CTA gradient changed from orange-to-blue to emerald-to-teal
+   604→- All layout, structure, component names, props, and logic preserved
+   605→- No files in ui/, auth/, ProductDetailPage, dashboard/, admin/, rentals/, or API routes were modified
+   606→- globals.css enhanced with smooth scrolling and custom scrollbar styles
+   607→---
+   608→Task ID: 1
+   609→Agent: Main
+   610→Task: Rename RentLoop to RentCart across all files
+   611→
+   612→Work Log:
+   613→- Searched all source files for RentLoop brand references
+   614→- Updated layout.tsx metadata (title, keywords, authors, openGraph, twitter)
+   615→- Updated LoginPage.tsx (3 instances: logo, mobile logo, testimonial)
+   616→- Updated AuthModal.tsx (3 instances: header, subtitle, register text)
+   617→- Updated AppFooter.tsx (4 instances: logo, email, phone, copyright)
+   618→- Updated AppHeader.tsx (3 instances: mobile logo, desktop logo, sheet logo)
+   619→- Updated ReviewsSection.tsx (1 instance in testimonial)
+   620→- Updated TrustSection.tsx (1 instance in description)
+   621→- Updated FAQSection.tsx (2 instances: question and description)
+   622→- Updated HowItWorksSection.tsx (1 instance in heading)
+   623→- Updated prisma/seed.ts (1 instance in review comment)
+   624→- Updated footer color to emerald from blue
+   625→
+   626→Stage Summary:
+   627→- All RentLoop brand references in src/ replaced with RentCart
+   628→- Footer rebranded with emerald accent and rentcart.in email
+   629→- Phone changed from RENT-LOOP mnemonic to numeric
+   630→---
+   631→Task ID: 2
+   632→Agent: Subagent (full-stack-developer)
+   633→Task: Fix availability calendar
+   634→
+   635→Work Log:
+   636→- Created new API endpoint /api/products/[id]/calendar-availability/route.ts
+   637→- Returns unavailable dates for next 90 days based on active rentals
+   638→- Added getCalendarAvailability method to api.ts
+   639→- Modified ProductDetailPage with custom AvailabilityDayButton component
+   640→- Calendar now fetches availability on mount and color-codes dates
+   641→
+   642→Stage Summary:
+   643→- Calendar now shows green for available, red for unavailable dates
+   644→- Data fetched automatically on product page load
+   645→---
+   646→Task ID: 3
+   647→Agent: Main
+   648→Task: Fix state mismatch error blocking rentals
+   649→
+   650→Work Log:
+   651→- Removed state mismatch check from /api/rentals/route.ts POST handler
+   652→- Removed stateMismatch variable and warning block from ProductDetailPage
+   653→- Removed stateMismatch from button disabled conditions
+   654→- Cross-state rentals now allowed (delivery available for many items)
+   655→
+   656→Stage Summary:
+   657→- Users can now rent items from any state
+   658→- No more 400 error on rental creation
+   659→---
+   660→Task ID: 4
+   661→Agent: Subagent (full-stack-developer) + Main
+   662→Task: Enhance website theme to emerald/green
+   663→
+   664→Work Log:
+   665→- Changed HeroSection gradient from blue to emerald
+   666→- Changed all blue (#1e40af) to emerald (#059669) across 12 files
+   667→- Updated CategoriesSection, HowItWorksSection, TrustSection, ReviewsSection
+   668→- Updated FAQSection, CTASection, TrendingSection, MarketplacePage
+   669→- Updated AppHeader (logo bg, search, mobile nav)
+   670→- Updated AppFooter (logo, social links, footer links)
+   671→- Fixed remaining blue refs in WhyRentSection and ProductCard
+   672→
+   673→Stage Summary:
+   674→- Complete blue-to-emerald color migration across all visible components
+   675→- Professional IndiaMart-inspired green marketplace theme
+   676→---
+   677→Task ID: 5
+   678→Agent: Main
+   679→Task: Browser verification
+   680→
+   681→Work Log:
+   682→- Verified landing page renders with emerald gradient hero
+   683→- Verified RentCart branding visible in header and footer
+   684→- Verified product cards show with prices, verified badges, location
+   685→- Verified product detail page shows title, price, owner info
+   686→- Verified availability calendar renders with August 2026 month
+   687→- Fixed TrendingSection data.data -> data.products bug
+   688→- All lint checks pass (0 errors)
+   689→
+   690→Stage Summary:
+   691→- All major features verified working in browser
+   692→- Trending products now display correctly
+   693→

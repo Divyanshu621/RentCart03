@@ -234,7 +234,7 @@
    234→                  <Store className="w-5 h-5 text-white" />
    235→                </div>
    236→                <span className="text-xl font-bold tracking-tight text-white">
-   237→                  Rent<span className="text-blue-300">Loop</span>
+   237→                  Rent<span className="text-emerald-300">Cart</span>
    238→                </span>
    239→              </button>
    240→
@@ -277,7 +277,7 @@
    277→                      <DropdownMenuTrigger asChild>
    278→                        <button className="flex items-center gap-2 p-1 rounded-lg hover:bg-white/10 transition-colors">
    279→                          <Avatar className="h-8 w-8 border-2 border-white/40">
-   280→                            <AvatarFallback className="bg-blue-600 text-white text-sm font-semibold">
+   280→                            <AvatarFallback className="bg-[#059669] text-white text-sm font-semibold">
    281→                              {user.name?.charAt(0)?.toUpperCase() || 'U'}
    282→                            </AvatarFallback>
    283→                          </Avatar>
@@ -363,17 +363,17 @@
    363→              onClick={() => navigate('landing')}
    364→              className="flex items-center gap-2 group shrink-0"
    365→            >
-   366→              <div className="w-8 h-8 bg-[#1e40af] rounded-lg flex items-center justify-center">
+   366→              <div className="w-8 h-8 bg-[#059669] rounded-lg flex items-center justify-center">
    367→                <Store className="w-5 h-5 text-white" />
    368→              </div>
    369→              <span className="text-xl font-bold tracking-tight text-[#0f172a]">
-   370→                Rent<span className="text-[#1e40af]">Loop</span>
+   370→                Rent<span className="text-emerald-600">Cart</span>
    371→              </span>
    372→            </button>
    373→
    374→            {/* Desktop: Unified search bar */}
    375→            <div className="hidden md:flex flex-1 max-w-2xl mx-6">
-   376→              <div className="flex items-center w-full border-2 border-blue-500 rounded-lg h-10 overflow-hidden bg-white">
+   376→              <div className="flex items-center w-full border-2 border-emerald-500 rounded-lg h-10 overflow-hidden bg-white">
    377→                {/* Category dropdown */}
    378→                <div ref={categoryDropdownRef} className="relative">
    379→                  <button
@@ -387,7 +387,7 @@
    387→                    <div className="absolute top-full left-0 mt-1 w-56 bg-white rounded-lg shadow-xl border border-gray-100 py-1 z-50 max-h-72 overflow-y-auto">
    388→                      <button
    389→                        onClick={() => { navigate('marketplace'); setShowCategoryDropdown(false); }}
-   390→                        className="w-full px-3 py-2 text-left text-sm text-[#0f172a] hover:bg-blue-50 hover:text-blue-700 transition-colors"
+   390→                        className="w-full px-3 py-2 text-left text-sm text-[#0f172a] hover:bg-emerald-50 hover:text-emerald-700 transition-colors"
    391→                      >
    392→                        All Categories
    393→                      </button>
@@ -395,7 +395,7 @@
    395→                        <button
    396→                          key={cat.id}
    397→                          onClick={() => { navigate('marketplace', { categoryId: cat.id }); setShowCategoryDropdown(false); }}
-   398→                          className="w-full px-3 py-2 text-left text-sm text-[#64748b] hover:bg-blue-50 hover:text-blue-700 transition-colors"
+   398→                          className="w-full px-3 py-2 text-left text-sm text-[#64748b] hover:bg-emerald-50 hover:text-emerald-700 transition-colors"
    399→                        >
    400→                          {cat.name}
    401→                        </button>
@@ -414,7 +414,7 @@
    414→                        : 'text-[#94a3b8]'
    415→                    }`}
    416→                  >
-   417→                    <MapPin className={`w-3.5 h-3.5 shrink-0 ${hasLocationSelection ? 'text-[#1e40af]' : 'text-[#94a3b8]'}`} />
+   417→                    <MapPin className={`w-3.5 h-3.5 shrink-0 ${hasLocationSelection ? 'text-[#059669]' : 'text-[#94a3b8]'}`} />
    418→                    <span className="truncate">{locationLabel}</span>
    419→                    <ChevronDown className={`w-3 h-3 shrink-0 transition-transform ${showLocationPopover ? 'rotate-180' : ''}`} />
    420→                  </button>
@@ -476,7 +476,7 @@
    476→                              setShowLocationPopover(false);
    477→                              navigate('marketplace');
    478→                            }}
-   479→                            className="text-xs text-[#1e40af] hover:text-blue-700 font-medium"
+   479→                            className="text-xs text-[#059669] hover:text-emerald-700 font-medium"
    480→                          >
    481→                            Clear location
    482→                          </button>
@@ -500,7 +500,7 @@
    500→                {/* Search button */}
    501→                <button
    502→                  onClick={handleSearchNavigate}
-   503→                  className="w-12 h-full bg-[#1e40af] hover:bg-[#3b82f6] text-white flex items-center justify-center transition-colors shrink-0"
+   503→                  className="w-12 h-full bg-[#059669] hover:bg-[#10b981] text-white flex items-center justify-center transition-colors shrink-0"
    504→                  aria-label="Search"
    505→                >
    506→                  <Search className="w-4.5 h-4.5" />
@@ -523,7 +523,7 @@
    523→                onClick={() => setShowLocationMobile(true)}
    524→                className={`md:hidden flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs border transition-colors ${
    525→                  hasLocationSelection
-   526→                    ? 'border-blue-200 bg-blue-50 text-[#1e40af]'
+   526→                    ? 'border-emerald-200 bg-emerald-50 text-[#059669]'
    527→                    : 'border-gray-200 text-[#64748b] hover:border-gray-300'
    528→                }`}
    529→              >
@@ -577,8 +577,8 @@
    577→                  <DropdownMenu>
    578→                    <DropdownMenuTrigger asChild>
    579→                      <button className="flex items-center gap-2 p-1 rounded-lg hover:bg-gray-100 transition-colors">
-   580→                        <Avatar className="h-8 w-8 border-2 border-blue-100">
-   581→                          <AvatarFallback className="bg-blue-100 text-[#1e40af] text-sm font-semibold">
+   580→                        <Avatar className="h-8 w-8 border-2 border-emerald-100">
+   581→                          <AvatarFallback className="bg-emerald-100 text-[#059669] text-sm font-semibold">
    582→                            {user.name?.charAt(0)?.toUpperCase() || 'U'}
    583→                          </AvatarFallback>
    584→                        </Avatar>
@@ -637,7 +637,7 @@
    637→            >
    638→              <button
    639→                onClick={() => navigate('marketplace')}
-   640→                className="shrink-0 px-4 py-1.5 rounded-full text-xs font-medium transition-colors bg-white text-[#64748b] border border-[#e2e8f0] hover:border-blue-300 hover:text-blue-600"
+   640→                className="shrink-0 px-4 py-1.5 rounded-full text-xs font-medium transition-colors bg-white text-[#64748b] border border-[#e2e8f0] hover:border-emerald-300 hover:text-emerald-600"
    641→              >
    642→                All
    643→              </button>
@@ -645,7 +645,7 @@
    645→                <button
    646→                  key={cat.id}
    647→                  onClick={() => handleCategoryPillClick(cat.id)}
-   648→                  className="shrink-0 px-4 py-1.5 rounded-full text-xs font-medium transition-colors text-[#64748b] hover:bg-blue-50 hover:text-blue-600 border border-transparent"
+   648→                  className="shrink-0 px-4 py-1.5 rounded-full text-xs font-medium transition-colors text-[#64748b] hover:bg-emerald-50 hover:text-emerald-600 border border-transparent"
    649→                >
    650→                  {cat.name}
    651→                </button>
@@ -660,7 +660,7 @@
    660→        <SheetContent side="bottom" className="rounded-t-2xl">
    661→          <SheetHeader className="p-4 pb-2">
    662→            <SheetTitle className="flex items-center gap-2 text-base">
-   663→              <MapPin className="w-4 h-4 text-[#1e40af]" />
+   663→              <MapPin className="w-4 h-4 text-[#059669]" />
    664→              Select Location
    665→            </SheetTitle>
    666→          </SheetHeader>
@@ -771,7 +771,7 @@
    771→        {unreadCount > 0 && (
    772→          <button
    773→            onClick={onMarkAllRead}
-   774→            className="text-xs text-[#1e40af] hover:text-blue-700"
+   774→            className="text-xs text-[#059669] hover:text-emerald-700"
    775→          >
    776→            Mark all read
    777→          </button>
@@ -785,7 +785,7 @@
    785→            <button
    786→              key={n.id}
    787→              onClick={onNotifClick}
-   788→              className={`w-full px-4 py-3 text-left hover:bg-gray-50 border-b border-gray-50 last:border-0 transition-colors ${!n.isRead ? 'bg-blue-50/50' : ''}`}
+   788→              className={`w-full px-4 py-3 text-left hover:bg-gray-50 border-b border-gray-50 last:border-0 transition-colors ${!n.isRead ? 'bg-emerald-50/50' : ''}`}
    789→            >
    790→              <p className="text-sm font-medium text-[#0f172a]">{n.title}</p>
    791→              <p className="text-xs text-[#64748b] mt-0.5 line-clamp-1">{n.message}</p>
@@ -795,7 +795,7 @@
    795→      </ScrollArea>
    796→      <button
    797→        onClick={onViewAll}
-   798→        className="w-full p-2.5 text-center text-xs font-medium text-[#1e40af] hover:bg-blue-50 border-t border-gray-100 transition-colors"
+   798→        className="w-full p-2.5 text-center text-xs font-medium text-[#059669] hover:bg-emerald-50 border-t border-gray-100 transition-colors"
    799→      >
    800→        View all notifications
    801→      </button>
@@ -885,11 +885,11 @@
    885→      <SheetContent side="right" className="w-72 p-0">
    886→        <SheetHeader className="p-4 border-b border-[#e2e8f0]">
    887→          <SheetTitle className="flex items-center gap-2">
-   888→            <div className="w-7 h-7 bg-[#1e40af] rounded-lg flex items-center justify-center">
+   888→            <div className="w-7 h-7 bg-[#059669] rounded-lg flex items-center justify-center">
    889→              <Store className="w-4 h-4 text-white" />
    890→            </div>
    891→            <span className="text-[#0f172a]">
-   892→              Rent<span className="text-[#1e40af]">Loop</span>
+   892→              Rent<span className="text-emerald-600">Cart</span>
    893→            </span>
    894→          </SheetTitle>
    895→        </SheetHeader>
