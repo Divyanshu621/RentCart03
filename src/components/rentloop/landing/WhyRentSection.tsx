@@ -1,87 +1,116 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { PiggyBank, Sparkles, TestTube2, Crown, Leaf, Repeat } from 'lucide-react';
+import { PiggyBank, Sparkles, TestTube2, Crown, Leaf, Repeat, TrendingUp, Users, IndianRupee } from 'lucide-react';
 
 const benefits = [
   {
     icon: PiggyBank,
     title: 'Save Money',
     description: 'Why buy when you can rent? Save up to 80% compared to purchasing.',
-    color: 'bg-amber-50 text-amber-600',
   },
   {
     icon: Sparkles,
-    title: 'Declutter',
-    description: "Don't store items you rarely use. Rent them when needed.",
-    color: 'bg-violet-50 text-violet-600',
+    title: 'Declutter Your Life',
+    description: "Don't store items you rarely use. Rent them only when needed.",
   },
   {
     icon: TestTube2,
-    title: 'Try Before Buy',
+    title: 'Try Before You Buy',
     description: 'Test products before making a purchase decision.',
-    color: 'bg-sky-50 text-sky-600',
   },
   {
     icon: Crown,
     title: 'Access Premium',
     description: 'Access premium and expensive items at a fraction of the cost.',
-    color: 'bg-amber-50 text-amber-600',
   },
   {
     icon: Leaf,
     title: 'Eco Friendly',
     description: 'Reduce waste by sharing resources. Better for the planet.',
-    color: 'bg-emerald-50 text-emerald-600',
   },
   {
     icon: Repeat,
-    title: 'Flexibility',
+    title: 'Total Flexibility',
     description: 'Rent for as long or as short as you need. No commitments.',
-    color: 'bg-rose-50 text-rose-600',
   },
+];
+
+const stats = [
+  { icon: IndianRupee, value: '₹2.5Cr+', label: 'Saved by Users' },
+  { icon: Users, value: '5,000+', label: 'Happy Renters' },
+  { icon: TrendingUp, value: '25,000+', label: 'Rentals Completed' },
 ];
 
 export default function WhyRentSection() {
   return (
-    <section className="py-20 sm:py-28 bg-slate-50">
+    <section className="py-16 sm:py-20 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <motion.div
-          className="text-center mb-12"
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.5 }}
-          transition={{ duration: 0.6 }}
-        >
-          <h2 className="text-3xl sm:text-4xl font-bold text-[#0f172a]">
-            Why Rent Instead of Buy?
-          </h2>
-          <p className="mt-3 text-slate-500 text-lg max-w-xl mx-auto">
-            Smart people choose renting for a more flexible and sustainable lifestyle
-          </p>
-        </motion.div>
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-start">
+          {/* Left — Stats */}
+          <motion.div
+            className="lg:col-span-4"
+            initial={{ opacity: 0, x: -30 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true, amount: 0.3 }}
+            transition={{ duration: 0.6 }}
+          >
+            <h2 className="text-3xl sm:text-4xl font-bold text-[#0f172a] leading-tight">
+              Why Rent
+              <br />
+              <span className="text-[#1e40af]">Instead of Buy?</span>
+            </h2>
+            <p className="mt-4 text-[#64748b] leading-relaxed">
+              Smart people choose renting for a more flexible and sustainable lifestyle. Join thousands who have already made the switch.
+            </p>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {benefits.map((benefit, index) => (
-            <motion.div
-              key={benefit.title}
-              className="bg-white rounded-2xl p-6 border border-slate-100 hover:shadow-md hover:border-emerald-100 transition-all"
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, amount: 0.2 }}
-              transition={{ duration: 0.5, delay: index * 0.1 }}
-            >
-              <div className={`w-12 h-12 rounded-xl ${benefit.color} flex items-center justify-center mb-4`}>
-                <benefit.icon className="h-6 w-6" />
-              </div>
-              <h3 className="text-lg font-semibold text-[#0f172a] mb-2">
-                {benefit.title}
-              </h3>
-              <p className="text-slate-500 text-sm leading-relaxed">
-                {benefit.description}
-              </p>
-            </motion.div>
-          ))}
+            <div className="mt-8 space-y-6">
+              {stats.map((stat, index) => (
+                <motion.div
+                  key={stat.label}
+                  className="flex items-start gap-4"
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, amount: 0.3 }}
+                  transition={{ duration: 0.5, delay: index * 0.1 }}
+                >
+                  <div className="w-12 h-12 rounded-xl bg-[#eff6ff] flex items-center justify-center shrink-0">
+                    <stat.icon className="h-6 w-6 text-[#1e40af]" />
+                  </div>
+                  <div>
+                    <div className="text-2xl font-bold text-[#0f172a]">{stat.value}</div>
+                    <div className="text-sm text-[#64748b]">{stat.label}</div>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </motion.div>
+
+          {/* Right — Benefits grid */}
+          <div className="lg:col-span-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {benefits.map((benefit, index) => (
+                <motion.div
+                  key={benefit.title}
+                  className="bg-[#f8fafc] rounded-xl p-5 border border-[#e2e8f0] hover:border-[#3b82f6]/30 hover:shadow-md transition-all"
+                  initial={{ opacity: 0, y: 24 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, amount: 0.2 }}
+                  transition={{ duration: 0.5, delay: index * 0.08 }}
+                >
+                  <div className="w-11 h-11 rounded-lg bg-[#eff6ff] flex items-center justify-center mb-3">
+                    <benefit.icon className="h-5 w-5 text-[#1e40af]" />
+                  </div>
+                  <h3 className="text-base font-semibold text-[#0f172a] mb-1.5">
+                    {benefit.title}
+                  </h3>
+                  <p className="text-sm text-[#64748b] leading-relaxed">
+                    {benefit.description}
+                  </p>
+                </motion.div>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
     </section>

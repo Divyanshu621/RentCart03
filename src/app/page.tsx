@@ -115,7 +115,7 @@ export default function Home() {
           <AppHeader />
         </ErrorBoundary>
       )}
-      <main className={`flex-1 ${isLanding ? '' : 'pb-20 md:pb-0'}`}>
+      <main className={`flex-1 ${isLanding ? '' : 'pb-20 md:pb-0 bg-[#f8fafc]'}`}>
         <ErrorBoundary>
           {renderView()}
         </ErrorBoundary>

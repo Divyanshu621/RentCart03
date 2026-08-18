@@ -27,7 +27,7 @@ const faqs = [
   },
   {
     question: 'Can I extend my rental period?',
-    answer: 'Yes! You can request an extension through the app before your current rental ends. The owner will review and approve or reject the request. If approved, you\'ll only pay the additional rental amount for the extended days.',
+    answer: "Yes! You can request an extension through the app before your current rental ends. The owner will review and approve or reject the request. If approved, you'll only pay the additional rental amount for the extended days.",
   },
   {
     question: 'What if the owner cancels my booking?',
@@ -45,8 +45,17 @@ const faqs = [
 
 export default function FAQSection() {
   return (
-    <section className="py-20 sm:py-28 bg-slate-50">
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+    <section className="py-16 sm:py-20 bg-[#f8fafc] relative">
+      {/* Subtle dot pattern */}
+      <div
+        className="absolute inset-0 opacity-[0.03]"
+        style={{
+          backgroundImage: 'radial-gradient(circle, #1e40af 1px, transparent 1px)',
+          backgroundSize: '20px 20px',
+        }}
+      />
+
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <motion.div
           className="text-center mb-12"
           initial={{ opacity: 0, y: 20 }}
@@ -57,7 +66,7 @@ export default function FAQSection() {
           <h2 className="text-3xl sm:text-4xl font-bold text-[#0f172a]">
             Frequently Asked Questions
           </h2>
-          <p className="mt-3 text-slate-500 text-lg max-w-xl mx-auto">
+          <p className="mt-3 text-[#64748b] text-lg max-w-xl mx-auto">
             Everything you need to know about renting on RentLoop
           </p>
         </motion.div>
@@ -73,12 +82,12 @@ export default function FAQSection() {
               <AccordionItem
                 key={index}
                 value={`item-${index}`}
-                className="bg-white rounded-xl border border-slate-100 px-6 mb-3 data-[state=open]:shadow-sm data-[state=open]:border-emerald-200 transition-all"
+                className="bg-white rounded-xl border border-[#e2e8f0] px-6 mb-3 data-[state=open]:shadow-sm data-[state=open]:border-[#3b82f6]/40 transition-all"
               >
-                <AccordionTrigger className="text-left text-[#0f172a] font-medium hover:no-underline py-4">
+                <AccordionTrigger className="text-left text-[#0f172a] font-medium hover:no-underline py-4 text-sm sm:text-base data-[state=open]:text-[#1e40af] transition-colors">
                   {faq.question}
                 </AccordionTrigger>
-                <AccordionContent className="text-slate-500 text-sm leading-relaxed pb-4">
+                <AccordionContent className="text-[#64748b] text-sm leading-relaxed pb-4">
                   {faq.answer}
                 </AccordionContent>
               </AccordionItem>

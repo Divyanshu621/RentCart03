@@ -1,21 +1,14 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Camera, Laptop, Bike, Drill, ArrowRight, Sparkles } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { useAppStore } from '@/store';
+import { useEffect, useRef, useState, useCallback, useMemo } from 'react';
+import { motion } from 'framer-motion';
+import { Search, ChevronDown, Sparkles } from 'lucide-react';
 
-const floatingIcons = [
-  { Icon: Camera, x: '10%', y: '20%', size: 28, delay: 0, duration: 6 },
-  { Icon: Laptop, x: '80%', y: '15%', size: 32, delay: 1.2, duration: 7 },
-  { Icon: Bike, x: '15%', y: '70%', size: 26, delay: 0.6, duration: 5.5 },
-  { Icon: Drill, x: '75%', y: '65%', size: 30, delay: 1.8, duration: 6.5 },
-  { Icon: Sparkles, x: '50%', y: '10%', size: 22, delay: 2.4, duration: 5 },
-  { Icon: Camera, x: '88%', y: '45%', size: 24, delay: 3, duration: 7.5 },
-  { Icon: Laptop, x: '25%', y: '85%', size: 20, delay: 0.3, duration: 6 },
-  { Icon: Sparkles, x: '60%', y: '80%', size: 26, delay: 1.5, duration: 5.8 },
-];
+import { useAppStore } from '@/store';
+import { api } from '@/lib/api';
+import type { Category } from '@/types';
+
+/* ─── Animated Counter ─────────────────────────────────────── */
 
 function AnimatedCounter({ target, suffix = '', prefix = '' }: { target: number; suffix?: string; prefix?: string }) {
   const [count, setCount] = useState(0);
@@ -49,122 +42,199 @@ function AnimatedCounter({ target, suffix = '', prefix = '' }: { target: number;
 
   return (
     <span ref={ref}>
-      {prefix}{count.toLocaleString()}{suffix}
+      {prefix}{count.toLocaleString('en-IN')}{suffix}
     </span>
   );
 }
 
+/* ─── Stats ─────────────────────────────────────────────────── */
+
 const stats = [
-  { label: 'Items', value: 10000, suffix: '+', prefix: '' },
-  { label: 'Owners', value: 500, suffix: '+', prefix: '' },
-  { label: 'Rentals', value: 25000, suffix: '+', prefix: '' },
-  { label: 'Rating', value: 4.9, suffix: '', prefix: '' },
+  { label: 'Products', value: 10000, suffix: '+', prefix: '' },
+  { label: 'Users', value: 5000, suffix: '+', prefix: '' },
+  { label: 'Cities', value: 50, suffix: '+', prefix: '' },
+  { label: 'Rating', value: 4.8, suffix: '/5', prefix: '' },
 ];
+
+/* ─── Component ─────────────────────────────────────────────── */
 
 export default function HeroSection() {
   const navigate = useAppStore((s) => s.navigate);
   const user = useAppStore((s) => s.user);
+  const categories = useAppStore((s) => s.categories);
+  const setCategories = useAppStore((s) => s.setCategories);
 
-  const handleListClick = () => {
-    if (user) {
-      navigate('list-item');
-    } else {
-      const store = useAppStore.getState();
-      store.setReturnUrl('list-item');
-      store.setAuthModalView('login');
-      store.setAuthModalOpen(true);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState<string>('');
+  const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
+  const categoryRef = useRef<HTMLDivElement>(null);
+
+  // Fetch categories on mount
+  useEffect(() => {
+    if (categories.length === 0) {
+      api.getCategories().then((data) => {
+        const c = data as unknown as Category[];
+        setCategories(c);
+      }).catch(() => {});
     }
-  };
+  }, [categories.length, setCategories]);
+
+  // Close category dropdown on outside click
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (categoryRef.current && !categoryRef.current.contains(e.target as Node)) {
+        setShowCategoryDropdown(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, []);
+
+  const handleSearchNavigate = useCallback(() => {
+    const data: Record<string, unknown> = {};
+    if (searchQuery.trim()) data.searchQuery = searchQuery.trim();
+    if (selectedCategory) data.categoryId = selectedCategory;
+    navigate('marketplace', data);
+  }, [searchQuery, selectedCategory, navigate]);
+
+  const handleSearchKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') handleSearchNavigate();
+  }, [handleSearchNavigate]);
+
+  const selectedCategoryName = useMemo(() => {
+    if (!selectedCategory) return 'All Categories';
+    const cat = categories.find((c) => c.id === selectedCategory);
+    return cat?.name || 'All Categories';
+  }, [selectedCategory, categories]);
 
   return (
-    <section className="relative min-h-screen flex flex-col justify-center overflow-hidden bg-[#0f172a]">
-      {/* Background gradient overlay */}
-      <div className="absolute inset-0 bg-gradient-to-b from-[#0f172a] via-[#0f172a]/95 to-[#1a2744]" />
+    <section className="relative min-h-[600px] lg:min-h-[700px] flex flex-col justify-center overflow-hidden">
+      {/* Blue gradient background */}
+      <div className="absolute inset-0 bg-gradient-to-br from-[#1e40af] via-[#1e3a6f] to-[#1e3a5f]" />
 
-      {/* Subtle radial glow */}
-      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[600px] bg-emerald-500/5 rounded-full blur-3xl" />
-      <div className="absolute bottom-0 left-1/3 w-[500px] h-[400px] bg-emerald-600/5 rounded-full blur-3xl" />
+      {/* Subtle dot pattern overlay */}
+      <div
+        className="absolute inset-0 opacity-[0.06]"
+        style={{
+          backgroundImage: 'radial-gradient(circle, white 1px, transparent 1px)',
+          backgroundSize: '24px 24px',
+        }}
+      />
 
-      {/* Floating icons */}
-      <AnimatePresence>
-        {floatingIcons.map((item, i) => (
-          <motion.div
-            key={i}
-            className="absolute text-emerald-400/20 pointer-events-none"
-            style={{ left: item.x, top: item.y }}
-            initial={{ opacity: 0, scale: 0 }}
-            animate={{
-              opacity: 1,
-              scale: 1,
-              y: [0, -20, 0, 15, 0],
-              rotate: [0, 5, -3, 4, 0],
-            }}
-            transition={{
-              duration: item.duration,
-              delay: item.delay,
-              repeat: Infinity,
-              repeatType: 'loop',
-              ease: 'easeInOut',
-            }}
-          >
-            <item.Icon size={item.size} strokeWidth={1.5} />
-          </motion.div>
-        ))}
-      </AnimatePresence>
+      {/* Subtle geometric shapes */}
+      <div className="absolute top-20 right-10 w-72 h-72 rounded-full bg-white/[0.03] blur-2xl" />
+      <div className="absolute bottom-20 left-10 w-96 h-96 rounded-full bg-[#3b82f6]/[0.05] blur-3xl" />
 
       {/* Content */}
-      <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center pt-24 pb-12">
+      <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center pt-28 pb-8 w-full">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, ease: 'easeOut' }}
         >
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 mb-6 rounded-full border border-emerald-500/30 bg-emerald-500/10 text-emerald-400 text-sm font-medium">
-            <Sparkles size={14} />
-            <span>India&apos;s #1 Rental Marketplace</span>
+          {/* Badge */}
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 mb-6 rounded-full border border-white/20 bg-white/10 text-white/90 text-sm font-medium backdrop-blur-sm">
+            <Sparkles size={14} className="text-amber-400" />
+            <span>India&apos;s Trusted Rental Marketplace</span>
           </div>
 
-          <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight leading-tight">
-            <span className="bg-gradient-to-r from-white via-white to-emerald-400 bg-clip-text text-transparent">
-              Rent Anything
-            </span>
+          {/* Main heading */}
+          <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-[3.5rem] font-bold tracking-tight leading-[1.1] text-white">
+            Find &amp; Rent Anything
             <br />
-            <span className="bg-gradient-to-r from-emerald-400 to-emerald-300 bg-clip-text text-transparent">
-              You Need.
-            </span>
+            <span className="text-[#f97316]">Across India</span>
           </h1>
 
+          {/* Subheading */}
           <motion.p
-            className="mt-6 text-lg sm:text-xl text-slate-400 max-w-2xl mx-auto leading-relaxed"
+            className="mt-5 text-lg sm:text-xl text-blue-100/80 max-w-2xl mx-auto leading-relaxed"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.2, ease: 'easeOut' }}
+            transition={{ duration: 0.8, delay: 0.15, ease: 'easeOut' }}
           >
-            Get the things you need for a few days without buying them permanently.
+            From cameras to cars, laptops to furniture — rent what you need,
+            when you need it. Save money, reduce waste.
           </motion.p>
 
+          {/* ─── Search Bar ──────────────────────────────── */}
           <motion.div
-            className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4"
+            className="mt-10 max-w-3xl mx-auto"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.4, ease: 'easeOut' }}
+            transition={{ duration: 0.8, delay: 0.3, ease: 'easeOut' }}
           >
-            <Button
-              size="lg"
-              className="bg-emerald-500 hover:bg-emerald-600 text-white px-8 py-6 text-base font-semibold rounded-xl shadow-lg shadow-emerald-500/25 transition-all hover:shadow-emerald-500/40"
-              onClick={() => navigate('marketplace')}
-            >
-              Explore Rentals
-              <ArrowRight className="ml-2 h-5 w-5" />
-            </Button>
-            <Button
-              size="lg"
-              variant="outline"
-              className="border-slate-600 text-slate-300 hover:bg-slate-800 hover:text-white px-8 py-6 text-base font-semibold rounded-xl transition-all"
-              onClick={handleListClick}
-            >
-              List Your Item
-            </Button>
+            <div className="flex items-stretch h-12 sm:h-14 rounded-xl overflow-hidden shadow-2xl shadow-black/20 bg-white">
+              {/* Category dropdown */}
+              <div ref={categoryRef} className="relative">
+                <button
+                  onClick={() => setShowCategoryDropdown(!showCategoryDropdown)}
+                  className="w-[130px] sm:w-[160px] h-full flex items-center justify-between gap-1 px-3 sm:px-4 bg-[#f8fafc] border-r border-[#e2e8f0] text-xs sm:text-sm text-[#0f172a] font-medium hover:bg-[#f1f5f9] transition-colors shrink-0"
+                >
+                  <span className="truncate">{selectedCategoryName}</span>
+                  <ChevronDown className={`w-3.5 h-3.5 text-[#64748b] shrink-0 transition-transform ${showCategoryDropdown ? 'rotate-180' : ''}`} />
+                </button>
+                {showCategoryDropdown && (
+                  <div className="absolute top-full left-0 mt-1 w-56 bg-white rounded-lg shadow-xl border border-[#e2e8f0] py-1 z-50 max-h-72 overflow-y-auto">
+                    <button
+                      onClick={() => { setSelectedCategory(''); setShowCategoryDropdown(false); }}
+                      className={`w-full px-3 py-2 text-left text-sm hover:bg-[#eff6ff] hover:text-[#1e40af] transition-colors ${!selectedCategory ? 'text-[#1e40af] font-medium' : 'text-[#0f172a]'}`}
+                    >
+                      All Categories
+                    </button>
+                    {categories.filter((c) => c.isActive).map((cat) => (
+                      <button
+                        key={cat.id}
+                        onClick={() => { setSelectedCategory(cat.id); setShowCategoryDropdown(false); }}
+                        className={`w-full px-3 py-2 text-left text-sm hover:bg-[#eff6ff] hover:text-[#1e40af] transition-colors ${selectedCategory === cat.id ? 'text-[#1e40af] font-medium' : 'text-[#64748b]'}`}
+                      >
+                        {cat.name}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Search input */}
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={handleSearchKeyDown}
+                placeholder="Search for cameras, laptops, bikes..."
+                className="flex-1 h-full px-3 sm:px-4 text-sm text-[#0f172a] placeholder:text-[#94a3b8] outline-none bg-transparent min-w-0"
+              />
+
+              {/* Search button */}
+              <button
+                onClick={handleSearchNavigate}
+                className="w-12 sm:w-14 h-full bg-[#f97316] hover:bg-[#ea580c] text-white flex items-center justify-center transition-colors shrink-0"
+                aria-label="Search"
+              >
+                <Search className="w-5 h-5" />
+              </button>
+            </div>
+          </motion.div>
+
+          {/* Quick links */}
+          <motion.div
+            className="mt-4 flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-sm"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.8, delay: 0.5 }}
+          >
+            <span className="text-blue-200/60">Popular:</span>
+            {['Cameras', 'Laptops', 'Bikes', 'Furniture', 'Gaming'].map((term) => (
+              <button
+                key={term}
+                onClick={() => {
+                  setSearchQuery(term);
+                  navigate('marketplace', { searchQuery: term });
+                }}
+                className="text-blue-100/80 hover:text-white transition-colors underline-offset-2 hover:underline"
+              >
+                {term}
+              </button>
+            ))}
           </motion.div>
         </motion.div>
       </div>
@@ -176,16 +246,16 @@ export default function HeroSection() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8, delay: 0.6, ease: 'easeOut' }}
       >
-        <div className="border-t border-slate-700/50 bg-[#0f172a]/80 backdrop-blur-sm">
+        <div className="border-t border-white/10 bg-[#1e3a5f]/60 backdrop-blur-sm">
           <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8">
               {stats.map((stat) => (
                 <div key={stat.label} className="text-center">
                   <div className="text-2xl sm:text-3xl font-bold text-white">
-                    {stat.value === 4.9 ? (
+                    {stat.value === 4.8 ? (
                       <>
                         <AnimatedCounter target={stat.value * 10} />
-                        <span className="text-lg text-slate-400">/10</span>
+                        <span className="text-base text-blue-200/60">/10</span>
                       </>
                     ) : (
                       <AnimatedCounter
@@ -195,7 +265,7 @@ export default function HeroSection() {
                       />
                     )}
                   </div>
-                  <div className="text-sm text-slate-500 mt-1">{stat.label}</div>
+                  <div className="text-sm text-blue-200/60 mt-1">{stat.label}</div>
                 </div>
               ))}
             </div>

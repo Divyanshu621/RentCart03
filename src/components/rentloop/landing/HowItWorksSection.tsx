@@ -7,35 +7,44 @@ const steps = [
   {
     step: 1,
     icon: Search,
-    title: 'Browse & Choose',
-    description: 'Explore thousands of items available for rent in your area.',
+    title: 'Search & Browse',
+    description: 'Explore thousands of items by category, location, or keyword.',
   },
   {
     step: 2,
     icon: CreditCard,
     title: 'Book & Pay',
-    description: 'Select your dates, pay securely, and get instant confirmation.',
+    description: 'Select dates, pay securely online, and get instant confirmation.',
   },
   {
     step: 3,
     icon: Package,
-    title: 'Receive & Use',
-    description: 'Pick up or get your item delivered. Enjoy using it!',
+    title: 'Receive & Enjoy',
+    description: 'Pick up your item or get it delivered. Use it for as long as you need.',
   },
   {
     step: 4,
     icon: RotateCcw,
     title: 'Return & Review',
-    description: 'Return the item on time and share your experience.',
+    description: 'Return on time and share your experience with the community.',
   },
 ];
 
 export default function HowItWorksSection() {
   return (
-    <section className="py-20 sm:py-28 bg-slate-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <section className="py-16 sm:py-20 bg-[#f8fafc] relative overflow-hidden">
+      {/* Subtle dot pattern */}
+      <div
+        className="absolute inset-0 opacity-[0.03]"
+        style={{
+          backgroundImage: 'radial-gradient(circle, #1e40af 1px, transparent 1px)',
+          backgroundSize: '20px 20px',
+        }}
+      />
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <motion.div
-          className="text-center mb-16"
+          className="text-center mb-14"
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.5 }}
@@ -44,48 +53,45 @@ export default function HowItWorksSection() {
           <h2 className="text-3xl sm:text-4xl font-bold text-[#0f172a]">
             How RentLoop Works
           </h2>
-          <p className="mt-3 text-slate-500 text-lg max-w-xl mx-auto">
+          <p className="mt-3 text-[#64748b] text-lg max-w-xl mx-auto">
             Renting is simple, secure, and hassle-free in four easy steps
           </p>
         </motion.div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-          {steps.map((item, index) => (
-            <motion.div
-              key={item.step}
-              className="relative"
-              initial={{ opacity: 0, y: 40 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, amount: 0.3 }}
-              transition={{ duration: 0.6, delay: index * 0.15 }}
-            >
-              {/* Connector line (hidden on mobile and last card) */}
-              {index < steps.length - 1 && (
-                <div className="hidden lg:block absolute top-10 left-[60%] w-[80%] h-[2px] bg-gradient-to-r from-emerald-300 to-emerald-100" />
-              )}
+        {/* Steps */}
+        <div className="relative">
+          {/* Dotted connector line (desktop) */}
+          <div className="hidden lg:block absolute top-16 left-[12.5%] right-[12.5%] border-t-2 border-dashed border-[#1e40af]/20" />
 
-              <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 hover:shadow-md hover:border-emerald-100 transition-all relative z-10">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-6">
+            {steps.map((item, index) => (
+              <motion.div
+                key={item.step}
+                className="relative flex flex-col items-center text-center"
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, amount: 0.3 }}
+                transition={{ duration: 0.5, delay: index * 0.15 }}
+              >
                 {/* Step number circle */}
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-10 h-10 rounded-full bg-emerald-500 text-white flex items-center justify-center text-sm font-bold shadow-md shadow-emerald-500/30">
-                    {item.step}
-                  </div>
+                <div className="relative z-10 w-14 h-14 rounded-full bg-[#1e40af] text-white flex items-center justify-center text-lg font-bold shadow-lg shadow-[#1e40af]/20">
+                  {item.step}
                 </div>
 
-                {/* Icon */}
-                <div className="w-14 h-14 rounded-xl bg-emerald-50 flex items-center justify-center mb-4">
-                  <item.icon className="h-7 w-7 text-emerald-600" />
+                {/* Icon circle */}
+                <div className="mt-5 w-16 h-16 rounded-2xl bg-white border border-[#e2e8f0] shadow-sm flex items-center justify-center">
+                  <item.icon className="h-7 w-7 text-[#1e40af]" />
                 </div>
 
-                <h3 className="text-lg font-semibold text-[#0f172a] mb-2">
+                <h3 className="mt-4 text-lg font-semibold text-[#0f172a]">
                   {item.title}
                 </h3>
-                <p className="text-slate-500 text-sm leading-relaxed">
+                <p className="mt-2 text-sm text-[#64748b] leading-relaxed max-w-[220px]">
                   {item.description}
                 </p>
-              </div>
-            </motion.div>
-          ))}
+              </motion.div>
+            ))}
+          </div>
         </div>
       </div>
     </section>

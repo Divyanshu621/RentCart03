@@ -1,11 +1,11 @@
 'use client';
 
 import { useAppStore } from '@/store';
-import { Store, Mail, Phone, MapPin } from 'lucide-react';
+import { Store, Mail, Phone, MapPin, Facebook, Twitter, Instagram, Linkedin, Youtube } from 'lucide-react';
 
 export default function AppFooter() {
-  const navigate = useAppStore(s => s.navigate);
-  const currentView = useAppStore(s => s.currentView);
+  const navigate = useAppStore((s) => s.navigate);
+  const currentView = useAppStore((s) => s.currentView);
 
   if (currentView === 'landing') return null;
 
@@ -16,19 +16,32 @@ export default function AppFooter() {
           {/* Brand */}
           <div>
             <div className="flex items-center gap-2 mb-4">
-              <div className="w-8 h-8 bg-emerald-500 rounded-lg flex items-center justify-center">
+              <div className="w-9 h-9 bg-[#1e40af] rounded-lg flex items-center justify-center">
                 <Store className="w-5 h-5 text-white" />
               </div>
               <span className="text-xl font-bold text-white">
-                Rent<span className="text-emerald-400">Loop</span>
+                Rent<span className="text-[#3b82f6]">Loop</span>
               </span>
             </div>
             <p className="text-sm text-gray-400 leading-relaxed">
-              Rent it. Use it. Return it. The smarter way to access the things you need.
+              Rent it. Use it. Return it. The smarter way to access the things you need across India.
             </p>
             <div className="flex items-center gap-2 mt-4 text-sm text-gray-400">
-              <MapPin className="w-4 h-4" />
-              <span>India</span>
+              <MapPin className="w-4 h-4 shrink-0" />
+              <span>Bengaluru, Karnataka, India</span>
+            </div>
+
+            {/* Social links */}
+            <div className="flex items-center gap-3 mt-5">
+              {[Facebook, Twitter, Instagram, Linkedin, Youtube].map((Icon, i) => (
+                <button
+                  key={i}
+                  className="w-9 h-9 rounded-lg bg-white/5 hover:bg-[#1e40af] flex items-center justify-center text-gray-400 hover:text-white transition-colors"
+                  aria-label="Social link"
+                >
+                  <Icon className="w-4 h-4" />
+                </button>
+              ))}
             </div>
           </div>
 
@@ -37,23 +50,28 @@ export default function AppFooter() {
             <h3 className="text-sm font-semibold text-white uppercase tracking-wider mb-4">For Renters</h3>
             <ul className="space-y-2.5">
               <li>
-                <button onClick={() => navigate('marketplace')} className="text-sm text-gray-400 hover:text-emerald-400 transition-colors">
+                <button onClick={() => navigate('marketplace')} className="text-sm text-gray-400 hover:text-[#3b82f6] transition-colors">
                   Browse Rentals
                 </button>
               </li>
               <li>
-                <button onClick={() => navigate('marketplace')} className="text-sm text-gray-400 hover:text-emerald-400 transition-colors">
+                <button onClick={() => navigate('marketplace')} className="text-sm text-gray-400 hover:text-[#3b82f6] transition-colors">
                   How It Works
                 </button>
               </li>
               <li>
-                <button onClick={() => navigate('marketplace')} className="text-sm text-gray-400 hover:text-emerald-400 transition-colors">
+                <button onClick={() => navigate('marketplace')} className="text-sm text-gray-400 hover:text-[#3b82f6] transition-colors">
                   Safety Guide
                 </button>
               </li>
               <li>
-                <button onClick={() => navigate('marketplace')} className="text-sm text-gray-400 hover:text-emerald-400 transition-colors">
+                <button onClick={() => navigate('marketplace')} className="text-sm text-gray-400 hover:text-[#3b82f6] transition-colors">
                   Pricing
+                </button>
+              </li>
+              <li>
+                <button onClick={() => navigate('favorites')} className="text-sm text-gray-400 hover:text-[#3b82f6] transition-colors">
+                  My Favourites
                 </button>
               </li>
             </ul>
@@ -64,22 +82,27 @@ export default function AppFooter() {
             <h3 className="text-sm font-semibold text-white uppercase tracking-wider mb-4">For Owners</h3>
             <ul className="space-y-2.5">
               <li>
-                <button onClick={() => navigate('list-item')} className="text-sm text-gray-400 hover:text-emerald-400 transition-colors">
+                <button onClick={() => navigate('list-item')} className="text-sm text-gray-400 hover:text-[#3b82f6] transition-colors">
                   List Your Item
                 </button>
               </li>
               <li>
-                <button onClick={() => navigate('dashboard')} className="text-sm text-gray-400 hover:text-emerald-400 transition-colors">
+                <button onClick={() => navigate('dashboard')} className="text-sm text-gray-400 hover:text-[#3b82f6] transition-colors">
                   Owner Dashboard
                 </button>
               </li>
               <li>
-                <button onClick={() => navigate('dashboard')} className="text-sm text-gray-400 hover:text-emerald-400 transition-colors">
+                <button onClick={() => navigate('my-listings')} className="text-sm text-gray-400 hover:text-[#3b82f6] transition-colors">
+                  My Listings
+                </button>
+              </li>
+              <li>
+                <button onClick={() => navigate('dashboard')} className="text-sm text-gray-400 hover:text-[#3b82f6] transition-colors">
                   Earnings
                 </button>
               </li>
               <li>
-                <button onClick={() => navigate('dashboard')} className="text-sm text-gray-400 hover:text-emerald-400 transition-colors">
+                <button onClick={() => navigate('dashboard')} className="text-sm text-gray-400 hover:text-[#3b82f6] transition-colors">
                   Trust & Verification
                 </button>
               </li>
@@ -89,42 +112,44 @@ export default function AppFooter() {
           {/* Support */}
           <div>
             <h3 className="text-sm font-semibold text-white uppercase tracking-wider mb-4">Support</h3>
-            <ul className="space-y-2.5">
+            <ul className="space-y-3">
               <li className="flex items-center gap-2 text-sm text-gray-400">
-                <Mail className="w-4 h-4" />
-                support@rentloop.in
+                <Mail className="w-4 h-4 shrink-0" />
+                <span>support@rentloop.in</span>
               </li>
               <li className="flex items-center gap-2 text-sm text-gray-400">
-                <Phone className="w-4 h-4" />
-                +91 1800-RENT-LOOP
+                <Phone className="w-4 h-4 shrink-0" />
+                <span>+91 1800-RENT-LOOP</span>
               </li>
-              <li>
-                <button className="text-sm text-gray-400 hover:text-emerald-400 transition-colors">
-                  Help Center
-                </button>
-              </li>
-              <li>
-                <button className="text-sm text-gray-400 hover:text-emerald-400 transition-colors">
-                  Privacy Policy
-                </button>
-              </li>
-              <li>
-                <button className="text-sm text-gray-400 hover:text-emerald-400 transition-colors">
-                  Terms of Service
-                </button>
+              <li className="flex items-center gap-2 text-sm text-gray-400">
+                <MapPin className="w-4 h-4 shrink-0" />
+                <span>Bengaluru, India</span>
               </li>
             </ul>
+            <div className="mt-4 space-y-2">
+              <button className="block text-sm text-gray-400 hover:text-[#3b82f6] transition-colors">
+                Help Center
+              </button>
+              <button className="block text-sm text-gray-400 hover:text-[#3b82f6] transition-colors">
+                Privacy Policy
+              </button>
+              <button className="block text-sm text-gray-400 hover:text-[#3b82f6] transition-colors">
+                Terms of Service
+              </button>
+            </div>
           </div>
         </div>
 
         {/* Bottom bar */}
         <div className="border-t border-gray-800 mt-10 pt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-xs text-gray-500">
-            © {new Date().getFullYear()} RentLoop. All rights reserved.
+            &copy; {new Date().getFullYear()} RentLoop. All rights reserved.
           </p>
           <div className="flex items-center gap-4 text-xs text-gray-500">
             <button className="hover:text-gray-300 transition-colors">Privacy</button>
+            <span className="text-gray-700">|</span>
             <button className="hover:text-gray-300 transition-colors">Terms</button>
+            <span className="text-gray-700">|</span>
             <button className="hover:text-gray-300 transition-colors">Cookies</button>
           </div>
         </div>
