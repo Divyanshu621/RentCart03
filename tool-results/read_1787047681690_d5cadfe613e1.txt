@@ -408,3 +408,94 @@
    408→- No new packages installed
    409→- Lint passes with 0 errors (2 pre-existing warnings)
    410→
+   411→---
+   412→Task ID: 10
+   413→Agent: Main
+   414→Task: Remove GST from platform fee calculation
+   415→
+   416→Work Log:
+   417→- Investigated current GST calculation in ProductDetailPage.tsx (frontend) and api/rentals/route.ts (backend)
+   418→- Found GST was calculated on (rentalAmount + platformFee) at 18%
+   419→- Fixed frontend: Changed `const taxableAmount = rentalAmount + platformFee; const tax = Math.round(taxableAmount * 0.18);` to `const tax = Math.round(rentalAmount * 0.18);`
+   420→- Fixed backend: Changed `const tax = (rentalAmount + platformFee - discount) * 0.18;` to `const tax = rentalAmount * 0.18;`
+   421→- Verified both LoginPage and AuthModal already have "Continue with Google" button
+   422→- Verified no lint errors after changes
+   423→- Ran lint check: 0 errors, 2 pre-existing warnings
+   424→
+   425→Stage Summary:
+   426→- GST now calculated only on rentalAmount, not including platform fee
+   427→- Example: ₹200/day × 5 days → Rental ₹1,000, Platform Fee ₹100, GST ₹180 (was ₹198), saving ₹18
+   428→- Both frontend display and backend API calculation are consistent
+   429→
+   430→---
+   431→Task ID: 11-a
+   432→Agent: Sub-agent (area-data)
+   433→Task: Add Area model, types, seed data, and API support
+   434→
+   435→Work Log:
+   436→- Added Area model to Prisma schema with name, cityId, pinCode, isActive, createdAt fields
+   437→- Added @@unique([name, cityId]) constraint on Area model
+   438→- Added areas Area[] relation to City model
+   439→- Added Area interface to TypeScript types (id, name, cityId, pinCode, isActive)
+   440→- Added areas: Area[] field to City interface
+   441→- Populated seed.ts with 8-15 real Indian localities per city for all 30 cities (325 total areas)
+   442→- Used createMany batch insert for area seeding performance
+   443→- Added Areas count to seed completion summary
+   444→- Reset database, pushed schema, regenerated Prisma client, re-seeded successfully
+   445→- Updated /api/states route to include areas in city includes (with isActive filter and name ordering)
+   446→
+   447→Stage Summary:
+   448→- Area model with 325 areas across 30 cities (real Indian locality names with PIN codes)
+   449→- States API now returns nested structure: State → City → Area
+   450→- Types updated for frontend consumption
+   451→
+   452→---
+   453→Task ID: 11-b
+   454→Agent: Sub-agent (cascading-selectors)
+   455→Task: Add State → City → Area cascading selectors
+   456→
+   457→Work Log:
+   458→- Updated Zustand store with selectedCity, setSelectedCity, selectedArea, setSelectedArea
+   459→- Imported City and Area types in store
+   460→- Updated AppHeader: replaced simple state dropdown with cascading State → City → Area Select components on desktop
+   461→- Added mobile location picker as a bottom Sheet with cascading selectors
+   462→- Location badge shows most specific selection (Area > City > State) on mobile
+   463→- Updated MarketplacePage: added City and Area Select dropdowns that appear based on parent selection
+   464→- Added cityId to products API query params when city is selected
+   465→- Cascading reset: state change resets city+area, city change resets area
+   466→- Updated clearFilters to also reset city and area
+   467→- Updated location restriction message to show most specific location
+   468→- Removed unused navigate import from MarketplacePage
+   469→- Products API already supported cityId filtering (no changes needed)
+   470→
+   471→Stage Summary:
+   472→- Users can now drill down: State → City → Area in both header and marketplace
+   473→- Location badge shows most specific selection
+   474→- Products API supports cityId filter
+   475→- Lint passes cleanly
+   476→
+   477→---
+   478→Task ID: 11
+   479→c
+   480→Agent: Main
+   481→Task: Fix rental errors, enhance Google login, add area selection
+   482→
+   483→
+   484→Work Log:
+   485→- Fixed rental API to add console.error logging for all 400 error paths (state mismatch, own product, min/max days, availability)
+   486→- Updated Google login in LoginPage.tsx: replaced auto-generated email with a Gmail input dialog showing email + optional name fields
+   487→- Updated Google login in AuthModal.tsx: same Gmail input dialog approach
+   488→- Added isNotApproved check in ProductDetailPage.tsx to disable Rent Now button for non-APPROVED products
+   489→- Added toast error message when user tries to rent a non-APPROVED product
+   490→- Fixed SWC/Turbopack parsing error caused by orphaned JSX comment (removed comment line 515)
+   491→- Verified states API returns nested State → City → Area data (~325 areas)
+   492→- Verified ESLint passes with 0 errors (2 pre-existing warnings)
+   493→- Verified dev server compiles and serves pages correctly
+   494→
+   495→Stage Summary:
+   496→- Google login now prompts for real Gmail address instead of auto-generating fake email
+   497→- Users can enter their registered Gmail to sign in or create a new account
+   498→- Non-APPROVED products show clear warning and disabled Rent Now button
+   499→- Rental API has diagnostic logging for faster debugging
+   500→- All lint checks pass cleanly
+   501→

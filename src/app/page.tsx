@@ -3,6 +3,7 @@
 import { useEffect } from 'react';
 import { useAppStore } from '@/store';
 import { api } from '@/lib/api';
+import { toast } from 'sonner';
 import AppHeader from '@/components/rentloop/common/AppHeader';
 import AppFooter from '@/components/rentloop/common/AppFooter';
 import MobileNav from '@/components/rentloop/common/MobileNav';
@@ -33,6 +34,16 @@ export default function Home() {
   const setIsLoadingAuth = useAppStore((s) => s.setIsLoadingAuth);
   const setStates = useAppStore((s) => s.setStates);
   const setCategories = useAppStore((s) => s.setCategories);
+
+  // Handle Google OAuth callback errors from URL
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const authError = params.get('auth_error');
+    if (authError) {
+      toast.error(authError);
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+  }, []);
 
   // Check auth on mount
   useEffect(() => {

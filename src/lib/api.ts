@@ -27,8 +27,11 @@ export const api = {
   logout: () =>
     request<{ success: boolean }>('/api/auth/logout', { method: 'POST' }),
 
-  googleAuth: (data: { email: string; name: string }) =>
+  googleAuth: (data: { email: string; name: string; avatarUrl?: string }) =>
     request<{ user: Record<string, unknown>; message: string }>('/api/auth/google', { method: 'POST', body: JSON.stringify(data) }),
+
+  getGoogleConfig: () =>
+    request<{ configured: boolean; clientId: string | null }>('/api/auth/google/config'),
 
   me: () =>
     request<Record<string, unknown>>('/api/auth/me'),

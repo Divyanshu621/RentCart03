@@ -449,3 +449,53 @@
    449→   449→- States API now returns nested structure: State → City → Area
    450→   450→- Types updated for frontend consumption
    451→   451→
+   452→   452→---
+   453→   453→Task ID: 11-b
+   454→   454→Agent: Sub-agent (cascading-selectors)
+   455→   455→Task: Add State → City → Area cascading selectors
+   456→   456→
+   457→   457→Work Log:
+   458→   458→- Updated Zustand store with selectedCity, setSelectedCity, selectedArea, setSelectedArea
+   459→   459→- Imported City and Area types in store
+   460→   460→- Updated AppHeader: replaced simple state dropdown with cascading State → City → Area Select components on desktop
+   461→   461→- Added mobile location picker as a bottom Sheet with cascading selectors
+   462→   462→- Location badge shows most specific selection (Area > City > State) on mobile
+   463→   463→- Updated MarketplacePage: added City and Area Select dropdowns that appear based on parent selection
+   464→   464→- Added cityId to products API query params when city is selected
+   465→   465→- Cascading reset: state change resets city+area, city change resets area
+   466→   466→- Updated clearFilters to also reset city and area
+   467→   467→- Updated location restriction message to show most specific location
+   468→   468→- Removed unused navigate import from MarketplacePage
+   469→   469→- Products API already supported cityId filtering (no changes needed)
+   470→   470→
+   471→   471→Stage Summary:
+   472→   472→- Users can now drill down: State → City → Area in both header and marketplace
+   473→   473→- Location badge shows most specific selection
+   474→   474→- Products API supports cityId filter
+   475→   475→- Lint passes cleanly
+   476→   476→
+   477→   477→---
+   478→   478→Task ID: 11
+   479→   479→c
+   480→   480→Agent: Main
+   481→   481→Task: Fix rental errors, enhance Google login, add area selection
+   482→   482→
+   483→   483→
+   484→   484→Work Log:
+   485→   485→- Fixed rental API to add console.error logging for all 400 error paths (state mismatch, own product, min/max days, availability)
+   486→   486→- Updated Google login in LoginPage.tsx: replaced auto-generated email with a Gmail input dialog showing email + optional name fields
+   487→   487→- Updated Google login in AuthModal.tsx: same Gmail input dialog approach
+   488→   488→- Added isNotApproved check in ProductDetailPage.tsx to disable Rent Now button for non-APPROVED products
+   489→   489→- Added toast error message when user tries to rent a non-APPROVED product
+   490→   490→- Fixed SWC/Turbopack parsing error caused by orphaned JSX comment (removed comment line 515)
+   491→   491→- Verified states API returns nested State → City → Area data (~325 areas)
+   492→   492→- Verified ESLint passes with 0 errors (2 pre-existing warnings)
+   493→   493→- Verified dev server compiles and serves pages correctly
+   494→   494→
+   495→   495→Stage Summary:
+   496→   496→- Google login now prompts for real Gmail address instead of auto-generating fake email
+   497→   497→- Users can enter their registered Gmail to sign in or create a new account
+   498→   498→- Non-APPROVED products show clear warning and disabled Rent Now button
+   499→   499→- Rental API has diagnostic logging for faster debugging
+   500→   500→- All lint checks pass cleanly
+   501→   501→
