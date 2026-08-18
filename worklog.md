@@ -349,3 +349,61 @@ Stage Summary:
 - Rent Now button shows contextual disabled text (Select Start Date / Select End Date / validation error)
 - Coupon input properly disabled when dates are invalid
 - Browser verified: Aug 20 start → Aug 20 DISABLED in end calendar, Aug 21+ enabled, pricing breakdown appears, green Rent Now button active
+
+---
+Task ID: 10-a
+Agent: Sub-agent
+Task: Fix Rent Now to create rental via API
+
+Work Log:
+- Read ProductDetailPage.tsx to understand existing handleRentNow implementation
+- Identified that handleRentNow only navigated to dashboard with createRental data that DashboardPage never handled
+- Added `useQueryClient` import from @tanstack/react-query
+- Added `Loader2` import from lucide-react
+- Added `toast` import from sonner
+- Added `createRentalMutation` using useMutation that calls api.createRental with productId, startDate, endDate, and optional couponCode
+- On mutation success: shows success toast, invalidates ['rentals'] and ['my-rentals'] queries, navigates to 'my-rentals'
+- On mutation error: shows error toast with server message or fallback
+- Updated handleRentNow to call createRentalMutation.mutate instead of navigate('dashboard', ...)
+- Updated Rent Now button: disabled while mutation is pending, shows Loader2 spinner with "Creating Rental..." text during loading
+- All existing validation checks (auth, stateMismatch, date validity) preserved
+- Ran lint: 0 errors, 2 pre-existing warnings (unrelated)
+
+Stage Summary:
+- Rent Now button now creates a rental via api.createRental API call
+- Rental created with PENDING_PAYMENT status; user navigated to My Rentals to click Pay Now
+- Loading spinner shown during API call, button disabled to prevent double-submit
+- Success/error toasts provide user feedback
+- ['rentals'] and ['my-rentals'] query caches invalidated on success for fresh data
+- Lint passes clean (0 errors)
+
+---
+Task ID: 10-b
+Agent: Sub-agent
+Task: Fix products API to support ownerId filter
+
+Work Log:
+- Read /home/z/my-project/src/app/api/products/route.ts
+- Added `ownerId` extraction from searchParams
+- Replaced hardcoded `where: { status: 'APPROVED' }` with conditional logic: when ownerId is provided, filter by ownerId without status restriction; otherwise keep status APPROVED filter
+
+Stage Summary:
+- MyListingsPage now correctly fetches the owner's own listings across all statuses (including PENDING_REVIEW)
+- Public product listing still returns only APPROVED products
+- Lint passes with 0 errors (2 pre-existing warnings unrelated to this change)
+
+---
+Task ID: $(cat /home/z/my-project/worklog.md | rg -c 'Task ID:' | tail -1)
+Agent: General-purpose
+Task: Add Continue with Google auth (simulated)
+
+Changes Made:
+- Created /src/app/api/auth/google/route.ts – POST endpoint that accepts {email, name, googleId?}, finds or creates user (CUSTOMER role, isVerified, isActive, trustScore 50, random bcrypt password), creates session, returns {user, message}
+- Added googleAuth method to /src/lib/api.ts – calls /api/auth/google with POST
+- Updated /src/components/rentloop/auth/AuthModal.tsx – Added "Continue with Google" button with divider in LoginForm, isGoogleLoading state, handleGoogleLogin handler, inline Google SVG icon
+- Updated /src/components/rentloop/auth/LoginPage.tsx – Added Loader2 import, isGoogleLoading state, handleGoogleLogin handler, Google button with divider before email form, removed redundant "or" divider after form
+
+Stage Summary:
+- Simulated Google OAuth: generates fake email (google_{timestamp}@gmail.com) and name (Google User)
+- No new packages installed
+- Lint passes with 0 errors (2 pre-existing warnings)

@@ -61,7 +61,14 @@ export async function GET(request: NextRequest) {
     const page = Math.max(1, parseInt(searchParams.get('page') || '1'));
     const limit = Math.min(50, Math.max(1, parseInt(searchParams.get('limit') || '20')));
 
-    const where: Record<string, unknown> = { status: 'APPROVED' };
+    const ownerId = searchParams.get('ownerId');
+    const where: Record<string, unknown> = {};
+
+    if (ownerId) {
+      where.ownerId = ownerId;
+    } else {
+      where.status = 'APPROVED';
+    }
 
     if (search) {
       where.OR = [

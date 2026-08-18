@@ -30,9 +30,10 @@ import {
   Shirt,
   Baby,
   Utensils,
+  Loader2,
   type LucideIcon,
 } from 'lucide-react';
-import { useQuery, useMutation } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { format, differenceInDays, startOfDay, addDays } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -48,6 +49,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { useAppStore } from '@/store';
 import { api } from '@/lib/api';
 import type { Product, Review } from '@/types';
+import { toast } from 'sonner';
 
 const categoryIcons: Record<string, LucideIcon> = {
   'cameras': Camera,
@@ -149,6 +151,22 @@ export default function ProductDetailPage() {
   const isAvailable = availabilityData?.available ?? true;
   const unavailableDates = (availabilityData?.unavailableDates ?? []) as string[];
 
+  // Create rental mutation
+  const queryClient = useQueryClient();
+  const createRentalMutation = useMutation({
+    mutationFn: (data: { productId: string; startDate: string; endDate: string; couponCode?: string }) =>
+      api.createRental(data),
+    onSuccess: () => {
+      toast.success('Rental created! Please proceed to payment.');
+      queryClient.invalidateQueries({ queryKey: ['rentals'] });
+      queryClient.invalidateQueries({ queryKey: ['my-rentals'] });
+      navigate('my-rentals');
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || 'Failed to create rental. Please try again.');
+    },
+  });
+
   // Favorite toggle mutation
   const favMutation = useMutation({
     mutationFn: () => api.toggleFavorite(productId),
@@ -213,8 +231,12 @@ export default function ProductDetailPage() {
     }
     if (stateMismatch) return;
     if (!startDate || !endDate || !isDateValid) return;
-    // Navigate to create rental flow
-    navigate('dashboard', { createRental: { productId, startDate: format(startDate, 'yyyy-MM-dd'), endDate: format(endDate, 'yyyy-MM-dd'), couponCode: couponApplied ? couponCode : undefined } });
+    createRentalMutation.mutate({
+      productId,
+      startDate: format(startDate, 'yyyy-MM-dd'),
+      endDate: format(endDate, 'yyyy-MM-dd'),
+      couponCode: couponApplied ? couponCode : undefined,
+    });
   };
 
   const handleMessage = () => {
@@ -721,15 +743,17 @@ export default function ProductDetailPage() {
                       : 'bg-emerald-600 hover:bg-emerald-700 text-white'
                   }`}
                   onClick={handleRentNow}
-                  disabled={stateMismatch || !startDate || !endDate || !isDateValid}
+                  disabled={stateMismatch || !startDate || !endDate || !isDateValid || createRentalMutation.isPending}
                 >
-                  {stateMismatch
-                    ? 'Not Available in Your State'
-                    : !startDate
-                      ? 'Select Start Date'
-                      : !endDate
-                        ? 'Select End Date'
-                        : dateValidationError || 'Rent Now'}
+                  {createRentalMutation.isPending
+                    ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />Creating Rental...</>
+                    : stateMismatch
+                      ? 'Not Available in Your State'
+                      : !startDate
+                        ? 'Select Start Date'
+                        : !endDate
+                          ? 'Select End Date'
+                          : dateValidationError || 'Rent Now'}
                 </Button>
 
                 {!user && startDate && endDate && rentalCalc.days > 0 && !stateMismatch && (

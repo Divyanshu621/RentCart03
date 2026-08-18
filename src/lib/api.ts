@@ -27,6 +27,9 @@ export const api = {
   logout: () =>
     request<{ success: boolean }>('/api/auth/logout', { method: 'POST' }),
 
+  googleAuth: (data: { email: string; name: string }) =>
+    request<{ user: Record<string, unknown>; message: string }>('/api/auth/google', { method: 'POST', body: JSON.stringify(data) }),
+
   me: () =>
     request<Record<string, unknown>>('/api/auth/me'),
 
