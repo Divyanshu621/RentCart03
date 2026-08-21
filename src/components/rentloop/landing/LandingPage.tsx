@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
+import LandingNavbar from './LandingNavbar';
 import HeroSection from './HeroSection';
 import CategoriesSection from './CategoriesSection';
 import HowItWorksSection from './HowItWorksSection';
@@ -18,6 +19,7 @@ export default function LandingPage() {
 
   return (
     <main className="smooth-scroll">
+      <LandingNavbar />
       <HeroSection />
       <CategoriesSection />
       <HowItWorksSection />

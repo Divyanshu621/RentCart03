@@ -448,7 +448,6 @@ function RegisterForm({
     register,
     handleSubmit,
     control,
-    watch,
     setValue,
     formState: { errors, isSubmitting },
   } = useForm<RegisterFormData>({
@@ -466,7 +465,7 @@ function RegisterForm({
     },
   });
 
-  const selectedStateId = useWatch({ control: form.control, name: 'stateId' });
+  const selectedStateId = useWatch({ control, name: 'stateId' });
   const selectedState = states.find((s) => s.id === selectedStateId);
   const cities = selectedState?.cities?.filter((c) => c.isActive) || [];
 

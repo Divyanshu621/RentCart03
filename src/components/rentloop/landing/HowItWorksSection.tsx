@@ -32,7 +32,7 @@ const steps = [
 
 export default function HowItWorksSection() {
   return (
-    <section className="py-16 sm:py-20 bg-[#f8fafc] relative overflow-hidden">
+    <section id="how-it-works" className="py-16 sm:py-20 bg-[#f8fafc] relative overflow-hidden">
       {/* Subtle dot pattern */}
       <div
         className="absolute inset-0 opacity-[0.03]"
