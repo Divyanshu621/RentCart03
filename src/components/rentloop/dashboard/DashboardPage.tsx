@@ -20,6 +20,8 @@ import {
   AlertTriangle,
   Eye,
   Loader2,
+  Shield,
+  ChevronRight as ChevronRightIcon,
 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -268,6 +270,7 @@ export default function DashboardPage() {
 
   const firstName = user?.name?.split(' ')[0] || 'User';
   const isOwner = user?.role === 'OWNER' || user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN';
+  const kycStatus = user?.kycStatus;
 
   const currentHour = new Date().getHours();
   const greeting = currentHour < 12 ? 'Good Morning' : currentHour < 17 ? 'Good Afternoon' : 'Good Evening';
@@ -367,6 +370,51 @@ export default function DashboardPage() {
             </Badge>
           </div>
         </motion.div>
+
+        {/* ─── KYC Status Banner for OWNER ──────────── */}
+        {user?.role === 'OWNER' && kycStatus && kycStatus !== 'VERIFIED' && (
+          <motion.div variants={itemVariants} className="mb-6">
+            <div
+              className={`rounded-2xl p-4 sm:p-5 cursor-pointer transition-all hover:shadow-md ${
+                kycStatus === 'REJECTED'
+                  ? 'bg-red-50 border border-red-200'
+                  : kycStatus === 'SUBMITTED'
+                  ? 'bg-blue-50 border border-blue-200'
+                  : 'bg-amber-50 border border-amber-200'
+              }`}
+              onClick={() => navigate('seller-kyc')}
+            >
+              <div className="flex items-center gap-3">
+                <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${
+                  kycStatus === 'REJECTED' ? 'bg-red-100' : kycStatus === 'SUBMITTED' ? 'bg-blue-100' : 'bg-amber-100'
+                }`}>
+                  <Shield className={`w-5 h-5 ${
+                    kycStatus === 'REJECTED' ? 'text-red-600' : kycStatus === 'SUBMITTED' ? 'text-blue-600' : 'text-amber-600'
+                  }`} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className={`text-sm font-semibold ${
+                    kycStatus === 'REJECTED' ? 'text-red-800' : kycStatus === 'SUBMITTED' ? 'text-blue-800' : 'text-amber-800'
+                  }`}>
+                    {kycStatus === 'REJECTED' ? 'KYC Verification Rejected' :
+                     kycStatus === 'SUBMITTED' ? 'KYC Under Review' :
+                     'Complete Seller Verification'}
+                  </h3>
+                  <p className={`text-xs mt-0.5 ${
+                    kycStatus === 'REJECTED' ? 'text-red-600' : kycStatus === 'SUBMITTED' ? 'text-blue-600' : 'text-amber-600'
+                  }`}>
+                    {kycStatus === 'REJECTED' ? 'Your documents were rejected. Tap to review and resubmit.' :
+                     kycStatus === 'SUBMITTED' ? 'Your documents are being reviewed. You\'ll be notified once approved.' :
+                     'Upload Aadhaar, PAN & bank details to start listing items.'}
+                  </p>
+                </div>
+                <ChevronRightIcon className={`w-5 h-5 shrink-0 ${
+                  kycStatus === 'REJECTED' ? 'text-red-400' : kycStatus === 'SUBMITTED' ? 'text-blue-400' : 'text-amber-400'
+                }`} />
+              </div>
+            </div>
+          </motion.div>
+        )}
 
         {/* ─── Stats Grid ─────────────────────────────────── */}
         <motion.div variants={itemVariants} className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-8">

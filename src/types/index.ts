@@ -43,12 +43,15 @@ export interface Category {
 }
 
 // ─── User ────────────────────────────────────────────────────
+export type KycStatus = 'NOT_REQUIRED' | 'PENDING' | 'SUBMITTED' | 'VERIFIED' | 'REJECTED';
+
 export interface User {
   id: string;
   name: string;
   email: string;
   phone?: string;
   role: 'CUSTOMER' | 'OWNER' | 'ADMIN' | 'SUPER_ADMIN';
+  kycStatus: KycStatus;
   stateId?: string;
   state?: State;
   cityId?: string;
@@ -305,6 +308,37 @@ export interface AdminDashboard {
   productsByCategory: { name: string; count: number }[];
 }
 
+// ─── Seller KYC ─────────────────────────────────────────────
+export type KycDocStatus = 'DRAFT' | 'SUBMITTED' | 'UNDER_REVIEW' | 'VERIFIED' | 'REJECTED';
+export type BusinessType = 'INDIVIDUAL' | 'PROPRIETORSHIP' | 'PARTNERSHIP' | 'LLP' | 'PRIVATE_LIMITED' | 'COMPANY';
+
+export interface SellerKyc {
+  id: string;
+  userId: string;
+  aadhaarNumber?: string;
+  panNumber?: string;
+  gstNumber?: string;
+  bankAccountNo?: string;
+  bankIfsc?: string;
+  bankName?: string;
+  bankHolderName?: string;
+  aadhaarFrontUrl?: string;
+  aadhaarBackUrl?: string;
+  panCardUrl?: string;
+  passbookUrl?: string;
+  businessName?: string;
+  businessType?: BusinessType;
+  businessAddress?: string;
+  status: KycDocStatus;
+  submittedAt?: string;
+  verifiedAt?: string;
+  rejectedAt?: string;
+  rejectionReason?: string;
+  reviewedBy?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 // ─── App View ────────────────────────────────────────────────
 export type AppView =
   | 'landing'
@@ -321,6 +355,7 @@ export type AppView =
   | 'conversation'
   | 'notifications'
   | 'profile'
+  | 'seller-kyc'
   | 'admin-dashboard'
   | 'admin-users'
   | 'admin-products'

@@ -764,3 +764,56 @@ Stage Summary:
 - 6 Indian payment methods supported (Razorpay, UPI, Card, Net Banking, Wallet, Cash on Pickup)
 - Beautiful checkout modal with order summary, method selection, processing & success states
 - Integrated into both ProductDetailPage (post-creation) and MyRentalsPage (pay pending)
+
+---
+Task ID: seller-kyc
+Agent: Main
+Task: Add seller KYC document verification (Aadhaar, PAN, Bank) for OWNER accounts
+
+Work Log:
+- Added `kycStatus` field to User model in Prisma schema (NOT_REQUIRED, PENDING, SUBMITTED, VERIFIED, REJECTED)
+- Created `SellerKyc` model in Prisma schema with document fields (aadhaarNumber, panNumber, gstNumber, bankAccountNo, bankIfsc, bankName, bankHolderName), document upload URLs (aadhaarFrontUrl, aadhaarBackUrl, panCardUrl, passbookUrl), business info (businessName, businessType, businessAddress), and status tracking
+- Pushed schema to SQLite DB and regenerated Prisma client
+- Added `KycStatus`, `SellerKyc`, `KycDocStatus`, `BusinessType` types to types/index.ts
+- Added `seller-kyc` to AppView union type
+- Created GET /api/kyc/status API route - returns KYC status and creates draft for OWNER users
+- Created POST /api/kyc/submit API route - validates mandatory fields (Aadhaar, PAN, bank details) and submits for review
+- Created PUT /api/kyc/submit API route - saves draft without validations
+- Created PATCH /api/admin/kyc/[id] API route - admin approve/reject KYC with reason
+- Added KYC API methods to api.ts (getKycStatus, submitKyc, saveKycDraft, reviewKyc)
+- Created SellerKycPage.tsx with comprehensive mobile-friendly UI:
+  - DocumentUpload component with drag-and-drop, camera capture, image preview, file validation
+  - StatusBanner component showing different states (DRAFT, SUBMITTED, UNDER_REVIEW, VERIFIED, REJECTED)
+  - StepsIndicator showing Identity → Bank Details → Business Info progress
+  - Aadhaar number auto-formatting (XXXX XXXX XXXX)
+  - PAN number auto-formatting and uppercase
+  - GST number formatting
+  - IFSC code formatting
+  - Mobile-responsive design with safe-area support
+  - Sticky submit bar with Save Draft + Submit buttons
+  - Info cards for data security and important notes
+- Wired SellerKycPage into page.tsx router
+- Added KYC redirect in page.tsx: OWNER users with kycStatus !== VERIFIED are redirected to seller-kyc page
+- Updated AuthModal handleAuthSuccess to redirect OWNER users to KYC page after login/register
+- Added KYC status banner to DashboardPage for OWNER users with tap-to-navigate
+- Updated seed OWNER users: Rahul Sharma (PENDING for testing), Priya Patel & Vikram Reddy (VERIFIED)
+- All code passes ESLint with zero errors
+
+Stage Summary:
+- Full seller KYC verification flow implemented
+- Required documents: Aadhaar Card (front + back), PAN Card, Bank Account details
+- Optional: GST Number, Business Info, Bank Passbook
+- Admin can approve/reject KYC from /api/admin/kyc/[id]
+- Owner users are automatically redirected to KYC page when not verified
+- Dashboard shows KYC status banner for non-verified owners
+- Files created/modified:
+  - prisma/schema.prisma (added SellerKyc model, kycStatus on User)
+  - src/types/index.ts (added KYC types, seller-kyc view)
+  - src/app/api/kyc/status/route.ts (new)
+  - src/app/api/kyc/submit/route.ts (new)
+  - src/app/api/admin/kyc/[id]/route.ts (new)
+  - src/lib/api.ts (added KYC methods)
+  - src/components/rentloop/kyc/SellerKycPage.tsx (new)
+  - src/app/page.tsx (added KYC redirect, seller-kyc route)
+  - src/components/rentloop/auth/AuthModal.tsx (KYC redirect on auth success)
+  - src/components/rentloop/dashboard/DashboardPage.tsx (KYC status banner)

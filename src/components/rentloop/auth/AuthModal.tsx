@@ -94,13 +94,19 @@ export default function AuthModal() {
     try {
       const meData = await api.me();
       setUser(meData as unknown as UserType);
+      const u = meData as unknown as UserType;
+      toast.success(authModalView === 'login' ? 'Welcome back!' : 'Account created successfully!');
+      setAuthModalOpen(false);
+      setReturnUrl(null);
+      // Redirect OWNER users to KYC page
+      if (u.role === 'OWNER' && u.kycStatus !== 'VERIFIED') {
+        navigate('seller-kyc');
+      } else {
+        navigate(returnUrl ? (returnUrl as 'marketplace' | 'dashboard') : 'marketplace');
+      }
     } catch {
       setUser(userData as unknown as UserType);
     }
-    toast.success(authModalView === 'login' ? 'Welcome back!' : 'Account created successfully!');
-    setAuthModalOpen(false);
-    setReturnUrl(null);
-    navigate(returnUrl ? (returnUrl as 'marketplace' | 'dashboard') : 'marketplace');
   }, [authModalView, returnUrl, navigate, setAuthModalOpen, setReturnUrl, setUser]);
 
   return (

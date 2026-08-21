@@ -66,6 +66,7 @@ model User {
   phone         String?
   passwordHash  String
   role          String    @default("CUSTOMER") // CUSTOMER, OWNER, ADMIN, SUPER_ADMIN
+  kycStatus     String    @default("NOT_REQUIRED") // NOT_REQUIRED, PENDING, SUBMITTED, VERIFIED, REJECTED
   stateId       String?
   state         State?    @relation(fields: [stateId], references: [id])
   cityId        String?
@@ -98,6 +99,7 @@ model User {
   couponsCreated     Coupon[]
   couponUsages       CouponUsage[]
   auditLogs          AuditLog[]
+  sellerKyc          SellerKyc?
 }
 
 // ─── Product ────────────────────────────────────────────────
@@ -350,6 +352,39 @@ model CouponUsage {
   user      User     @relation(fields: [userId], references: [id])
   rentalId  String?
   createdAt DateTime @default(now())
+}
+
+// ─── Seller KYC ────────────────────────────────────────────
+model SellerKyc {
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  // Document numbers
+  aadhaarNumber   String?
+  panNumber       String?
+  gstNumber       String?
+  bankAccountNo   String?
+  bankIfsc        String?
+  bankName        String?
+  bankHolderName  String?
+  // Document file URLs (base64 or uploaded file paths)
+  aadhaarFrontUrl    String?
+  aadhaarBackUrl     String?
+  panCardUrl         String?
+  passbookUrl        String?
+  // Business info
+  businessName       String?
+  businessType       String?  // INDIVIDUAL, PROPRIETORSHIP, PARTNERSHIP, LLP, PRIVATE_LIMITED, COMPANY
+  businessAddress    String?
+  // Status
+  status           String   @default("DRAFT") // DRAFT, SUBMITTED, UNDER_REVIEW, VERIFIED, REJECTED
+  submittedAt      DateTime?
+  verifiedAt       DateTime?
+  rejectedAt       DateTime?
+  rejectionReason  String?
+  reviewedBy       String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 }
 
 // ─── Audit Log ──────────────────────────────────────────────

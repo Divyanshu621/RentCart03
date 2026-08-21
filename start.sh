@@ -1,3 +1,3 @@
 #!/bin/bash
 cd /home/z/my-project
-exec bun run dev > dev.log 2>&1
+exec npx next dev -p 3000

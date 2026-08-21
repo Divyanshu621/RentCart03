@@ -331,7 +331,7 @@
    331→  }
    332→
    333→  return (
-   334→    <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
+   334→    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 pb-20 sm:pb-0">
    335→      <motion.div
    336→        className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8"
    337→        variants={containerVariants}
@@ -583,7 +583,7 @@
    583→
    584→        {/* ─── Empty State ─────────────────────────────────── */}
    585→        {!loading && !error && uniqueRecent.length === 0 && activeCustomerRentals.length === 0 && ownerRentals.length === 0 && (
-   586→          <motion.div variants={itemVariants} className="text-center py-16">
+   586→          <motion.div variants={itemVariants} className="text-center py-12 sm:py-16 pb-24 sm:pb-16">
    587→            <div className="w-20 h-20 rounded-full bg-emerald-50 dark:bg-emerald-900/20 flex items-center justify-center mx-auto mb-6">
    588→              <Package className="w-10 h-10 text-emerald-400" />
    589→            </div>

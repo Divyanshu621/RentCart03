@@ -187,4 +187,17 @@ export const api = {
 
   updateAdminRental: (id: string, data: Record<string, unknown>) =>
     request<Record<string, unknown>>(`/api/admin/rentals/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+
+  // KYC
+  getKycStatus: () =>
+    request<{ kycStatus: string; kyc: Record<string, unknown> | null }>('/api/kyc/status'),
+
+  submitKyc: (data: Record<string, unknown>) =>
+    request<{ kyc: Record<string, unknown>; message: string }>('/api/kyc/submit', { method: 'POST', body: JSON.stringify(data) }),
+
+  saveKycDraft: (data: Record<string, unknown>) =>
+    request<{ kyc: Record<string, unknown>; message: string }>('/api/kyc/submit', { method: 'PUT', body: JSON.stringify(data) }),
+
+  reviewKyc: (id: string, data: { action: 'APPROVE' | 'REJECT'; rejectionReason?: string }) =>
+    request<{ success: boolean; message: string }>(`/api/admin/kyc/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
 };

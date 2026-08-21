@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useAppStore } from '@/store';
 import { api } from '@/lib/api';
 import { toast } from 'sonner';
@@ -25,6 +25,7 @@ import AdminUsersPage from '@/components/rentloop/admin/AdminUsersPage';
 import AdminProductsPage from '@/components/rentloop/admin/AdminProductsPage';
 import AdminRentalsPage from '@/components/rentloop/admin/AdminRentalsPage';
 import AdminDisputesPage from '@/components/rentloop/admin/AdminDisputesPage';
+import SellerKycPage from '@/components/rentloop/kyc/SellerKycPage';
 import type { User, State, Category } from '@/types';
 
 export default function Home() {
@@ -34,6 +35,8 @@ export default function Home() {
   const setIsLoadingAuth = useAppStore((s) => s.setIsLoadingAuth);
   const setStates = useAppStore((s) => s.setStates);
   const setCategories = useAppStore((s) => s.setCategories);
+  const navigate = useAppStore((s) => s.navigate);
+  const kycRedirectDone = useRef(false);
 
   // Handle Google OAuth callback errors from URL
   useEffect(() => {
@@ -59,6 +62,19 @@ export default function Home() {
     };
     init();
   }, [setUser, setIsLoadingAuth]);
+
+  // KYC redirect for OWNER accounts
+  useEffect(() => {
+    if (!user || kycRedirectDone.current) return;
+    if (user.role === 'OWNER' && user.kycStatus !== 'VERIFIED') {
+      kycRedirectDone.current = true;
+      // If already on KYC page, don't redirect again
+      if (currentView !== 'seller-kyc') {
+        toast.warning('Please complete seller verification to continue');
+        navigate('seller-kyc');
+      }
+    }
+  }, [user, currentView, navigate]);
 
   // Fetch reference data
   useEffect(() => {
@@ -101,6 +117,8 @@ export default function Home() {
         return <AdminRentalsPage />;
       case 'admin-disputes':
         return <AdminDisputesPage />;
+      case 'seller-kyc':
+        return <SellerKycPage />;
       default:
         return <MarketplacePage />;
     }
