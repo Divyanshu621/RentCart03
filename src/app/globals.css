@@ -123,6 +123,37 @@
 
 html {
   scroll-behavior: smooth;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-text-size-adjust: 100%;
+}
+
+/* Safe area support for iOS notch/home indicator */
+:root {
+  --safe-area-top: env(safe-area-inset-top, 0px);
+  --safe-area-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-area-left: env(safe-area-inset-left, 0px);
+  --safe-area-right: env(safe-area-inset-right, 0px);
+}
+
+.safe-area-top {
+  padding-top: var(--safe-area-top);
+}
+
+.safe-area-bottom {
+  padding-bottom: var(--safe-area-bottom);
+}
+
+/* Mobile touch improvements */
+@layer base {
+  button, [role="button"], a, input, select, textarea {
+    min-height: 44px;
+  }
+
+  @media (max-width: 767px) {
+    select, input[type="text"], input[type="email"], input[type="password"], input[type="tel"], input[type="number"], textarea {
+      font-size: 16px !important; /* Prevents iOS zoom */
+    }
+  }
 }
 
 html.no-scrollbar {
@@ -155,4 +186,11 @@ html.no-scrollbar::-webkit-scrollbar {
 
 *:not(html.no-scrollbar)::-webkit-scrollbar-thumb:hover {
   background-color: #9ca3af;
+}
+
+/* Mobile-first drawer overlay improvements */
+@media (max-width: 639px) {
+  [data-vaul-overlay] {
+    backdrop-filter: blur(4px);
+  }
 }

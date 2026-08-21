@@ -216,23 +216,23 @@ function RentalCard({
         className="border-slate-200 bg-white hover:shadow-md transition-shadow cursor-pointer"
         onClick={() => onSelect(rental)}
       >
-        <CardContent className="p-4">
-          <div className="flex gap-4">
+        <CardContent className="p-3 sm:p-4">
+          <div className="flex gap-3 sm:gap-4">
             {/* Thumbnail */}
-            <div className={`h-20 w-20 rounded-lg bg-gradient-to-br ${gradient} flex items-center justify-center shrink-0`}>
-              <Icon className="h-8 w-8 text-white/80" strokeWidth={1.5} />
+            <div className={`h-16 w-16 sm:h-20 sm:w-20 rounded-lg bg-gradient-to-br ${gradient} flex items-center justify-center shrink-0`}>
+              <Icon className="h-6 w-6 sm:h-8 sm:w-8 text-white/80" strokeWidth={1.5} />
             </div>
 
             {/* Info */}
             <div className="flex-1 min-w-0">
-              <h3 className="font-semibold text-slate-900 text-sm truncate">{rental.product.title}</h3>
-              <div className="flex items-center gap-1.5 text-xs text-slate-500 mt-1">
+              <h3 className="font-semibold text-slate-900 text-xs sm:text-sm truncate">{rental.product.title}</h3>
+              <div className="flex items-center gap-1 text-[11px] sm:text-xs text-slate-500 mt-1">
                 <CalendarRange className="h-3 w-3" />
                 <span>{format(new Date(rental.startDate), 'dd MMM yyyy')}</span>
                 <span>→</span>
                 <span>{format(new Date(rental.endDate), 'dd MMM yyyy')}</span>
               </div>
-              <div className="flex items-center gap-1.5 text-xs text-slate-400 mt-0.5">
+              <div className="flex items-center gap-1 text-[11px] sm:text-xs text-slate-400 mt-0.5">
                 <Clock className="h-3 w-3" />
                 <span>{rental.rentalDays} days</span>
               </div>
@@ -255,11 +255,11 @@ function RentalCard({
               <div className="flex gap-1.5" onClick={(e) => e.stopPropagation()}>
                 {rental.status === 'PENDING_PAYMENT' && isCustomer && (
                   <>
-                    <Button size="sm" className="h-7 px-2.5 text-[11px] bg-emerald-600 hover:bg-emerald-700 text-white" onClick={() => onAction(rental, 'pay')}>
-                      <CreditCard className="h-3 w-3 mr-1" />Pay Now
+                    <Button size="sm" className="h-11 sm:h-7 px-3 sm:px-2.5 text-xs sm:text-[11px] bg-emerald-600 hover:bg-emerald-700 text-white" onClick={() => onAction(rental, 'pay')}>
+                      <CreditCard className="h-3.5 w-3.5 sm:h-3 sm:w-3 mr-1" />Pay Now
                     </Button>
-                    <Button size="sm" variant="outline" className="h-7 px-2.5 text-[11px] border-red-200 text-red-600 hover:bg-red-50" onClick={() => onAction(rental, 'cancel')}>
-                      <XCircle className="h-3 w-3 mr-1" />Cancel
+                    <Button size="sm" variant="outline" className="h-11 sm:h-7 px-3 sm:px-2.5 text-xs sm:text-[11px] border-red-200 text-red-600 hover:bg-red-50" onClick={() => onAction(rental, 'cancel')}>
+                      <XCircle className="h-3.5 w-3.5 sm:h-3 sm:w-3 mr-1" />Cancel
                     </Button>
                   </>
                 )}
@@ -284,26 +284,26 @@ function RentalCard({
                 )}
                 {rental.status === 'ACTIVE' && isCustomer && (
                   <>
-                    <Button size="sm" className="h-7 px-2.5 text-[11px] bg-emerald-600 hover:bg-emerald-700 text-white" onClick={() => onAction(rental, 'return')}>
-                      <RotateCcw className="h-3 w-3 mr-1" />Start Return
+                    <Button size="sm" className="h-11 sm:h-7 px-3 sm:px-2.5 text-xs sm:text-[11px] bg-emerald-600 hover:bg-emerald-700 text-white" onClick={() => onAction(rental, 'return')}>
+                      <RotateCcw className="h-3.5 w-3.5 sm:h-3 sm:w-3 mr-1" />Start Return
                     </Button>
-                    <Button size="sm" variant="outline" className="h-7 px-2.5 text-[11px]" onClick={() => onAction(rental, 'extend')}>
-                      <Timer className="h-3 w-3 mr-1" />Extend
+                    <Button size="sm" variant="outline" className="h-11 sm:h-7 px-3 sm:px-2.5 text-xs sm:text-[11px]" onClick={() => onAction(rental, 'extend')}>
+                      <Timer className="h-3.5 w-3.5 sm:h-3 sm:w-3 mr-1" />Extend
                     </Button>
                   </>
                 )}
                 {rental.status === 'RETURN_PENDING' && isOwner && (
-                  <Button size="sm" className="h-7 px-2.5 text-[11px] bg-emerald-600 hover:bg-emerald-700 text-white" onClick={() => onAction(rental, 'confirmReturn')}>
-                    <CheckCircle2 className="h-3 w-3 mr-1" />Confirm Return
+                  <Button size="sm" className="h-11 sm:h-7 px-3 sm:px-2.5 text-xs sm:text-[11px] bg-emerald-600 hover:bg-emerald-700 text-white" onClick={() => onAction(rental, 'confirmReturn')}>
+                    <CheckCircle2 className="h-3.5 w-3.5 sm:h-3 sm:w-3 mr-1" />Confirm Return
                   </Button>
                 )}
                 {rental.status === 'OVERDUE' && isCustomer && (
                   <>
-                    <Button size="sm" className="h-7 px-2.5 text-[11px] bg-red-600 hover:bg-red-700 text-white" onClick={() => onAction(rental, 'return')}>
-                      <RotateCcw className="h-3 w-3 mr-1" />Return Now
+                    <Button size="sm" className="h-11 sm:h-7 px-3 sm:px-2.5 text-xs sm:text-[11px] bg-red-600 hover:bg-red-700 text-white" onClick={() => onAction(rental, 'return')}>
+                      <RotateCcw className="h-3.5 w-3.5 sm:h-3 sm:w-3 mr-1" />Return Now
                     </Button>
-                    <Button size="sm" variant="outline" className="h-7 px-2.5 text-[11px]" onClick={() => onAction(rental, 'contact')}>
-                      <Phone className="h-3 w-3 mr-1" />Contact
+                    <Button size="sm" variant="outline" className="h-11 sm:h-7 px-3 sm:px-2.5 text-xs sm:text-[11px]" onClick={() => onAction(rental, 'contact')}>
+                      <Phone className="h-3.5 w-3.5 sm:h-3 sm:w-3 mr-1" />Contact
                     </Button>
                   </>
                 )}
@@ -470,7 +470,7 @@ export default function MyRentalsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-slate-50 pb-20 sm:pb-0">
       {/* Header */}
       <div className="bg-white border-b border-slate-200 sticky top-0 z-30">
         <div className="max-w-5xl mx-auto px-4 sm:px-6">
@@ -485,15 +485,15 @@ export default function MyRentalsPage() {
         </div>
       </div>
 
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-4 sm:py-6">
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as TabKey)} className="mb-6">
-          <TabsList className="bg-slate-100 p-1 h-auto flex-wrap gap-1">
+          <TabsList className="bg-slate-100 p-1 h-auto flex-nowrap gap-1 overflow-x-auto scrollbar-none">
             {(Object.keys(tabCounts) as TabKey[]).map((tab) => (
               <TabsTrigger
                 key={tab}
                 value={tab}
-                className="text-xs sm:text-sm px-3 py-1.5 data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-sm capitalize"
+                className="text-xs sm:text-sm px-3 sm:px-4 py-1.5 whitespace-nowrap data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-sm capitalize"
               >
                 {tab}
                 {tabCounts[tab] > 0 && (
@@ -514,7 +514,7 @@ export default function MyRentalsPage() {
         ) : filteredRentals.length === 0 ? (
           <EmptyState tab={activeTab} />
         ) : (
-          <div className="space-y-3 max-h-[calc(100vh-220px)] overflow-y-auto pr-1">
+          <div className="space-y-3 max-h-[calc(100vh-220px)] overflow-y-auto pr-1 pb-16 sm:pb-0">
             <AnimatePresence mode="popLayout">
               {filteredRentals.map((rental) => (
                 <RentalCard

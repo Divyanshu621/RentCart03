@@ -346,7 +346,7 @@ export default function ProductDetailPage() {
       <div className="min-h-screen bg-slate-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <Skeleton className="h-10 w-32 mb-6" />
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-8">
             <Skeleton className="aspect-square rounded-xl" />
             <div className="space-y-4">
               <Skeleton className="h-8 w-3/4" />
@@ -385,14 +385,14 @@ export default function ProductDetailPage() {
         <motion.div initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }}>
           <button
             onClick={goBack}
-            className="flex items-center gap-2 text-sm text-slate-600 hover:text-slate-900 transition-colors mb-6 group"
+            className="flex items-center gap-2 text-xs sm:text-sm text-slate-600 hover:text-slate-900 transition-colors mb-4 sm:mb-6 group"
           >
             <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
             Back to marketplace
           </button>
         </motion.div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-8">
           {/* Left: Image Gallery */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -770,10 +770,10 @@ export default function ProductDetailPage() {
                   </div>
                 )}
 
-                {/* Rent Now CTA */}
+                {/* Rent Now CTA - hidden on mobile (shown in sticky bar) */}
                 <Button
                   size="lg"
-                  className={`w-full h-12 text-base font-semibold ${
+                  className={`w-full h-12 text-base font-semibold hidden md:flex ${
                     isNotApproved || !startDate || !endDate || !isDateValid
                       ? 'bg-slate-300 text-slate-500 cursor-not-allowed'
                       : 'bg-emerald-600 hover:bg-emerald-700 text-white'
@@ -803,7 +803,7 @@ export default function ProductDetailPage() {
         </div>
 
         {/* Availability Calendar & Reviews - Below */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-10">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-8 mt-10">
           {/* Availability Calendar */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -940,6 +940,27 @@ export default function ProductDetailPage() {
             </Card>
           </motion.div>
         </div>
+        {/* Mobile sticky bottom CTA - only visible on mobile when dates are selected */}
+        {startDate && endDate && rentalCalc.days > 0 && (
+          <div className="fixed bottom-16 left-0 right-0 z-30 bg-white border-t border-slate-200 px-4 py-3 safe-area-bottom md:hidden">
+            <div className="max-w-lg mx-auto flex items-center justify-between gap-3">
+              <div className="min-w-0">
+                <p className="text-xs text-slate-500">Total for {rentalCalc.days} days</p>
+                <p className="text-lg font-bold text-slate-900">₹{rentalCalc.total.toLocaleString('en-IN')}</p>
+              </div>
+              <Button
+                size="lg"
+                className={`h-12 px-6 font-semibold ${!user || isNotApproved ? 'bg-slate-300 text-slate-500' : 'bg-emerald-600 hover:bg-emerald-700 text-white'}`}
+                onClick={handleRentNow}
+                disabled={!user || isNotApproved || createRentalMutation.isPending}
+              >
+                {createRentalMutation.isPending
+                  ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />Processing...</>
+                  : !user ? 'Sign in to Rent' : 'Rent Now'}
+              </Button>
+            </div>
+          </div>
+        )}
       </div>
 
       <PaymentCheckoutModal

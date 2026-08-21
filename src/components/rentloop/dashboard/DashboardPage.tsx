@@ -331,7 +331,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 pb-20 sm:pb-0">
       <motion.div
         className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8"
         variants={containerVariants}
@@ -369,7 +369,7 @@ export default function DashboardPage() {
         </motion.div>
 
         {/* ─── Stats Grid ─────────────────────────────────── */}
-        <motion.div variants={itemVariants} className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <motion.div variants={itemVariants} className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-8">
           {statCards.map((stat) => {
             const value = stats?.[stat.key] ?? 0;
             const Icon = stat.icon;
@@ -378,21 +378,21 @@ export default function DashboardPage() {
                 key={stat.key}
                 className={`relative overflow-hidden border ${stat.border} ${stat.bg} hover:shadow-lg transition-shadow duration-300`}
               >
-                <CardContent className="p-4 sm:p-5">
+                <CardContent className="p-3 sm:p-5">
                   <div className="flex items-start justify-between">
-                    <div className={`p-2.5 rounded-xl ${stat.iconBg}`}>
-                      <Icon className={`w-5 h-5 ${stat.color}`} />
+                    <div className={`p-2 sm:p-2.5 rounded-xl ${stat.iconBg}`}>
+                      <Icon className={`w-4 h-4 sm:w-5 sm:h-5 ${stat.color}`} />
                     </div>
                   </div>
-                  <div className="mt-3">
-                    <p className={`text-2xl sm:text-3xl font-bold ${stat.color} tracking-tight`}>
+                  <div className="mt-2 sm:mt-3">
+                    <p className={`text-xl sm:text-2xl md:text-3xl font-bold ${stat.color} tracking-tight`}>
                       <AnimatedCounter
                         target={value}
                         prefix={stat.prefix}
                         suffix={stat.suffix}
                       />
                     </p>
-                    <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1 font-medium">
+                    <p className="text-[11px] sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5 sm:mt-1 font-medium">
                       {stat.label}
                     </p>
                   </div>
@@ -406,8 +406,8 @@ export default function DashboardPage() {
 
         {/* ─── Quick Actions ───────────────────────────────── */}
         <motion.div variants={itemVariants} className="mb-8">
-          <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">Quick Actions</h2>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+          <h2 className="text-base sm:text-lg font-semibold text-slate-900 dark:text-white mb-3 sm:mb-4">Quick Actions</h2>
+          <div className="grid grid-cols-3 sm:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-3">
             {quickActions.map((action) => {
               const Icon = action.icon;
               return (
@@ -416,16 +416,16 @@ export default function DashboardPage() {
                   whileHover={{ y: -2, scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={() => navigate(action.view)}
-                  className="flex flex-col items-center gap-2 p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-emerald-300 dark:hover:border-emerald-700 hover:shadow-md transition-all duration-200 group"
+                  className="flex flex-col items-center gap-1.5 sm:gap-2 p-2.5 sm:p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-emerald-300 dark:hover:border-emerald-700 hover:shadow-md transition-all duration-200 group"
                 >
-                  <div className="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 group-hover:bg-emerald-100 dark:group-hover:bg-emerald-900/40 transition-colors">
-                    <Icon className="w-5 h-5 text-slate-500 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors" />
+                  <div className="p-2 sm:p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 group-hover:bg-emerald-100 dark:group-hover:bg-emerald-900/40 transition-colors">
+                    <Icon className="w-4 h-4 sm:w-5 sm:h-5 text-slate-500 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors" />
                   </div>
                   <div className="text-center">
-                    <p className="text-sm font-semibold text-slate-700 dark:text-slate-200 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
+                    <p className="text-[11px] sm:text-sm font-semibold text-slate-700 dark:text-slate-200 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
                       {action.label}
                     </p>
-                    <p className="text-[11px] text-slate-400 mt-0.5">{action.desc}</p>
+                    <p className="text-[10px] sm:text-[11px] text-slate-400 mt-0.5 hidden sm:block">{action.desc}</p>
                   </div>
                 </motion.button>
               );
@@ -468,7 +468,7 @@ export default function DashboardPage() {
                         <span className="text-sm text-slate-700 dark:text-slate-300 truncate">
                           {rental.product.title}
                         </span>
-                        <span className="text-xs text-slate-400 flex-shrink-0">
+                        <span className="text-xs text-slate-400 flex-shrink-0 hidden sm:inline">
                           by {rental.customer.name}
                         </span>
                       </div>
@@ -504,7 +504,7 @@ export default function DashboardPage() {
               </Button>
             </div>
             <Card className="overflow-hidden">
-              <CardContent className="p-2 sm:p-3">
+              <CardContent className="p-1.5 sm:p-3">
                 <div className="divide-y divide-slate-100 dark:divide-slate-800">
                   {activeCustomerRentals.slice(0, 3).map((rental) => (
                     <RentalItem key={rental.id} rental={rental} role="customer" />
@@ -538,7 +538,7 @@ export default function DashboardPage() {
               </Button>
             </div>
             <Card className="overflow-hidden">
-              <CardContent className="p-2 sm:p-3">
+              <CardContent className="p-1.5 sm:p-3">
                 <div className="divide-y divide-slate-100 dark:divide-slate-800">
                   {ownerRentals.slice(0, 4).map((rental) => (
                     <RentalItem key={rental.id} rental={rental} role="owner" />
@@ -563,7 +563,7 @@ export default function DashboardPage() {
               </div>
             </div>
             <Card className="overflow-hidden">
-              <CardContent className="p-2 sm:p-3">
+              <CardContent className="p-1.5 sm:p-3">
                 <div className="divide-y divide-slate-100 dark:divide-slate-800">
                   {uniqueRecent.map((rental) => {
                     const isCustomer = rental.customerId === user?.id;
@@ -583,7 +583,7 @@ export default function DashboardPage() {
 
         {/* ─── Empty State ─────────────────────────────────── */}
         {!loading && !error && uniqueRecent.length === 0 && activeCustomerRentals.length === 0 && ownerRentals.length === 0 && (
-          <motion.div variants={itemVariants} className="text-center py-16">
+          <motion.div variants={itemVariants} className="text-center py-12 sm:py-16 pb-24 sm:pb-16">
             <div className="w-20 h-20 rounded-full bg-emerald-50 dark:bg-emerald-900/20 flex items-center justify-center mx-auto mb-6">
               <Package className="w-10 h-10 text-emerald-400" />
             </div>
