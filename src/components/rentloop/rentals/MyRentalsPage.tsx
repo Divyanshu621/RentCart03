@@ -38,6 +38,7 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
+import PaymentCheckoutModal from '@/components/rentloop/payment/PaymentCheckoutModal';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -364,6 +365,8 @@ export default function MyRentalsPage() {
   const [activeTab, setActiveTab] = useState<TabKey>('all');
   const [detailOpen, setDetailOpen] = useState(false);
   const [selectedRental, setSelectedRental] = useState<Rental | null>(null);
+  const [paymentModalOpen, setPaymentModalOpen] = useState(false);
+  const [paymentRental, setPaymentRental] = useState<Rental | null>(null);
 
   // Fetch rentals as customer
   const { data: customerRentals = [], isLoading: loadingCustomer } = useQuery({
@@ -425,7 +428,8 @@ export default function MyRentalsPage() {
   const handleAction = useCallback((rental: Rental, action: string) => {
     switch (action) {
       case 'pay':
-        payMutation.mutate(rental.id);
+        setPaymentRental(rental);
+        setPaymentModalOpen(true);
         break;
       case 'cancel':
         cancelMutation.mutate({ id: rental.id });
@@ -530,6 +534,32 @@ export default function MyRentalsPage() {
         rentalId={selectedRental?.id ?? null}
         open={detailOpen}
         onClose={() => { setDetailOpen(false); setSelectedRental(null); }}
+      />
+      {/* Payment Modal */}
+      <PaymentCheckoutModal
+        open={paymentModalOpen}
+        onClose={() => { setPaymentModalOpen(false); setPaymentRental(null); }}
+        rentalId={paymentRental?.id || ''}
+        rentalData={paymentRental ? {
+          totalAmount: paymentRental.totalAmount,
+          rentalAmount: paymentRental.rentalAmount,
+          platformFee: paymentRental.platformFee,
+          tax: paymentRental.tax,
+          deliveryFee: paymentRental.deliveryFee,
+          discount: paymentRental.discount,
+          securityDeposit: paymentRental.securityDeposit,
+          rentalDays: paymentRental.rentalDays,
+          dailyRate: paymentRental.dailyRate,
+          startDate: paymentRental.startDate,
+          endDate: paymentRental.endDate,
+          productTitle: paymentRental.product?.title,
+        } : null}
+        onSuccess={() => {
+          setPaymentModalOpen(false);
+          setPaymentRental(null);
+          queryClient.invalidateQueries({ queryKey: ['rentals'] });
+          toast.success('Payment successful! Rental request sent to owner.');
+        }}
       />
     </div>
   );

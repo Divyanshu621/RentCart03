@@ -52,6 +52,7 @@ import { api } from '@/lib/api';
 import type { Product, Review } from '@/types';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import PaymentCheckoutModal from '@/components/rentloop/payment/PaymentCheckoutModal';
 
 const categoryIcons: Record<string, LucideIcon> = {
   'cameras': Camera,
@@ -145,6 +146,8 @@ export default function ProductDetailPage() {
   const [couponDiscount, setCouponDiscount] = useState(0);
   const [isFavorited, setIsFavorited] = useState(false);
   const [calOpen, setCalOpen] = useState<'start' | 'end' | null>(null);
+  const [paymentModalOpen, setPaymentModalOpen] = useState(false);
+  const [pendingRentalId, setPendingRentalId] = useState('');
 
   // Fetch product
   const { data: productData, isLoading, isError } = useQuery({
@@ -197,11 +200,17 @@ export default function ProductDetailPage() {
   const createRentalMutation = useMutation({
     mutationFn: (data: { productId: string; startDate: string; endDate: string; couponCode?: string }) =>
       api.createRental(data),
-    onSuccess: () => {
-      toast.success('Rental created! Please proceed to payment.');
-      queryClient.invalidateQueries({ queryKey: ['rentals'] });
-      queryClient.invalidateQueries({ queryKey: ['my-rentals'] });
-      navigate('my-rentals');
+    onSuccess: (res: Record<string, unknown>) => {
+      const rental = res.rental as { id: string } | undefined;
+      if (rental?.id) {
+        setPendingRentalId(rental.id);
+        setPaymentModalOpen(true);
+      } else {
+        toast.success('Rental created! Please proceed to payment.');
+        queryClient.invalidateQueries({ queryKey: ['rentals'] });
+        queryClient.invalidateQueries({ queryKey: ['my-rentals'] });
+        navigate('my-rentals');
+      }
     },
     onError: (error: Error) => {
       toast.error(error.message || 'Failed to create rental. Please try again.');
@@ -932,6 +941,33 @@ export default function ProductDetailPage() {
           </motion.div>
         </div>
       </div>
+
+      <PaymentCheckoutModal
+        open={paymentModalOpen}
+        onClose={() => { setPaymentModalOpen(false); setPendingRentalId(''); }}
+        rentalId={pendingRentalId}
+        rentalData={startDate && endDate ? {
+          totalAmount: rentalCalc.total,
+          rentalAmount: rentalCalc.rentalAmount,
+          platformFee: rentalCalc.platformFee,
+          tax: rentalCalc.tax,
+          deliveryFee: rentalCalc.deliveryFee,
+          discount: rentalCalc.discount,
+          securityDeposit: rentalCalc.securityDeposit,
+          rentalDays: rentalCalc.rentalDays,
+          dailyRate: rentalCalc.dailyRate,
+          startDate: format(startDate, 'yyyy-MM-dd'),
+          endDate: format(endDate, 'yyyy-MM-dd'),
+          productTitle: (productData as Record<string, unknown>)?.title as string || undefined,
+        } : null}
+        onSuccess={() => {
+          setPaymentModalOpen(false);
+          setPendingRentalId('');
+          queryClient.invalidateQueries({ queryKey: ['rentals'] });
+          queryClient.invalidateQueries({ queryKey: ['my-rentals'] });
+          navigate('my-rentals');
+        }}
+      />
     </div>
   );
 }

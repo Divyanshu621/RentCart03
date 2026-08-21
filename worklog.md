@@ -736,3 +736,31 @@ Stage Summary:
 - Transparent on top → solid dark on scroll with backdrop blur
 - Mobile responsive with slide-out menu
 - Zero lint errors/warnings
+
+---
+Task ID: 5
+Agent: Main
+Task: Add payment gateway/method to RentCart
+
+Work Log:
+- Installed razorpay@2.9.8 package
+- Created `/api/payments/create-order/route.ts` - Creates Razorpay order or simulated demo order
+- Created `/api/payments/verify/route.ts` - Verifies Razorpay payment signature with HMAC-SHA256, completes rental on success
+- Created `/components/rentloop/payment/PaymentCheckoutModal.tsx` (834 lines) - Full checkout modal with:
+  - Order summary (product, dates, pricing breakdown, total)
+  - 6 payment methods: Razorpay, UPI Direct, Credit/Debit Card, Net Banking, Wallet, Cash on Pickup
+  - Method-specific forms (UPI ID, card details, bank selection, wallet grid)
+  - Processing animation with spinner
+  - Success screen with checkmark animation
+  - Security badges (100% Secure, Buyer Protection, Money-back guarantee)
+- Updated `api.ts` with `createPaymentOrder` and `verifyPayment` functions
+- Updated `ProductDetailPage.tsx` - Opens payment modal after rental creation instead of navigating away
+- Updated `MyRentalsPage.tsx` - Pay Now button now opens payment modal instead of instant simulated payment
+- Zero lint errors, clean compilation
+
+Stage Summary:
+- Complete payment gateway integration with Razorpay (real mode when keys configured)
+- Demo/simulated mode works without any API keys
+- 6 Indian payment methods supported (Razorpay, UPI, Card, Net Banking, Wallet, Cash on Pickup)
+- Beautiful checkout modal with order summary, method selection, processing & success states
+- Integrated into both ProductDetailPage (post-creation) and MyRentalsPage (pay pending)

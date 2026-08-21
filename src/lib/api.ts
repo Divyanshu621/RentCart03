@@ -99,6 +99,13 @@ export const api = {
   payRental: (id: string) =>
     request<Record<string, unknown>>(`/api/rentals/${id}/pay`, { method: 'POST' }),
 
+  // Payments
+  createPaymentOrder: (rentalId: string, paymentMethod?: string) =>
+    request<Record<string, unknown>>('/api/payments/create-order', { method: 'POST', body: JSON.stringify({ rentalId, paymentMethod }) }),
+
+  verifyPayment: (data: { rentalId: string; razorpayOrderId?: string; razorpayPaymentId?: string; razorpaySignature?: string; paymentMethod?: string }) =>
+    request<Record<string, unknown>>('/api/payments/verify', { method: 'POST', body: JSON.stringify(data) }),
+
   cancelRental: (id: string, reason?: string) =>
     request<Record<string, unknown>>(`/api/rentals/${id}/cancel`, { method: 'POST', body: JSON.stringify({ reason }) }),
 
