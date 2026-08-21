@@ -355,30 +355,30 @@ export default function AppHeader() {
       </div>
 
       {/* Main header */}
-      <header className="sticky top-0 z-50 w-full bg-white shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-14">
+      <header className="sticky top-0 z-50 w-full bg-white shadow-sm overflow-hidden">
+        <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8">
+          <div className="flex items-center gap-2 sm:gap-3 h-14 min-w-0">
             {/* Logo */}
             <button
               onClick={() => navigate('landing')}
-              className="flex items-center gap-2 group shrink-0"
+              className="flex items-center gap-1.5 sm:gap-2 group shrink-0"
             >
-              <div className="w-8 h-8 bg-[#059669] rounded-lg flex items-center justify-center">
-                <Store className="w-5 h-5 text-white" />
+              <div className="w-7 h-7 sm:w-8 sm:h-8 bg-[#059669] rounded-lg flex items-center justify-center">
+                <Store className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
               </div>
-              <span className="text-xl font-bold tracking-tight text-[#0f172a]">
+              <span className="hidden sm:inline text-lg sm:text-xl font-bold tracking-tight text-[#0f172a]">
                 Rent<span className="text-emerald-600">Cart</span>
               </span>
             </button>
 
             {/* Desktop: Unified search bar */}
-            <div className="hidden md:flex flex-1 max-w-2xl mx-6">
+            <div className="hidden md:flex flex-1 max-w-xs lg:max-w-xl xl:max-w-2xl mx-2 lg:mx-6 min-w-0">
               <div className="flex items-center w-full border-2 border-emerald-500 rounded-lg h-10 overflow-hidden bg-white">
                 {/* Category dropdown */}
                 <div ref={categoryDropdownRef} className="relative">
                   <button
                     onClick={() => setShowCategoryDropdown(!showCategoryDropdown)}
-                    className="w-[140px] h-full flex items-center justify-between gap-1 px-3 bg-gray-50 border-r border-gray-200 text-xs text-[#0f172a] font-medium hover:bg-gray-100 transition-colors shrink-0"
+                    className="w-[100px] lg:w-[140px] h-full flex items-center justify-between gap-1 px-2.5 lg:px-3 bg-gray-50 border-r border-gray-200 text-xs text-[#0f172a] font-medium hover:bg-gray-100 transition-colors shrink-0"
                   >
                     <span className="truncate">All Categories</span>
                     <ChevronDown className={`w-3.5 h-3.5 text-[#64748b] shrink-0 transition-transform ${showCategoryDropdown ? 'rotate-180' : ''}`} />
@@ -408,7 +408,7 @@ export default function AppHeader() {
                 <div ref={locationPopoverRef} className="relative">
                   <button
                     onClick={() => setShowLocationPopover(!showLocationPopover)}
-                    className={`w-[130px] h-full flex items-center gap-1.5 px-3 border-r border-gray-200 text-xs shrink-0 transition-colors ${
+                    className={`w-[90px] lg:w-[130px] h-full flex items-center gap-1 px-2 lg:px-3 border-r border-gray-200 text-xs shrink-0 transition-colors ${
                       hasLocationSelection
                         ? 'text-[#0f172a] font-medium'
                         : 'text-[#94a3b8]'
@@ -416,7 +416,7 @@ export default function AppHeader() {
                   >
                     <MapPin className={`w-3.5 h-3.5 shrink-0 ${hasLocationSelection ? 'text-[#059669]' : 'text-[#94a3b8]'}`} />
                     <span className="truncate">{locationLabel}</span>
-                    <ChevronDown className={`w-3 h-3 shrink-0 transition-transform ${showLocationPopover ? 'rotate-180' : ''}`} />
+                    <ChevronDown className="w-3 h-3 shrink-0 transition-transform ${showLocationPopover ? 'rotate-180' : ''} hidden lg:block" />
                   </button>
                   {showLocationPopover && (
                     <div className="absolute top-full left-0 mt-1 w-64 bg-white rounded-lg shadow-xl border border-gray-100 p-4 z-50">
@@ -509,7 +509,7 @@ export default function AppHeader() {
             </div>
 
             {/* Right actions */}
-            <div className="flex items-center gap-2 shrink-0">
+            <div className="flex items-center gap-1 sm:gap-2 shrink-0">
               {/* Mobile: Search icon */}
               <button
                 onClick={() => navigate('marketplace')}
@@ -537,10 +537,11 @@ export default function AppHeader() {
                   <Button
                     size="sm"
                     onClick={() => requireAuth(() => navigate('list-item'))}
-                    className="hidden sm:flex bg-orange-500 hover:bg-orange-600 text-white rounded-full text-xs font-semibold px-4 h-8 gap-1.5"
+                    className="hidden lg:flex bg-orange-500 hover:bg-orange-600 text-white rounded-full text-xs font-semibold px-3 lg:px-4 h-8 gap-1.5"
                   >
                     <Plus className="w-3.5 h-3.5" />
-                    <span>List Item Free</span>
+                    <span className="hidden xl:inline">List Item Free</span>
+                    <span className="xl:hidden">List</span>
                   </Button>
 
                   {/* Notifications */}
@@ -582,7 +583,7 @@ export default function AppHeader() {
                             {user.name?.charAt(0)?.toUpperCase() || 'U'}
                           </AvatarFallback>
                         </Avatar>
-                        <span className="hidden sm:block text-sm font-medium text-[#0f172a] max-w-[100px] truncate">
+                        <span className="hidden lg:block text-sm font-medium text-[#0f172a] max-w-[80px] lg:max-w-[100px] truncate">
                           {user.name?.split(' ')[0]}
                         </span>
                       </button>
@@ -596,19 +597,19 @@ export default function AppHeader() {
                   </DropdownMenu>
                 </>
               ) : (
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5 sm:gap-2">
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={() => { setAuthModalView('login'); setAuthModalOpen(true); }}
-                    className="text-[#64748b] hover:text-[#0f172a] hover:bg-gray-100"
+                    className="text-[#64748b] hover:text-[#0f172a] hover:bg-gray-100 text-xs sm:text-sm px-2 sm:px-3"
                   >
                     Login
                   </Button>
                   <Button
                     size="sm"
                     onClick={() => { setAuthModalView('register'); setAuthModalOpen(true); }}
-                    className="bg-orange-500 hover:bg-orange-600 text-white"
+                    className="bg-orange-500 hover:bg-orange-600 text-white text-xs sm:text-sm px-3 sm:px-4"
                   >
                     Sign Up
                   </Button>
