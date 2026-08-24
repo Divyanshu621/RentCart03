@@ -337,14 +337,12 @@ export default function ListItemPage() {
         ownerNotes: data.ownerNotes || undefined,
       };
 
-      // Attach uploaded image URLs for new products
-      if (!isEditing) {
-        const uploadedUrls = images
-          .filter(img => img.serverUrl)
-          .map(img => img.serverUrl);
-        if (uploadedUrls.length > 0) {
-          payload.imageUrls = uploadedUrls;
-        }
+      // Attach uploaded image URLs
+      const uploadedUrls = images
+        .filter(img => img.serverUrl)
+        .map(img => img.serverUrl);
+      if (uploadedUrls.length > 0) {
+        payload.imageUrls = uploadedUrls;
       }
 
       if (isEditing) {

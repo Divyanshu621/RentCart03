@@ -40,7 +40,78 @@ function GoogleIcon({ className = 'w-5 h-5' }: { className?: string }) {
   );
 }
 
-// ─── Pinterest-style Login Page ─────────────────────────────
+// ─── Left Panel SVG Illustration ────────────────────────────
+function RentalIllustration() {
+  return (
+    <svg viewBox="0 0 480 400" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full max-w-sm mx-auto">
+      {/* Background circle glow */}
+      <circle cx="240" cy="200" r="160" fill="url(#glowGrad)" opacity="0.3" />
+      
+      {/* Camera */}
+      <g transform="translate(80, 80)">
+        <rect x="0" y="8" width="80" height="56" rx="8" fill="#10b981" opacity="0.9" />
+        <rect x="4" y="12" width="72" height="48" rx="6" fill="#064e3b" />
+        <circle cx="40" cy="36" r="14" fill="none" stroke="#34d399" strokeWidth="3" />
+        <circle cx="40" cy="36" r="6" fill="#34d399" />
+        <rect x="56" y="14" width="12" height="8" rx="2" fill="#6ee7b7" opacity="0.5" />
+        <rect x="28" y="4" width="24" height="8" rx="4" fill="#10b981" opacity="0.9" />
+      </g>
+      
+      {/* Laptop */}
+      <g transform="translate(300, 100)">
+        <rect x="0" y="0" width="80" height="52" rx="6" fill="#10b981" opacity="0.9" />
+        <rect x="4" y="4" width="72" height="40" rx="3" fill="#064e3b" />
+        <rect x="-8" y="52" width="96" height="6" rx="3" fill="#10b981" opacity="0.8" />
+        {/* Screen content lines */}
+        <rect x="12" y="12" width="40" height="3" rx="1.5" fill="#34d399" opacity="0.6" />
+        <rect x="12" y="20" width="56" height="3" rx="1.5" fill="#34d399" opacity="0.4" />
+        <rect x="12" y="28" width="48" height="3" rx="1.5" fill="#34d399" opacity="0.4" />
+        <rect x="12" y="36" width="32" height="3" rx="1.5" fill="#34d399" opacity="0.3" />
+      </g>
+      
+      {/* Bike */}
+      <g transform="translate(120, 240)">
+        <circle cx="24" cy="40" r="20" fill="none" stroke="#10b981" strokeWidth="3" opacity="0.9" />
+        <circle cx="76" cy="40" r="20" fill="none" stroke="#10b981" strokeWidth="3" opacity="0.9" />
+        <path d="M24 40 L50 12 L76 40" fill="none" stroke="#34d399" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M50 12 L40 40 L76 40" fill="none" stroke="#34d399" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+        <line x1="50" y1="12" x2="66" y2="12" stroke="#10b981" strokeWidth="3" strokeLinecap="round" />
+        <circle cx="50" cy="12" r="3" fill="#6ee7b7" />
+      </g>
+      
+      {/* Drill / Tool */}
+      <g transform="translate(320, 260)">
+        <rect x="0" y="20" width="60" height="24" rx="6" fill="#10b981" opacity="0.9" />
+        <rect x="60" y="24" width="30" height="16" rx="3" fill="#064e3b" />
+        <polygon points="90,28 110,32 90,36" fill="#34d399" />
+        <rect x="8" y="0" width="8" height="20" rx="2" fill="#10b981" opacity="0.7" />
+        <circle cx="42" cy="32" r="4" fill="#064e3b" />
+        <circle cx="42" cy="32" r="2" fill="#6ee7b7" />
+      </g>
+      
+      {/* Floating dots / particles */}
+      <circle cx="200" cy="60" r="4" fill="#34d399" opacity="0.5" />
+      <circle cx="280" cy="50" r="3" fill="#6ee7b7" opacity="0.4" />
+      <circle cx="420" cy="200" r="4" fill="#34d399" opacity="0.3" />
+      <circle cx="60" cy="180" r="3" fill="#6ee7b7" opacity="0.4" />
+      <circle cx="160" cy="320" r="3" fill="#34d399" opacity="0.3" />
+      <circle cx="380" cy="320" r="4" fill="#6ee7b7" opacity="0.3" />
+      
+      {/* Connection lines */}
+      <path d="M160 120 Q200 160 170 240" stroke="#10b981" strokeWidth="1" strokeDasharray="4 4" opacity="0.3" />
+      <path d="M340 140 Q360 200 340 260" stroke="#10b981" strokeWidth="1" strokeDasharray="4 4" opacity="0.3" />
+      
+      <defs>
+        <radialGradient id="glowGrad" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stopColor="#10b981" stopOpacity="0.4" />
+          <stop offset="100%" stopColor="#10b981" stopOpacity="0" />
+        </radialGradient>
+      </defs>
+    </svg>
+  );
+}
+
+// ─── Unstop-inspired Split Login Page ───────────────────────
 export default function LoginPage() {
   const { setUser, navigate, setAuthModalOpen, setAuthModalView } = useAppStore();
   const [showPassword, setShowPassword] = useState(false);
@@ -160,156 +231,206 @@ export default function LoginPage() {
   });
 
   return (
-    <div className="min-h-screen bg-white flex flex-col">
-      {/* Top bar with logo */}
-      <div className="w-full max-w-md mx-auto px-6 pt-6 pb-2">
-        <button
-          onClick={() => navigate('landing')}
-          className="inline-flex items-center gap-2 group"
-        >
-          <div className="w-8 h-8 rounded-lg bg-emerald-500 flex items-center justify-center">
-            <svg className="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 16.8l-6.2 4.5 2.4-7.4L2 9.4h7.6z" />
-            </svg>
-          </div>
-          <span className="text-[#0f172a] font-bold text-xl tracking-tight group-hover:opacity-80 transition-opacity">RentCart</span>
-        </button>
-      </div>
+    <div className="min-h-screen flex">
+      {/* ─── Left Panel (hidden on mobile) ─── */}
+      <div className="hidden lg:flex lg:w-1/2 bg-[#0a0f1a] flex-col items-center justify-center relative overflow-hidden">
+        {/* Subtle pattern overlay */}
+        <div className="absolute inset-0 opacity-[0.04]" style={{
+          backgroundImage: `radial-gradient(circle at 1px 1px, white 1px, transparent 0)`,
+          backgroundSize: '32px 32px',
+        }} />
+        
+        {/* Gradient glow */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full bg-emerald-500/10 blur-[100px]" />
 
-      {/* Centered form card */}
-      <div className="flex-1 flex items-center justify-center px-6 pb-12">
         <motion.div
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.35, ease: 'easeOut' }}
-          className="w-full max-w-sm"
+          initial={{ opacity: 0, x: -40 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.6, ease: 'easeOut' }}
+          className="relative z-10 flex flex-col items-center text-center px-10"
         >
-          {/* Heading */}
-          <h1 className="text-[28px] font-semibold text-[#0f172a] leading-tight mb-6">
-            Log in to discover more<br />rental deals just for you
-          </h1>
-
-          {/* Error display */}
-          {serverError && (
-            <motion.div
-              initial={{ opacity: 0, y: -4 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="mb-4 p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-sm"
-            >
-              {serverError}
-            </motion.div>
-          )}
-
-          {/* Form */}
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-3">
-            {/* Email */}
-            <div>
-              <Input
-                type="email"
-                placeholder="Email"
-                className={`h-[52px] rounded-2xl border-gray-300 text-[15px] placeholder:text-gray-500 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:border-blue-500 px-4 ${errors.email ? 'border-red-400 focus-visible:ring-red-400 focus-visible:border-red-400' : ''}`}
-                {...register('email')}
-              />
-              {errors.email && (
-                <p className="text-sm text-red-600 mt-1 ml-1">{errors.email.message}</p>
-              )}
+          {/* Logo */}
+          <div className="flex items-center gap-2.5 mb-12">
+            <div className="w-10 h-10 rounded-xl bg-emerald-500 flex items-center justify-center">
+              <svg className="w-5 h-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 16.8l-6.2 4.5 2.4-7.4L2 9.4h7.6z" />
+              </svg>
             </div>
-
-            {/* Password */}
-            <div>
-              <div className="relative">
-                <Input
-                  type={showPassword ? 'text' : 'password'}
-                  placeholder="Password"
-                  className={`h-[52px] rounded-2xl border-gray-300 text-[15px] placeholder:text-gray-500 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:border-blue-500 px-4 pr-12 ${errors.password ? 'border-red-400 focus-visible:ring-red-400 focus-visible:border-red-400' : ''}`}
-                  {...register('password')}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-800 transition-colors p-1"
-                  tabIndex={-1}
-                >
-                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                </button>
-              </div>
-              {errors.password && (
-                <p className="text-sm text-red-600 mt-1 ml-1">{errors.password.message}</p>
-              )}
-            </div>
-
-            {/* Forgot Password - left-aligned blue link */}
-            <div className="pt-1">
-              <button
-                type="button"
-                onClick={() => toast.info('Password reset link sent to your email!')}
-                className="text-[15px] text-[#0074e8] hover:text-[#0060b8] font-medium transition-colors"
-              >
-                Forgot password?
-              </button>
-            </div>
-
-            {/* Log in button - Red pill */}
-            <Button
-              type="submit"
-              disabled={isSubmitting}
-              className="w-full h-[52px] rounded-full bg-[#e60023] hover:bg-[#cc001f] active:bg-[#b3001b] text-white font-semibold text-[16px] transition-colors shadow-none"
-            >
-              {isSubmitting ? (
-                <>
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                  Logging in...
-                </>
-              ) : (
-                'Log in'
-              )}
-            </Button>
-          </form>
-
-          {/* OR divider */}
-          <div className="relative my-5 flex items-center">
-            <div className="flex-1 border-t border-gray-300" />
-            <span className="px-4 text-sm font-medium text-[#0f172a]">OR</span>
-            <div className="flex-1 border-t border-gray-300" />
+            <span className="text-white font-bold text-2xl tracking-tight">RentCart</span>
           </div>
 
-          {/* Continue with Google */}
-          <button
-            type="button"
-            onClick={handleGoogleClick}
-            disabled={isGoogleLoading || !checkedConfig}
-            className="w-full h-[52px] rounded-2xl border border-gray-300 bg-white hover:bg-gray-50 active:bg-gray-100 flex items-center justify-center gap-2.5 text-[15px] font-medium text-[#0f172a] transition-colors disabled:opacity-60"
-          >
-            {isGoogleLoading ? (
-              <Loader2 className="w-5 h-5 animate-spin text-gray-500" />
-            ) : (
-              <GoogleIcon />
-            )}
-            {isGoogleLoading ? 'Signing in...' : 'Continue with Google'}
-          </button>
+          {/* Illustration */}
+          <RentalIllustration />
 
-          {/* Sign up link */}
-          <p className="mt-6 text-center text-sm text-[#0f172a]">
-            Not on RentCart yet?{' '}
-            <button
-              onClick={openRegister}
-              className="text-[#0074e8] hover:text-[#0060b8] font-semibold transition-colors"
-            >
-              Sign up
-            </button>
-          </p>
-
-          {/* Terms notice */}
-          <p className="mt-4 text-center text-xs text-gray-500 leading-relaxed">
-            By continuing, you agree to RentCart&apos;s{' '}
-            <span className="underline cursor-pointer">Terms of Service</span>
-            {' '}and acknowledge our{' '}
-            <span className="underline cursor-pointer">Privacy Policy</span>.
+          {/* Tagline */}
+          <h2 className="mt-10 text-3xl font-bold text-white leading-tight">
+            Your Next Rental
+            <br />
+            <span className="text-emerald-400">Starts Here</span>
+          </h2>
+          <p className="mt-4 text-slate-400 text-base max-w-xs leading-relaxed">
+            Discover thousands of items available for rent near you. Save money, reduce waste, and enjoy more.
           </p>
         </motion.div>
       </div>
 
-      {/* Google Sign-in Dialog (Demo Mode) */}
+      {/* ─── Right Panel ─── */}
+      <div className="w-full lg:w-1/2 bg-white flex flex-col min-h-screen">
+        {/* Top bar with logo (mobile only) */}
+        <div className="w-full px-6 pt-6 pb-2 lg:hidden">
+          <button
+            onClick={() => navigate('landing')}
+            className="inline-flex items-center gap-2 group"
+          >
+            <div className="w-8 h-8 rounded-lg bg-emerald-500 flex items-center justify-center">
+              <svg className="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 16.8l-6.2 4.5 2.4-7.4L2 9.4h7.6z" />
+              </svg>
+            </div>
+            <span className="text-[#0f172a] font-bold text-xl tracking-tight group-hover:opacity-80 transition-opacity">RentCart</span>
+          </button>
+        </div>
+
+        {/* Form area */}
+        <div className="flex-1 flex items-center justify-center px-6 sm:px-10 pb-12">
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, ease: 'easeOut' }}
+            className="w-full max-w-sm"
+          >
+            {/* Heading */}
+            <h1 className="text-[28px] font-bold text-[#0f172a] leading-tight mb-2">
+              Welcome Back!
+            </h1>
+            <p className="text-sm text-slate-500 mb-6">
+              Log in to access your rentals, listings, and messages
+            </p>
+
+            {/* Error display */}
+            {serverError && (
+              <motion.div
+                initial={{ opacity: 0, y: -4 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="mb-4 p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-sm"
+              >
+                {serverError}
+              </motion.div>
+            )}
+
+            {/* Form */}
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-3">
+              {/* Email */}
+              <div>
+                <label className="text-sm font-medium text-slate-700 mb-1.5 block">Email</label>
+                <Input
+                  type="email"
+                  placeholder="you@example.com"
+                  className={`h-[48px] rounded-xl border-slate-300 text-[15px] placeholder:text-slate-400 focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:border-emerald-500 px-4 ${errors.email ? 'border-red-400 focus-visible:ring-red-400 focus-visible:border-red-400' : ''}`}
+                  {...register('email')}
+                />
+                {errors.email && (
+                  <p className="text-xs text-red-600 mt-1 ml-1">{errors.email.message}</p>
+                )}
+              </div>
+
+              {/* Password */}
+              <div>
+                <label className="text-sm font-medium text-slate-700 mb-1.5 block">Password</label>
+                <div className="relative">
+                  <Input
+                    type={showPassword ? 'text' : 'password'}
+                    placeholder="Enter your password"
+                    className={`h-[48px] rounded-xl border-slate-300 text-[15px] placeholder:text-slate-400 focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:border-emerald-500 px-4 pr-12 ${errors.password ? 'border-red-400 focus-visible:ring-red-400 focus-visible:border-red-400' : ''}`}
+                    {...register('password')}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 transition-colors p-1"
+                    tabIndex={-1}
+                  >
+                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  </button>
+                </div>
+                {errors.password && (
+                  <p className="text-xs text-red-600 mt-1 ml-1">{errors.password.message}</p>
+                )}
+              </div>
+
+              {/* Forgot Password */}
+              <div className="pt-1 text-right">
+                <button
+                  type="button"
+                  onClick={() => toast.info('Password reset link sent to your email!')}
+                  className="text-sm text-emerald-600 hover:text-emerald-700 font-medium transition-colors"
+                >
+                  Forgot password?
+                </button>
+              </div>
+
+              {/* Log in button */}
+              <Button
+                type="submit"
+                disabled={isSubmitting}
+                className="w-full h-[48px] rounded-full bg-[#e60023] hover:bg-[#cc001f] active:bg-[#b3001b] text-white font-semibold text-[15px] transition-colors shadow-none"
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                    Logging in...
+                  </>
+                ) : (
+                  'Log in'
+                )}
+              </Button>
+            </form>
+
+            {/* OR divider */}
+            <div className="relative my-5 flex items-center">
+              <div className="flex-1 border-t border-slate-200" />
+              <span className="px-4 text-xs font-medium text-slate-400 uppercase tracking-wider">or</span>
+              <div className="flex-1 border-t border-slate-200" />
+            </div>
+
+            {/* Continue with Google */}
+            <button
+              type="button"
+              onClick={handleGoogleClick}
+              disabled={isGoogleLoading || !checkedConfig}
+              className="w-full h-[48px] rounded-xl border border-slate-300 bg-white hover:bg-slate-50 active:bg-slate-100 flex items-center justify-center gap-2.5 text-[15px] font-medium text-[#0f172a] transition-colors disabled:opacity-60"
+            >
+              {isGoogleLoading ? (
+                <Loader2 className="w-5 h-5 animate-spin text-slate-500" />
+              ) : (
+                <GoogleIcon />
+              )}
+              {isGoogleLoading ? 'Signing in...' : 'Continue with Google'}
+            </button>
+
+            {/* Sign up link */}
+            <p className="mt-6 text-center text-sm text-slate-600">
+              Not on RentCart yet?{' '}
+              <button
+                onClick={openRegister}
+                className="text-emerald-600 hover:text-emerald-700 font-semibold transition-colors"
+              >
+                Sign up
+              </button>
+            </p>
+
+            {/* Terms notice */}
+            <p className="mt-4 text-center text-xs text-slate-400 leading-relaxed">
+              By continuing, you agree to RentCart&apos;s{' '}
+              <span className="underline cursor-pointer hover:text-slate-600">Terms of Service</span>
+              {' '}and acknowledge our{' '}
+              <span className="underline cursor-pointer hover:text-slate-600">Privacy Policy</span>.
+            </p>
+          </motion.div>
+        </div>
+      </div>
+
+      {/* ─── Google Sign-in Dialog (Demo Mode) ─── */}
       <AnimatePresence>
         {showGoogleDialog && (
           <motion.div
@@ -353,7 +474,7 @@ export default function LoginPage() {
                     onChange={(e) => setGoogleEmail(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && handleDemoGoogleLogin()}
                     disabled={isGoogleLoading}
-                    className="h-[48px] rounded-xl border-gray-300 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:border-blue-500 text-[15px]"
+                    className="h-[48px] rounded-xl border-gray-300 focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:border-emerald-500 text-[15px]"
                     autoFocus
                   />
                   <p className="text-xs text-gray-500 mt-1.5">Only Gmail addresses are supported for demo mode</p>
@@ -369,7 +490,7 @@ export default function LoginPage() {
                     onChange={(e) => setGoogleName(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && handleDemoGoogleLogin()}
                     disabled={isGoogleLoading}
-                    className="h-[48px] rounded-xl border-gray-300 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:border-blue-500 text-[15px]"
+                    className="h-[48px] rounded-xl border-gray-300 focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:border-emerald-500 text-[15px]"
                   />
                 </div>
                 <Button

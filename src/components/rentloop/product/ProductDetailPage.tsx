@@ -148,6 +148,7 @@ export default function ProductDetailPage() {
   const [calOpen, setCalOpen] = useState<'start' | 'end' | null>(null);
   const [paymentModalOpen, setPaymentModalOpen] = useState(false);
   const [pendingRentalId, setPendingRentalId] = useState('');
+  const [selectedImage, setSelectedImage] = useState<{id: string; url: string; altText?: string} | null>(null);
 
   // Fetch product
   const { data: productData, isLoading, isError } = useQuery({
@@ -399,14 +400,41 @@ export default function ProductDetailPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4 }}
           >
-            <div className="aspect-square rounded-xl overflow-hidden bg-white border border-slate-200 shadow-sm">
-              {product.images.length > 0 ? (
-                <div className={`w-full h-full bg-gradient-to-br ${gradient} flex items-center justify-center`}>{/* placeholder */}
-                  <Icon className="h-24 w-24 text-white/60" strokeWidth={1.5} />
-                </div>
-              ) : (
-                <div className={`w-full h-full bg-gradient-to-br ${gradient} flex items-center justify-center`}>
-                  <Icon className="h-32 w-32 text-white/60" strokeWidth={1.5} />
+            <div className="space-y-3">
+              {/* Main Image */}
+              <div className="aspect-square rounded-xl overflow-hidden bg-white border border-slate-200 shadow-sm">
+                {product.images.length > 0 ? (
+                  <img
+                    src={selectedImage?.url || product.images[0].url}
+                    alt={selectedImage?.altText || product.title}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className={`w-full h-full bg-gradient-to-br ${gradient} flex items-center justify-center`}>
+                    <Icon className="h-32 w-32 text-white/60" strokeWidth={1.5} />
+                  </div>
+                )}
+              </div>
+              {/* Thumbnail strip when multiple images */}
+              {product.images.length > 1 && (
+                <div className="flex gap-2 overflow-x-auto pb-1">
+                  {product.images.map((img) => (
+                    <button
+                      key={img.id}
+                      onClick={() => setSelectedImage(img)}
+                      className={`shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 transition-all ${
+                        selectedImage?.id === img.id
+                          ? 'border-emerald-500 ring-1 ring-emerald-500/30'
+                          : 'border-slate-200 hover:border-slate-300'
+                      }`}
+                    >
+                      <img
+                        src={img.url}
+                        alt={img.altText || product.title}
+                        className="w-full h-full object-cover"
+                      />
+                    </button>
+                  ))}
                 </div>
               )}
             </div>

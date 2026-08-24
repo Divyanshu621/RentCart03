@@ -105,11 +105,19 @@ function FavoriteCard({ product, onRemove }: { product: Product; onRemove: (id: 
           className="relative aspect-[4/3] overflow-hidden"
           onClick={() => navigate('product', { productId: product.id })}
         >
-          <div
-            className={`absolute inset-0 bg-gradient-to-br ${gradient} flex items-center justify-center transition-transform duration-500 group-hover:scale-110`}
-          >
-            <Icon className="h-16 w-16 text-white/80" strokeWidth={1.5} />
-          </div>
+          {product.images && product.images.length > 0 ? (
+            <img
+              src={product.images[0].url}
+              alt={product.images[0].altText || product.title}
+              className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+            />
+          ) : (
+            <div
+              className={`absolute inset-0 bg-gradient-to-br ${gradient} flex items-center justify-center transition-transform duration-500 group-hover:scale-110`}
+            >
+              <Icon className="h-16 w-16 text-white/80" strokeWidth={1.5} />
+            </div>
+          )}
           <div className="absolute top-3 left-3">
             <Badge variant="secondary" className="bg-white/90 backdrop-blur-sm text-slate-700 text-xs font-medium border-0">
               {product.category.name}

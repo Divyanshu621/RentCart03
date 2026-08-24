@@ -36,12 +36,12 @@ const loginSchema = z.object({
 const registerSchema = z.object({
   name: z.string().min(1, 'Full name is required').min(2, 'Name must be at least 2 characters'),
   email: z.string().min(1, 'Email is required').email('Enter a valid email'),
-  phone: z.string().optional(),
+  phone: z.string().min(10, 'Phone number must be 10 digits').max(10, 'Phone number must be 10 digits').regex(/^[6-9]\d{9}$/, 'Enter a valid 10-digit phone number'),
   password: z.string().min(6, 'Password must be at least 6 characters'),
   stateId: z.string().min(1, 'Please select a state'),
   cityId: z.string().min(1, 'Please select a city'),
-  pinCode: z.string().optional(),
-  address: z.string().optional(),
+  pinCode: z.string().min(1, 'PIN code is required'),
+  address: z.string().min(1, 'Address is required'),
   agreeTerms: z.literal(true, { errorMap: () => ({ message: 'You must agree to the terms' }) }),
 });
 
@@ -483,7 +483,7 @@ function RegisterForm({
               <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
               <Input
                 type="tel"
-                placeholder="Phone Number (optional)"
+                placeholder="Phone Number"
                 className={`pl-10 ${errors.phone ? inputErrorClass : inputClass}`}
                 {...register('phone')}
               />

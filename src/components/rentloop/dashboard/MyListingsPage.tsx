@@ -145,9 +145,20 @@ function ListingCard({
       transition={{ duration: 0.2 }}
     >
       <Card className="overflow-hidden border-slate-200 bg-white hover:shadow-lg transition-shadow group">
-        {/* Image Placeholder */}
-        <div className={`relative aspect-[4/3] bg-gradient-to-br ${gradient} flex items-center justify-center`} onClick={() => onView(product)}>
-          <Icon className="h-14 w-14 text-white/80 group-hover:scale-110 transition-transform duration-300" strokeWidth={1.5} />
+        {/* Image */}
+        <div
+          className={`relative aspect-[4/3] bg-gradient-to-br ${gradient} flex items-center justify-center overflow-hidden`}
+          onClick={() => onView(product)}
+        >
+          {product.images && product.images.length > 0 ? (
+            <img
+              src={product.images[0].url}
+              alt={product.images[0].altText || product.title}
+              className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+            />
+          ) : (
+            <Icon className="h-14 w-14 text-white/80 group-hover:scale-110 transition-transform duration-300" strokeWidth={1.5} />
+          )}
           {/* Status Badge */}
           <div className="absolute top-3 right-3">
             <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold border ${productStatusColors[product.status]}`}>

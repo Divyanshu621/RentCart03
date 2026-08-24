@@ -903,3 +903,26 @@ Stage Summary:
 - Payment Checkout: Dynamically shows only enabled methods based on backend settings
 - Default state: Razorpay ON, Cash on Pickup ON, UPI/Card/NetBanking/Wallet OFF
 - Verified via agent-browser: toggles work, save persists, API rejects disabled methods
+
+---
+Task ID: image-display-auth-redesign
+Agent: Main
+Task: Fix image display (showing icon instead of actual image) + Unstop-inspired auth redesign
+
+Work Log:
+- Diagnosed root cause: ProductCard, ProductDetailPage, MyListingsPage, FavoritesPage all rendered gradient+icon placeholders instead of actual `<img>` tags, even when images existed in DB
+- Fixed ProductCard.tsx: Added conditional `<img>` rendering with onError fallback to gradient+icon
+- Fixed ProductDetailPage.tsx: Replaced identical branches with actual image gallery + thumbnail strip for multiple images, gradient+icon as fallback
+- Fixed MyListingsPage.tsx: Added `<img>` for product.images[0].url with gradient+icon fallback
+- Fixed FavoritesPage.tsx: Same pattern as MyListingsPage
+- Fixed ListItemPage.tsx: Removed `if (!isEditing)` guard so imageUrls are sent for both new and edit operations
+- Visited Unstop.com auth pages, analyzed with VLM: split layout, Email+Password login, Name+Email+Phone+Password+College+Degree+Year register
+- Redesigned LoginPage.tsx: Unstop-inspired split layout with dark left panel (SVG illustration) and white right form panel, responsive (hidden left panel on mobile)
+- Updated AuthModal.tsx register form: Phone now required (10 digits, Indian format), PIN Code required, Address required, matching backend expectations
+
+Stage Summary:
+- Images now display correctly when uploaded; gradient+icon shown only as fallback
+- Product detail page has image gallery with thumbnail navigation for multiple images
+- Editing products now properly sends updated images
+- LoginPage has professional split layout with branded illustration
+- Register form has all required fields matching Unstop's approach
