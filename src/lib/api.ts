@@ -1,13 +1,16 @@
 const API_BASE = '';
 
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
+  const isFormData = options?.body instanceof FormData;
+  const headers: HeadersInit = {
+    ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
+    ...options?.headers,
+  };
   const res = await fetch(`${API_BASE}${path}`, {
-    headers: {
-      'Content-Type': 'application/json',
-      ...options?.headers,
-    },
+    headers,
     credentials: 'include',
     ...options,
+    headers, // ensure our headers take precedence
   });
   if (!res.ok) {
     const err = await res.json().catch(() => ({ error: 'Request failed' }));
@@ -56,11 +59,17 @@ export const api = {
   getProduct: (id: string) =>
     request<Record<string, unknown>>(`/api/products/${id}`),
 
-  createProduct: (data: FormData | Record<string, unknown>) => {
-    if (data instanceof FormData) {
-      return request<Record<string, unknown>>('/api/products', { method: 'POST', body: data, headers: {} });
-    }
-    return request<Record<string, unknown>>('/api/products', { method: 'POST', body: JSON.stringify(data) });
+  createProduct: (data: Record<string, unknown>) =>
+    request<Record<string, unknown>>('/api/products', { method: 'POST', body: JSON.stringify(data) }),
+
+  uploadImages: (files: File[]) => {
+    const formData = new FormData();
+    files.forEach(f => formData.append('files', f));
+    return request<{ urls: string[] }>('/api/upload', {
+      method: 'POST',
+      body: formData,
+      headers: {},
+    });
   },
 
   updateProduct: (id: string, data: Record<string, unknown>) =>

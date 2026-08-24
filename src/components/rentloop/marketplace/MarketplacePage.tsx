@@ -341,7 +341,7 @@ export default function MarketplacePage() {
         </div>
 
         <div className="mb-5 -mx-4 px-4 sm:mx-0 sm:px-0">
-          <div className="flex gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+          <div className="flex gap-2 overflow-x-auto pb-1 pr-4 sm:pr-0" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
             <button onClick={() => { setSelectedCategory(''); setPage(1); }} className={catPillClass(!selectedCategory)}>All Items</button>
             {((categoriesData ?? categories) as Category[]).filter((c) => c.isActive).map((cat) => (
               <button key={cat.id} onClick={() => handleCategoryClick(cat.id)} className={catPillClass(selectedCategory === cat.id)}>{cat.name}</button>

@@ -20,6 +20,11 @@ const createProductSchema = z.object({
   deliveryFee: z.number().min(0),
   rentalRules: z.string().optional(),
   cancellationPolicy: z.string().optional(),
+  brand: z.string().optional(),
+  model: z.string().optional(),
+  purchaseYear: z.number().int().min(1990).max(new Date().getFullYear()).optional(),
+  ownerNotes: z.string().optional(),
+  imageUrls: z.array(z.string().url().or(z.string().startsWith('/'))).max(5).optional(),
 });
 
 function generateSlug(title: string): string {
@@ -138,6 +143,8 @@ export async function POST(request: NextRequest) {
     }
 
     const data = parsed.data;
+    const imageUrls = data.imageUrls || [];
+    const { imageUrls: _i, ...productData } = data;
     const slug = await ensureUniqueSlug(generateSlug(data.title));
 
     const product = await db.product.create({
@@ -148,6 +155,9 @@ export async function POST(request: NextRequest) {
         categoryId: data.categoryId,
         description: data.description,
         condition: data.condition,
+        brand: data.brand,
+        model: data.model,
+        purchaseYear: data.purchaseYear,
         dailyPrice: data.dailyPrice,
         weeklyPrice: data.weeklyPrice,
         securityDeposit: data.securityDeposit,
@@ -160,11 +170,20 @@ export async function POST(request: NextRequest) {
         deliveryFee: data.deliveryFee,
         rentalRules: data.rentalRules,
         cancellationPolicy: data.cancellationPolicy,
+        ownerNotes: data.ownerNotes,
         status: 'PENDING_REVIEW',
+        images: imageUrls.length > 0 ? {
+          create: imageUrls.map((url, idx) => ({
+            url,
+            altText: data.title,
+            sortOrder: idx,
+          })),
+        } : undefined,
       },
       include: {
         owner: { select: { id: true, name: true, avatarUrl: true } },
         category: true,
+        images: { orderBy: { sortOrder: 'asc' } },
       },
     });
 
