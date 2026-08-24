@@ -48,6 +48,7 @@ import { api } from '@/lib/api';
 import type { Rental, RentalStatus, ExtensionRequest, Payment } from '@/types';
 import { toast } from 'sonner';
 import RentalDetailDialog from './RentalDetailDialog';
+import CancelRentalDialog from './CancelRentalDialog';
 
 // ─── Category Icons ────────────────────────────────────────
 const categoryIcons: Record<string, LucideIcon> = {
@@ -266,16 +267,21 @@ function RentalCard({
                 {rental.status === 'OWNER_PENDING' && (
                   <>
                     {isOwner && (
-                      <Button size="sm" variant="outline" className="h-7 px-2.5 text-[11px] border-red-200 text-red-600 hover:bg-red-50" onClick={() => onAction(rental, 'cancel')}>
+                      <Button size="sm" variant="outline" className="h-7 px-2.5 text-[11px] border-red-200 text-red-600 hover:bg-red-50" onClick={() => onAction(rental, 'reject')}>
                         <XCircle className="h-3 w-3 mr-1" />Reject
                       </Button>
                     )}
                     {isCustomer && (
-                      <Button size="sm" variant="outline" className="h-7 px-2.5 text-[11px]" onClick={() => onSelect(rental)}>
-                        <Eye className="h-3 w-3 mr-1" />Details
+                      <Button size="sm" variant="outline" className="h-7 px-2.5 text-[11px] border-red-200 text-red-600 hover:bg-red-50" onClick={() => onAction(rental, 'cancel')}>
+                        <XCircle className="h-3 w-3 mr-1" />Cancel
                       </Button>
                     )}
                   </>
+                )}
+                {(rental.status === 'OWNER_ACCEPTED' || rental.status === 'PAYMENT_COMPLETED' || rental.status === 'READY_FOR_PICKUP') && isCustomer && (
+                  <Button size="sm" variant="outline" className="h-7 px-2.5 text-[11px] border-red-200 text-red-600 hover:bg-red-50" onClick={() => onAction(rental, 'cancel')}>
+                    <XCircle className="h-3 w-3 mr-1" />Cancel
+                  </Button>
                 )}
                 {rental.status === 'OWNER_ACCEPTED' && isOwner && (
                   <Button size="sm" variant="outline" className="h-7 px-2.5 text-[11px]" onClick={() => onSelect(rental)}>
@@ -367,6 +373,9 @@ export default function MyRentalsPage() {
   const [selectedRental, setSelectedRental] = useState<Rental | null>(null);
   const [paymentModalOpen, setPaymentModalOpen] = useState(false);
   const [paymentRental, setPaymentRental] = useState<Rental | null>(null);
+  const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
+  const [cancelRental, setCancelRental] = useState<Rental | null>(null);
+  const [cancelSuccess, setCancelSuccess] = useState(false);
 
   // Fetch rentals as customer
   const { data: customerRentals = [], isLoading: loadingCustomer } = useQuery({
@@ -415,7 +424,16 @@ export default function MyRentalsPage() {
 
   const cancelMutation = useMutation({
     mutationFn: ({ id, reason }: { id: string; reason?: string }) => api.cancelRental(id, reason),
-    onSuccess: () => { toast.success('Rental cancelled'); queryClient.invalidateQueries({ queryKey: ['rentals'] }); },
+    onSuccess: () => {
+      setCancelSuccess(true);
+      queryClient.invalidateQueries({ queryKey: ['rentals'] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const rejectMutation = useMutation({
+    mutationFn: (id: string) => api.rejectRental(id),
+    onSuccess: () => { toast.success('Rental rejected'); queryClient.invalidateQueries({ queryKey: ['rentals'] }); },
     onError: (e: Error) => toast.error(e.message),
   });
 
@@ -432,7 +450,11 @@ export default function MyRentalsPage() {
         setPaymentModalOpen(true);
         break;
       case 'cancel':
-        cancelMutation.mutate({ id: rental.id });
+        setCancelRental(rental);
+        setCancelDialogOpen(true);
+        break;
+      case 'reject':
+        rejectMutation.mutate(rental.id);
         break;
       case 'return':
         returnMutation.mutate(rental.id);
@@ -451,7 +473,7 @@ export default function MyRentalsPage() {
         navigate('product', { productId: rental.productId });
         break;
     }
-  }, [payMutation, cancelMutation, returnMutation, navigate]);
+  }, [payMutation, cancelMutation, rejectMutation, returnMutation, navigate]);
 
   const handleSelect = (rental: Rental) => {
     setSelectedRental(rental);
@@ -534,6 +556,17 @@ export default function MyRentalsPage() {
         rentalId={selectedRental?.id ?? null}
         open={detailOpen}
         onClose={() => { setDetailOpen(false); setSelectedRental(null); }}
+      />
+      {/* Cancel Dialog */}
+      <CancelRentalDialog
+        open={cancelDialogOpen}
+        onClose={() => { setCancelDialogOpen(false); setCancelRental(null); setCancelSuccess(false); }}
+        onConfirm={(reason) => cancelMutation.mutate({ id: cancelRental!.id, reason })}
+        rentalStatus={cancelRental?.status as RentalStatus}
+        productName={cancelRental?.product?.title || ''}
+        totalAmount={cancelRental?.totalAmount || 0}
+        isPending={cancelMutation.isPending}
+        isSuccess={cancelSuccess}
       />
       {/* Payment Modal */}
       <PaymentCheckoutModal

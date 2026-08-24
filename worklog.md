@@ -836,3 +836,24 @@ Stage Summary:
 - LoginPage.tsx and AuthModal.tsx fully redesigned with Pinterest-style auth UI
 - All existing functionality preserved: email/password login, Google OAuth (real+demo), forgot password, register with state/city selectors, terms checkbox, error handling, loading states
 - Visual verification passed: clean white background, rounded inputs, blue focus borders, red pill buttons, OR divider, Google sign-in
+---
+Task ID: cancel-rental-feature
+Agent: Main
+Task: Add cancel option when renting tools with confirmation dialog, reason selection, and refund info
+
+Work Log:
+- Analyzed existing rental flow: found cancel API exists but only for PENDING_PAYMENT/OWNER_PENDING, no confirmation dialog, no reason input, owner reject bug (used customer cancel endpoint)
+- Updated POST /api/rentals/[id]/cancel to allow cancel from 5 statuses: PENDING_PAYMENT, PAYMENT_COMPLETED, OWNER_PENDING, OWNER_ACCEPTED, READY_FOR_PICKUP
+- Added partial refund logic: full refund for early cancellation, 90% refund (10% fee) for later cancellations
+- Added refund record creation and payment status update, plus notifications to owner and customer
+- Added api.rejectRental() method using PATCH endpoint to fix owner reject bug
+- Created CancelRentalDialog component with: product info, refund details box (full/partial), 7 cancel reason options, custom reason textarea for 'Other', loading state, success screen with refund confirmation
+- Updated MyRentalsPage: cancel button shown for PENDING_PAYMENT, OWNER_PENDING, PAYMENT_COMPLETED, OWNER_ACCEPTED, READY_FOR_PICKUP (customer); reject button uses new api.rejectRental for owners
+- Updated RentalDetailDialog: same cancel button coverage, cancel dialog rendered as sibling (not nested) via Fragment wrapper
+- Verified with browser: cancel dialog opens correctly with reason options, full refund info shown, Cancel Rental button enables after reason selection
+
+Stage Summary:
+- Cancel API now supports 5 rental statuses with appropriate refund logic
+- CancelRentalDialog provides clean UX with reason selection and refund transparency
+- Owner reject fixed (uses PATCH instead of customer cancel endpoint)
+- Cancel buttons visible on rental cards and detail dialog for all cancellable statuses

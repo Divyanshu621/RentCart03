@@ -109,6 +109,9 @@ export const api = {
   cancelRental: (id: string, reason?: string) =>
     request<Record<string, unknown>>(`/api/rentals/${id}/cancel`, { method: 'POST', body: JSON.stringify({ reason }) }),
 
+  rejectRental: (id: string, reason?: string) =>
+    request<Record<string, unknown>>(`/api/rentals/${id}`, { method: 'PATCH', body: JSON.stringify({ status: 'OWNER_REJECTED', cancellationReason: reason || 'Owner rejected the rental request' }) }),
+
   returnRental: (id: string, data?: { inspectionResult?: string; inspectionNotes?: string }) =>
     request<Record<string, unknown>>(`/api/rentals/${id}/return`, { method: 'POST', body: JSON.stringify(data || {}) }),
 

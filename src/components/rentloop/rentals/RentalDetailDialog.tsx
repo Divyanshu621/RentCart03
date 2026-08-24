@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import {
@@ -37,6 +38,7 @@ import { useAppStore } from '@/store';
 import { api } from '@/lib/api';
 import type { Rental, RentalStatus, Payment, ExtensionRequest } from '@/types';
 import { toast } from 'sonner';
+import CancelRentalDialog from './CancelRentalDialog';
 
 // ─── Status Color Mapping ──────────────────────────────────
 const statusColors: Record<RentalStatus, string> = {
@@ -130,9 +132,18 @@ export default function RentalDetailDialog({ rentalId, open, onClose }: RentalDe
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
+  const [cancelSuccess, setCancelSuccess] = useState(false);
+
   const cancelMutation = useMutation({
-    mutationFn: (id: string) => api.cancelRental(id),
-    onSuccess: () => { toast.success('Rental cancelled'); queryClient.invalidateQueries({ queryKey: ['rental', rentalId] }); queryClient.invalidateQueries({ queryKey: ['rentals'] }); onClose(); },
+    mutationFn: ({ id, reason }: { id: string; reason?: string }) => api.cancelRental(id, reason),
+    onSuccess: () => { setCancelSuccess(true); queryClient.invalidateQueries({ queryKey: ['rental', rentalId] }); queryClient.invalidateQueries({ queryKey: ['rentals'] }); },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const rejectMutation = useMutation({
+    mutationFn: (id: string) => api.rejectRental(id),
+    onSuccess: () => { toast.success('Rental rejected'); queryClient.invalidateQueries({ queryKey: ['rental', rentalId] }); queryClient.invalidateQueries({ queryKey: ['rentals'] }); onClose(); },
     onError: (e: Error) => toast.error(e.message),
   });
 
@@ -166,6 +177,7 @@ export default function RentalDetailDialog({ rentalId, open, onClose }: RentalDe
   const currentStep = getCurrentStepIndex();
 
   return (
+    <>
     <Dialog open={open} onOpenChange={(v) => { if (!v) onClose(); }}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto p-0">
         <DialogHeader className="p-6 pb-0 sticky top-0 bg-white z-10 border-b border-slate-100 rounded-t-lg">
@@ -437,14 +449,24 @@ export default function RentalDetailDialog({ rentalId, open, onClose }: RentalDe
                   <Button className="bg-emerald-600 hover:bg-emerald-700 text-white" disabled={payMutation.isPending} onClick={() => payMutation.mutate(rental.id)}>
                     {payMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <CreditCard className="h-4 w-4 mr-2" />}Pay Now
                   </Button>
-                  <Button variant="outline" className="border-red-200 text-red-600 hover:bg-red-50" disabled={cancelMutation.isPending} onClick={() => cancelMutation.mutate(rental.id)}>
-                    {cancelMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <X className="h-4 w-4 mr-2" />}Cancel
+                  <Button variant="outline" className="border-red-200 text-red-600 hover:bg-red-50" onClick={() => setCancelDialogOpen(true)}>
+                    <X className="h-4 w-4 mr-2" />Cancel
                   </Button>
                 </>
               )}
               {rental.status === 'OWNER_PENDING' && isOwner && (
-                <Button variant="outline" className="border-red-200 text-red-600 hover:bg-red-50" disabled={cancelMutation.isPending} onClick={() => cancelMutation.mutate(rental.id)}>
-                  {cancelMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <X className="h-4 w-4 mr-2" />}Reject
+                <Button variant="outline" className="border-red-200 text-red-600 hover:bg-red-50" disabled={rejectMutation.isPending} onClick={() => rejectMutation.mutate(rental.id)}>
+                  {rejectMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <X className="h-4 w-4 mr-2" />}Reject
+                </Button>
+              )}
+              {rental.status === 'OWNER_PENDING' && isCustomer && (
+                <Button variant="outline" className="border-red-200 text-red-600 hover:bg-red-50" onClick={() => setCancelDialogOpen(true)}>
+                  <X className="h-4 w-4 mr-2" />Cancel
+                </Button>
+              )}
+              {(rental.status === 'PAYMENT_COMPLETED' || rental.status === 'OWNER_ACCEPTED' || rental.status === 'READY_FOR_PICKUP') && isCustomer && (
+                <Button variant="outline" className="border-red-200 text-red-600 hover:bg-red-50" onClick={() => setCancelDialogOpen(true)}>
+                  <X className="h-4 w-4 mr-2" />Cancel Rental
                 </Button>
               )}
               {(rental.status === 'ACTIVE' || rental.status === 'OVERDUE') && isCustomer && (
@@ -473,5 +495,17 @@ export default function RentalDetailDialog({ rentalId, open, onClose }: RentalDe
         )}
       </DialogContent>
     </Dialog>
-  );
+
+    {/* Cancel Dialog - rendered outside parent dialog */}
+    <CancelRentalDialog
+      open={cancelDialogOpen}
+      onClose={() => { setCancelDialogOpen(false); setCancelSuccess(false); onClose(); }}
+      onConfirm={(reason) => cancelMutation.mutate({ id: rental!.id, reason })}
+      rentalStatus={rental?.status as RentalStatus}
+      productName={rental?.product?.title || ''}
+      totalAmount={rental?.totalAmount || 0}
+      isPending={cancelMutation.isPending}
+      isSuccess={cancelSuccess}
+    />
+    </>);
 }
