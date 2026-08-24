@@ -25,6 +25,7 @@ import AdminUsersPage from '@/components/rentloop/admin/AdminUsersPage';
 import AdminProductsPage from '@/components/rentloop/admin/AdminProductsPage';
 import AdminRentalsPage from '@/components/rentloop/admin/AdminRentalsPage';
 import AdminDisputesPage from '@/components/rentloop/admin/AdminDisputesPage';
+import AdminSettingsPage from '@/components/rentloop/admin/AdminSettingsPage';
 import SellerKycPage from '@/components/rentloop/kyc/SellerKycPage';
 import type { User, State, Category } from '@/types';
 
@@ -117,6 +118,8 @@ export default function Home() {
         return <AdminRentalsPage />;
       case 'admin-disputes':
         return <AdminDisputesPage />;
+      case 'admin-settings':
+        return <AdminSettingsPage />;
       case 'seller-kyc':
         return <SellerKycPage />;
       default:

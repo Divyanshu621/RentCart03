@@ -10,12 +10,13 @@ declare global {
   }
 }
 
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   X, CreditCard, Smartphone, Building2, Wallet, Truck,
   ShieldCheck, ChevronRight, Loader2, CheckCircle2, Lock, IndianRupee, Landmark, QrCode, ChevronDown, ChevronUp,
 } from 'lucide-react';
+import { api } from '@/lib/api';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Drawer, DrawerContent, DrawerTitle, DrawerDescription } from '@/components/ui/drawer';
 import { Button } from '@/components/ui/button';
@@ -23,7 +24,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
-import { api } from '@/lib/api';
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -86,7 +86,7 @@ const wallets = [
   { name: 'Ola Money', color: 'bg-green-700 text-white' },
 ];
 
-const paymentMethods: PaymentMethodDef[] = [
+const allPaymentMethods: PaymentMethodDef[] = [
   {
     id: 'razorpay',
     icon: <CreditCard className="size-5" />,
@@ -149,6 +149,7 @@ export default function PaymentCheckoutModal({
 }: PaymentCheckoutModalProps) {
   const isMobile = useIsMobile();
   const queryClient = useQueryClient();
+  const [enabledMethods, setEnabledMethods] = useState<Record<string, boolean> | null>(null);
   const [selectedMethod, setSelectedMethod] = useState('razorpay');
   const [upiId, setUpiId] = useState('');
   const [cardNumber, setCardNumber] = useState('');
@@ -161,6 +162,35 @@ export default function PaymentCheckoutModal({
   const [step, setStep] = useState<'checkout' | 'processing' | 'success'>('checkout');
   const [txnId, setTxnId] = useState('');
   const [summaryExpanded, setSummaryExpanded] = useState(false);
+
+  // Fetch enabled payment methods from backend
+  useEffect(() => {
+    if (!open) return;
+    let cancelled = false;
+    api.getPaymentSettings().then((res) => {
+      if (cancelled) return;
+      setEnabledMethods(res.enabledMethods);
+      // Auto-select first enabled method if current selection is disabled
+      if (!res.enabledMethods[selectedMethod]) {
+        const firstEnabled = Object.entries(res.enabledMethods).find(([, v]) => v)?.[0];
+        if (firstEnabled) setSelectedMethod(firstEnabled);
+      }
+    }).catch(() => {
+      // Fallback: enable all if settings fetch fails
+      if (!cancelled) {
+        setEnabledMethods({
+          razorpay: true, upi: true, card: true, netbanking: true, wallet: true, cash: true,
+        });
+      }
+    });
+    return () => { cancelled = true; };
+  }, [open]);
+
+  // Filter payment methods based on backend settings
+  const paymentMethods = useMemo(() => {
+    if (!enabledMethods) return allPaymentMethods; // show all while loading
+    return allPaymentMethods.filter((m) => enabledMethods[m.id]);
+  }, [enabledMethods]);
 
   const dateRange = useMemo(() => {
     if (!rentalData) return '';

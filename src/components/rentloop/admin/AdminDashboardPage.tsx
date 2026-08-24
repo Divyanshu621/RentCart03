@@ -15,6 +15,7 @@ import {
   Loader2,
   ShieldCheck,
   TrendingUp,
+  Settings,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -130,6 +131,7 @@ export default function AdminDashboardPage() {
     { label: 'Manage Products', icon: Package, view: 'admin-products' as const, color: 'text-violet-600', bg: 'bg-violet-50' },
     { label: 'Manage Rentals', icon: CalendarCheck, view: 'admin-rentals' as const, color: 'text-emerald-600', bg: 'bg-emerald-50' },
     { label: 'View Disputes', icon: Gavel, view: 'admin-disputes' as const, color: 'text-orange-600', bg: 'bg-orange-50' },
+    { label: 'Payment Settings', icon: Settings, view: 'admin-settings' as const, color: 'text-slate-600', bg: 'bg-slate-100' },
   ];
 
   if (isLoading) {

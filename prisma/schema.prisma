@@ -387,6 +387,18 @@ model SellerKyc {
   updatedAt        DateTime @updatedAt
 }
 
+// ─── Payment Settings ──────────────────────────────────────
+model PaymentSettings {
+  id                  String   @id @default("default")
+  razorpayEnabled     Boolean  @default(true)
+  upiEnabled          Boolean  @default(false)
+  cardEnabled         Boolean  @default(false)
+  netbankingEnabled   Boolean  @default(false)
+  walletEnabled       Boolean  @default(false)
+  cashOnPickupEnabled Boolean  @default(true)
+  updatedAt           DateTime @updatedAt
+}
+
 // ─── Audit Log ──────────────────────────────────────────────
 model AuditLog {
   id        String   @id @default(cuid())

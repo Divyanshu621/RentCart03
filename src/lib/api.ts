@@ -212,4 +212,18 @@ export const api = {
 
   reviewKyc: (id: string, data: { action: 'APPROVE' | 'REJECT'; rejectionReason?: string }) =>
     request<{ success: boolean; message: string }>(`/api/admin/kyc/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+
+  // Payment Settings
+  getPaymentSettings: () =>
+    request<{ enabledMethods: Record<string, boolean> }>('/api/settings/payment'),
+
+  updatePaymentSettings: (data: Partial<{
+    razorpayEnabled: boolean;
+    upiEnabled: boolean;
+    cardEnabled: boolean;
+    netbankingEnabled: boolean;
+    walletEnabled: boolean;
+    cashOnPickupEnabled: boolean;
+  }>) =>
+    request<{ message: string; enabledMethods: Record<string, boolean> }>('/api/settings/payment', { method: 'PUT', body: JSON.stringify(data) }),
 };

@@ -877,3 +877,29 @@ Stage Summary:
 - Image upload is now fully functional with drag-drop, progress, preview, and server persistence
 - Category scroll no longer truncates last item
 - All pages render without visual glitches
+
+---
+Task ID: payment-settings
+Agent: Main
+Task: Add backend enable/disable payment settings with Razorpay and Cash on Pickup enabled by default
+
+Work Log:
+- Added PaymentSettings model to Prisma schema (singleton table with id='default')
+- Ran db:push to create the table and generated Prisma client
+- Seeded default settings: razorpayEnabled=true, cashOnPickupEnabled=true, all others=false
+- Created GET/PUT /api/settings/payment API routes (public GET, admin-only PUT)
+- Backend validation: create-order rejects disabled payment methods with 400 error
+- Updated api.ts with getPaymentSettings and updatePaymentSettings methods
+- Updated PaymentCheckoutModal to fetch settings on open and filter payment methods
+- Created AdminSettingsPage component with toggle switches for all 6 payment methods
+- Added 'admin-settings' to AppView type
+- Wired AdminSettingsPage into page.tsx router
+- Added 'Payment Settings' quick link card on AdminDashboardPage
+- Fixed key mapping issue between API response keys and component setting keys
+
+Stage Summary:
+- Backend: PaymentSettings model, GET/PUT API, method validation on create-order
+- Frontend: Admin Settings page with 6 toggle switches, Save button with confirmation
+- Payment Checkout: Dynamically shows only enabled methods based on backend settings
+- Default state: Razorpay ON, Cash on Pickup ON, UPI/Card/NetBanking/Wallet OFF
+- Verified via agent-browser: toggles work, save persists, API rejects disabled methods

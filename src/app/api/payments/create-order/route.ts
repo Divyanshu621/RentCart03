@@ -18,6 +18,24 @@ export async function POST(request: NextRequest) {
     const { rentalId, paymentMethod } = await request.json();
     if (!rentalId) return NextResponse.json({ error: 'Rental ID is required' }, { status: 400 });
 
+    // Check payment method is enabled in settings
+    const paySettings = await db.paymentSettings.findUnique({ where: { id: 'default' } });
+    const methodMap: Record<string, string> = {
+      RAZORPAY: 'razorpay',
+      UPI: 'upi',
+      CARD: 'card',
+      NETBANKING: 'netbanking',
+      WALLET: 'wallet',
+      CASH_ON_PICKUP: 'cash',
+    };
+    const methodKey = paymentMethod ? methodMap[paymentMethod] : 'razorpay';
+    if (paySettings && methodKey) {
+      const isEnabled = paySettings[`${methodKey}Enabled` as keyof typeof paySettings] as boolean | undefined;
+      if (isEnabled === false) {
+        return NextResponse.json({ error: 'This payment method is currently disabled' }, { status: 400 });
+      }
+    }
+
     const rental = await db.rental.findUnique({
       where: { id: rentalId },
       include: {

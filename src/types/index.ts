@@ -360,4 +360,5 @@ export type AppView =
   | 'admin-users'
   | 'admin-products'
   | 'admin-rentals'
-  | 'admin-disputes';
+  | 'admin-disputes'
+  | 'admin-settings';
