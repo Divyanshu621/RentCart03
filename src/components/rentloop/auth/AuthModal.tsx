@@ -160,6 +160,18 @@ function LoginForm({
   useEffect(() => {
     if (!googleClientId) return;
 
+    const handleCredentialResponse = async (response: { credential: string }) => {
+      setIsGoogleLoading(true);
+      try {
+        const res = await api.googleAuth({ credential: response.credential });
+        onSuccess(res.user);
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : 'Google sign-in failed');
+      } finally {
+        setIsGoogleLoading(false);
+      }
+    };
+
     // Load GIS script
     const script = document.createElement('script');
     script.src = 'https://accounts.google.com/gsi/client';
@@ -172,7 +184,7 @@ function LoginForm({
 
       window.google.accounts.id.initialize({
         client_id: googleClientId,
-        callback: handleGoogleCredentialResponse,
+        callback: handleCredentialResponse,
         auto_select: false,
         cancel_on_tap_outside: true,
       });
@@ -189,19 +201,17 @@ function LoginForm({
         });
       }
     };
-  }, [googleClientId]);
 
-  const handleGoogleCredentialResponse = async (response: { credential: string }) => {
-    setIsGoogleLoading(true);
-    try {
-      const res = await api.googleAuth({ credential: response.credential });
-      onSuccess(res.user);
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Google sign-in failed');
-    } finally {
-      setIsGoogleLoading(false);
-    }
-  };
+    script.onerror = () => {
+      if (googleBtnRef.current) {
+        googleBtnRef.current.innerHTML = '<p style="color:#94a3b8;font-size:13px;text-align:center;">Google Sign-In unavailable</p>';
+      }
+    };
+
+    return () => {
+      if (script.parentNode) script.parentNode.removeChild(script);
+    };
+  }, [googleClientId, onSuccess]);
 
   const onSubmit = async (data: LoginFormData) => {
     setServerError('');
@@ -575,8 +585,6 @@ function RegisterForm({
               <button type="button" onClick={() => { setAuthModalOpen(false); setTimeout(() => navigate('terms-of-service'), 300); }} className="text-[#0074e8] font-medium hover:underline cursor-pointer bg-transparent p-0 border-0">Terms of Service</button>
               {', '}
               <button type="button" onClick={() => { setAuthModalOpen(false); setTimeout(() => navigate('privacy-policy'), 300); }} className="text-[#0074e8] font-medium hover:underline cursor-pointer bg-transparent p-0 border-0">Privacy Policy</button>
-              {' '}and{' '}
-              <button type="button" onClick={() => { setAuthModalOpen(false); setTimeout(() => navigate('terms-of-service'), 300); }} className="text-[#0074e8] font-medium hover:underline cursor-pointer bg-transparent p-0 border-0">Rental Agreement</button>
             </label>
           </div>
           {errors.agreeTerms && <p className="text-xs text-red-600 ml-1">{errors.agreeTerms.message}</p>}

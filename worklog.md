@@ -1167,3 +1167,39 @@ Stage Summary:
 - All footer links (Help Center, Contact, Privacy, Terms, Cookies) verified working
 - Auth modal Terms/Privacy links navigate correctly and close modal
 - All major user flows verified via agent-browser
+---
+Task ID: comprehensive-audit-fix
+Agent: Main
+Task: Comprehensive audit and fix of all components - resolve critical crashes, broken navigation, and non-functional elements
+
+Work Log:
+- Analyzed user screenshot showing ErrorBoundary "Something went wrong" error
+- Used VLM to identify the error state from the uploaded screenshot
+- Launched 3 parallel subagent audits covering: auth components, header/footer/mobileNav, dashboard/productCard/marketplace, and remaining pages (MyRentals, Messages, Notifications, Payment)
+- Identified and fixed 20+ bugs across 10 files
+- Ran ESLint - 0 errors, 3 warnings (cleaned up)
+- Browser-verified all pages load without errors: landing, marketplace, product detail, help center, contact, login
+
+Stage Summary:
+- CRITICAL FIXES:
+  1. MyRentalsPage.tsx: RentalCard referenced out-of-scope `acceptMutation` - passed as prop `isAccepting`
+  2. ProductCard.tsx: Missing `?.` on `product.category.slug` and `product.category.name` - would crash if category null
+  3. AppHeader.tsx: Template literal `${}` inside double-quoted className string - fixed to backticks
+  4. AppHeader.tsx: Invalid Tailwind classes `w-4.5` `h-4.5` - changed to `w-[18px] h-[18px]`
+  5. AppHeader.tsx: `onNavigate((view) => navigate(view))` type mismatch - added `nav` cast in UserMenuContent and MobileSideSheet
+  6. NotificationsPanel.tsx: Navigation to invalid `'rental'` view (not in AppView union) - mapped to `'my-rentals'`
+  7. AppFooter.tsx: 5 links (favorites, list-item, dashboard, my-listings, earnings) had no auth guard - added `requireAuth` helper
+  8. MobileNav.tsx: `navigate(view as never)` unsafe cast - properly typed with `AppView`
+  9. ProductDetailPage.tsx: Dead store selector `s.n` removed
+  10. ProductDetailPage.tsx: Trust score showed `%` when undefined - now shows `N/A`
+  11. PaymentCheckoutModal.tsx: Missing Razorpay `handler` - users would be permanently stuck on "Processing..." - added success handler
+- HIGH PRIORITY FIXES:
+  12. MyRentalsPage.tsx: Category icon/gradient maps were defined but never used - now uses `rental.product?.category?.slug`
+  13. MyRentalsPage.tsx: "Contact" button showed "coming soon" toast - now navigates to Messages
+  14. MyRentalsPage.tsx: Dead imports `ExtensionRequest`, `Payment` removed
+  15. AuthModal.tsx: Stale Google GSI callback closure - moved handler inside useEffect, added `onSuccess` dep, added cleanup
+  16. AuthModal.tsx: Duplicate "Rental Agreement" link pointing to terms-of-service removed
+  17. AuthModal.tsx: Missing script `onerror` handler and cleanup - both added
+  18. ProductCard.tsx: Weekly price with misleading `line-through` - changed to "or ₹X/week"
+  19. DashboardPage.tsx: Duplicate `h-14` CSS class removed
+  20. NotificationsPanel.tsx: Properly typed navigation with `AppView` import

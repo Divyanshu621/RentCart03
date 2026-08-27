@@ -149,8 +149,8 @@ export default function ProductCard({
 
   const isFavorited = controlledFavorited !== undefined ? controlledFavorited : internalFavorited;
 
-  const Icon = categoryIcons[product.category.slug] || Camera;
-  const gradient = gradientMap[product.category.slug] || 'from-slate-400 to-gray-300';
+  const Icon = categoryIcons[product.category?.slug] || Camera;
+  const gradient = gradientMap[product.category?.slug] || 'from-slate-400 to-gray-300';
 
   const ownerInitial = product.owner.name?.charAt(0).toUpperCase() || '?';
 
@@ -285,7 +285,7 @@ export default function ProductCard({
       <div className="flex flex-col gap-2.5 p-4 flex-1">
         {/* Category name */}
         <p className="text-xs font-medium text-[#64748b] uppercase tracking-wide">
-          {product.category.name}
+          {product.category?.name}
         </p>
 
         {/* Title – 2-line clamp */}
@@ -308,8 +308,8 @@ export default function ProductCard({
             <span className="text-xs text-[#64748b]">/day</span>
           </div>
           {product.weeklyPrice && product.weeklyPrice > 0 && (
-            <span className="text-xs text-[#94a3b8] line-through">
-              ₹{formatINR(product.weeklyPrice)}/week
+            <span className="text-xs text-[#94a3b8]">
+              or ₹{formatINR(product.weeklyPrice)}/week
             </span>
           )}
           <span className="text-[11px] text-[#94a3b8]">

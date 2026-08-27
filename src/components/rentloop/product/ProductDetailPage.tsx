@@ -132,7 +132,6 @@ export default function ProductDetailPage() {
   const navigate = useAppStore((s) => s.navigate);
   const user = useAppStore((s) => s.user);
   const setAuthModalOpen = useAppStore((s) => s.setAuthModalOpen);
-  const n = useAppStore((s) => s.n);
   const viewData = useAppStore((s) => s.viewData);
 
   const productId = viewData.productId as string;
@@ -549,7 +548,7 @@ export default function ProductDetailPage() {
                         <span>·</span>
                         <span>{product.totalRentals} rentals</span>
                         <span>·</span>
-                        <span>Trust: {product.owner.trustScore}%</span>
+                        <span>Trust: {product.owner.trustScore != null ? `${product.owner.trustScore}%` : 'N/A'}</span>
                       </div>
                     </div>
                   </div>

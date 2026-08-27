@@ -306,6 +306,19 @@ export default function PaymentCheckoutModal({
           },
           theme: { color: '#059669' },
           modal: !isMobile,
+          handler: async (response: Record<string, string>) => {
+            try {
+              await api.verifyPayment({
+                rentalId,
+                razorpayPaymentId: response.razorpay_payment_id,
+                razorpayOrderId: response.razorpay_order_id,
+                razorpaySignature: response.razorpay_signature,
+              });
+              handlePaymentSuccess(response.razorpay_payment_id || (orderData.orderId as string));
+            } catch {
+              handlePaymentError();
+            }
+          },
         };
 
         const rzp = new window.Razorpay(rzpOptions);

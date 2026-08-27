@@ -44,7 +44,7 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAppStore } from '@/store';
 import { api } from '@/lib/api';
-import type { Rental, RentalStatus, ExtensionRequest, Payment } from '@/types';
+import type { Rental, RentalStatus } from '@/types';
 import { toast } from 'sonner';
 import RentalDetailDialog from './RentalDetailDialog';
 import CancelRentalDialog from './CancelRentalDialog';
@@ -191,16 +191,19 @@ function RentalCard({
   rental,
   onSelect,
   onAction,
+  isAccepting,
 }: {
   rental: Rental;
   onSelect: (r: Rental) => void;
   onAction: (r: Rental, action: string) => void;
+  isAccepting?: boolean;
 }) {
   const user = useAppStore((s) => s.user);
   const isOwner = user?.id === rental.ownerId;
   const isCustomer = user?.id === rental.customerId;
-  const Icon = Camera; // fallback
-  const gradient = 'from-slate-400 to-gray-300';
+  const categorySlug = rental.product?.category?.slug || '';
+  const Icon = categoryIcons[categorySlug] || Camera;
+  const gradient = gradientMap[categorySlug] || 'from-slate-400 to-gray-300';
 
   const isActive = rental.status === 'ACTIVE';
   const isOverdue = rental.status === 'OVERDUE';
@@ -267,7 +270,7 @@ function RentalCard({
                   <>
                     {isOwner && (
                       <>
-                        <Button size="sm" variant="outline" className="h-7 px-2.5 text-[11px] border-emerald-200 text-emerald-700 hover:bg-emerald-50" onClick={() => onAction(rental, 'accept')} disabled={acceptMutation.isPending}>
+                        <Button size="sm" variant="outline" className="h-7 px-2.5 text-[11px] border-emerald-200 text-emerald-700 hover:bg-emerald-50" onClick={() => onAction(rental, 'accept')} disabled={isAccepting}>
                           <CheckCircle2 className="h-3 w-3 mr-1" />Accept
                         </Button>
                         <Button size="sm" variant="outline" className="h-7 px-2.5 text-[11px] border-red-200 text-red-600 hover:bg-red-50" onClick={() => onAction(rental, 'reject')}>
@@ -480,7 +483,7 @@ export default function MyRentalsPage() {
         returnMutation.mutate(rental.id);
         break;
       case 'contact':
-        toast.info('Message feature coming soon!');
+        navigate('messages');
         break;
       case 'rentAgain':
         navigate('product', { productId: rental.productId });
@@ -557,6 +560,7 @@ export default function MyRentalsPage() {
                   rental={rental as Rental}
                   onSelect={handleSelect}
                   onAction={handleAction}
+                  isAccepting={acceptMutation.isPending}
                 />
               ))}
             </AnimatePresence>

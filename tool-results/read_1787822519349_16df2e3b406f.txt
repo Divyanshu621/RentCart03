@@ -738,211 +738,218 @@
    738→        onOpenChange={setShowMobile}
    739→        user={user}
    740→        isAdmin={isAdmin}
-   741→        onNavigate={(view) => { navigate(view); setShowMobile(false); }}
-   742→        onAuth={(view) => { setAuthModalView(view); setAuthModalOpen(true); setShowMobile(false); }}
-   743→        onLogout={() => { handleLogout(); setShowMobile(false); }}
-   744→      />
-   745→    </>
-   746→  );
-   747→}
-   748→
-   749→// ─── Notification Panel ────────────────────────────────────────
-   750→function NotificationPanel({
-   751→  show,
-   752→  onClose,
-   753→  notifications,
-   754→  unreadCount,
-   755→  onMarkAllRead,
-   756→  onViewAll,
-   757→  onNotifClick,
-   758→}: {
-   759→  show: boolean;
-   760→  onClose: () => void;
-   761→  notifications: Notification[];
-   762→  unreadCount: number;
-   763→  onMarkAllRead: () => void;
-   764→  onViewAll: () => void;
-   765→  onNotifClick: () => void;
-   766→}) {
-   767→  if (!show) return null;
-   768→  return (
-   769→    <div className="absolute right-0 top-full mt-2 w-80 bg-white rounded-xl shadow-2xl border border-gray-100 overflow-hidden z-50">
-   770→      <div className="p-3 border-b border-gray-100 flex items-center justify-between">
-   771→        <h3 className="font-semibold text-sm text-[#0f172a]">Notifications</h3>
-   772→        {unreadCount > 0 && (
-   773→          <button
-   774→            onClick={onMarkAllRead}
-   775→            className="text-xs text-[#059669] hover:text-emerald-700"
-   776→          >
-   777→            Mark all read
-   778→          </button>
-   779→        )}
-   780→      </div>
-   781→      <ScrollArea className="max-h-80">
-   782→        {notifications.length === 0 ? (
-   783→          <div className="p-6 text-center text-sm text-[#94a3b8]">No notifications</div>
-   784→        ) : (
-   785→          notifications.slice(0, 10).map(n => (
-   786→            <button
-   787→              key={n.id}
-   788→              onClick={onNotifClick}
-   789→              className={`w-full px-4 py-3 text-left hover:bg-gray-50 border-b border-gray-50 last:border-0 transition-colors ${!n.isRead ? 'bg-emerald-50/50' : ''}`}
-   790→            >
-   791→              <p className="text-sm font-medium text-[#0f172a]">{n.title}</p>
-   792→              <p className="text-xs text-[#64748b] mt-0.5 line-clamp-1">{n.message}</p>
-   793→            </button>
-   794→          ))
-   795→        )}
-   796→      </ScrollArea>
-   797→      <button
-   798→        onClick={onViewAll}
-   799→        className="w-full p-2.5 text-center text-xs font-medium text-[#059669] hover:bg-emerald-50 border-t border-gray-100 transition-colors"
-   800→      >
-   801→        View all notifications
-   802→      </button>
-   803→    </div>
-   804→  );
-   805→}
-   806→
-   807→// ─── User Menu Content ─────────────────────────────────────────
-   808→function UserMenuContent({
-   809→  user,
-   810→  isAdmin,
-   811→  onNavigate,
-   812→  onLogout,
-   813→}: {
-   814→  user: { name: string; email: string; state?: { name: string } | null };
-   815→  isAdmin: boolean;
-   816→  onNavigate: (view: string) => void;
-   817→  onLogout: () => void;
-   818→}) {
-   819→  return (
-   820→    <DropdownMenuContent align="end" className="w-56">
-   821→      <div className="px-3 py-2 border-b border-gray-100">
-   822→        <p className="text-sm font-semibold text-[#0f172a]">{user.name}</p>
-   823→        <p className="text-xs text-[#64748b]">{user.email}</p>
-   824→        {user.state && (
-   825→          <p className="text-xs text-[#94a3b8] mt-0.5">• {user.state.name}</p>
-   826→        )}
-   827→      </div>
-   828→      <DropdownMenuItem onClick={() => onNavigate('dashboard')}>
-   829→        <LayoutDashboard className="w-4 h-4 mr-2" />
-   830→        Dashboard
-   831→      </DropdownMenuItem>
-   832→      <DropdownMenuItem onClick={() => onNavigate('my-rentals')}>
-   833→        <Package className="w-4 h-4 mr-2" />
-   834→        My Rentals
-   835→      </DropdownMenuItem>
-   836→      <DropdownMenuItem onClick={() => onNavigate('my-listings')}>
-   837→        <Store className="w-4 h-4 mr-2" />
-   838→        My Listings
-   839→      </DropdownMenuItem>
-   840→      <DropdownMenuItem onClick={() => onNavigate('favorites')}>
-   841→        <Heart className="w-4 h-4 mr-2" />
-   842→        Favorites
-   843→      </DropdownMenuItem>
-   844→      <DropdownMenuItem onClick={() => onNavigate('messages')}>
-   845→        <MessageCircle className="w-4 h-4 mr-2" />
-   846→        Messages
-   847→      </DropdownMenuItem>
-   848→      {isAdmin && (
-   849→        <>
-   850→          <DropdownMenuSeparator />
-   851→          <DropdownMenuItem onClick={() => onNavigate('admin-dashboard')}>
-   852→            <Shield className="w-4 h-4 mr-2" />
-   853→            Admin Panel
-   854→          </DropdownMenuItem>
-   855→        </>
-   856→      )}
-   857→      <DropdownMenuSeparator />
-   858→      <DropdownMenuItem onClick={onLogout} className="text-red-600">
-   859→        <LogOut className="w-4 h-4 mr-2" />
-   860→        Logout
-   861→      </DropdownMenuItem>
-   862→    </DropdownMenuContent>
-   863→  );
-   864→}
-   865→
-   866→// ─── Mobile Side Sheet ─────────────────────────────────────────
-   867→function MobileSideSheet({
-   868→  open,
-   869→  onOpenChange,
-   870→  user,
-   871→  isAdmin,
-   872→  onNavigate,
-   873→  onAuth,
-   874→  onLogout,
-   875→}: {
-   876→  open: boolean;
-   877→  onOpenChange: (v: boolean) => void;
-   878→  user: { name?: string } | null;
-   879→  isAdmin: boolean;
-   880→  onNavigate: (view: string) => void;
-   881→  onAuth: (view: 'login' | 'register') => void;
-   882→  onLogout: () => void;
-   883→}) {
-   884→  return (
-   885→    <Sheet open={open} onOpenChange={onOpenChange}>
-   886→      <SheetContent side="right" className="w-72 p-0">
-   887→        <SheetHeader className="p-4 border-b border-[#e2e8f0]">
-   888→          <SheetTitle className="flex items-center gap-2">
-   889→            <div className="w-7 h-7 bg-[#059669] rounded-lg flex items-center justify-center">
-   890→              <Store className="w-4 h-4 text-white" />
-   891→            </div>
-   892→            <span className="text-[#0f172a]">
-   893→              Rent<span className="text-emerald-600">Cart</span>
-   894→            </span>
-   895→          </SheetTitle>
-   896→        </SheetHeader>
-   897→        <ScrollArea className="flex-1">
-   898→          <div className="p-3 space-y-1">
-   899→            <MobileNavItem icon={<Search className="w-4 h-4" />} label="Explore" onClick={() => onNavigate('marketplace')} />
-   900→            {user ? (
-   901→              <>
-   902→                <MobileNavItem icon={<Plus className="w-4 h-4" />} label="List Item Free" onClick={() => onNavigate('list-item')} />
-   903→                <MobileNavItem icon={<LayoutDashboard className="w-4 h-4" />} label="Dashboard" onClick={() => onNavigate('dashboard')} />
-   904→                <MobileNavItem icon={<Package className="w-4 h-4" />} label="My Rentals" onClick={() => onNavigate('my-rentals')} />
-   905→                <MobileNavItem icon={<Store className="w-4 h-4" />} label="My Listings" onClick={() => onNavigate('my-listings')} />
-   906→                <MobileNavItem icon={<Heart className="w-4 h-4" />} label="Favorites" onClick={() => onNavigate('favorites')} />
-   907→                <MobileNavItem icon={<MessageCircle className="w-4 h-4" />} label="Messages" onClick={() => onNavigate('messages')} />
-   908→                {isAdmin && (
-   909→                  <MobileNavItem icon={<Shield className="w-4 h-4" />} label="Admin Panel" onClick={() => onNavigate('admin-dashboard')} />
-   910→                )}
-   911→              </>
-   912→            ) : (
-   913→              <>
-   914→                <MobileNavItem icon={<User className="w-4 h-4" />} label="Login" onClick={() => onAuth('login')} />
-   915→                <MobileNavItem icon={<User className="w-4 h-4" />} label="Sign Up" onClick={() => onAuth('register')} />
-   916→              </>
-   917→            )}
-   918→          </div>
-   919→        </ScrollArea>
-   920→        {user && (
-   921→          <div className="p-3 border-t border-[#e2e8f0]">
-   922→            <button
-   923→              onClick={onLogout}
-   924→              className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-red-600 hover:bg-red-50 transition-colors"
-   925→            >
-   926→              <LogOut className="w-4 h-4" />
-   927→              Logout
-   928→            </button>
-   929→          </div>
-   930→        )}
-   931→      </SheetContent>
-   932→    </Sheet>
-   933→  );
-   934→}
-   935→
-   936→// ─── Mobile Nav Item ───────────────────────────────────────────
-   937→function MobileNavItem({ icon, label, onClick }: { icon: React.ReactNode; label: string; onClick: () => void }) {
-   938→  return (
-   939→    <button
-   940→      onClick={onClick}
-   941→      className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-[#0f172a] hover:bg-gray-100 transition-colors"
-   942→    >
-   943→      {icon}
-   944→      {label}
-   945→    </button>
-   946→  );
-   947→}
-   948→
+   741→        onNavigate={(view) => {
+   742→          if (view === 'list-item') {
+   743→            requireAuth(() => { navigate(view); setShowMobile(false); });
+   744→          } else {
+   745→            navigate(view);
+   746→            setShowMobile(false);
+   747→          }
+   748→        }}
+   749→        onAuth={(view) => { setAuthModalView(view); setAuthModalOpen(true); setShowMobile(false); }}
+   750→        onLogout={() => { handleLogout(); setShowMobile(false); }}
+   751→      />
+   752→    </>
+   753→  );
+   754→}
+   755→
+   756→// ─── Notification Panel ────────────────────────────────────────
+   757→function NotificationPanel({
+   758→  show,
+   759→  onClose,
+   760→  notifications,
+   761→  unreadCount,
+   762→  onMarkAllRead,
+   763→  onViewAll,
+   764→  onNotifClick,
+   765→}: {
+   766→  show: boolean;
+   767→  onClose: () => void;
+   768→  notifications: Notification[];
+   769→  unreadCount: number;
+   770→  onMarkAllRead: () => void;
+   771→  onViewAll: () => void;
+   772→  onNotifClick: () => void;
+   773→}) {
+   774→  if (!show) return null;
+   775→  return (
+   776→    <div className="absolute right-0 top-full mt-2 w-80 bg-white rounded-xl shadow-2xl border border-gray-100 overflow-hidden z-50">
+   777→      <div className="p-3 border-b border-gray-100 flex items-center justify-between">
+   778→        <h3 className="font-semibold text-sm text-[#0f172a]">Notifications</h3>
+   779→        {unreadCount > 0 && (
+   780→          <button
+   781→            onClick={onMarkAllRead}
+   782→            className="text-xs text-[#059669] hover:text-emerald-700"
+   783→          >
+   784→            Mark all read
+   785→          </button>
+   786→        )}
+   787→      </div>
+   788→      <ScrollArea className="max-h-80">
+   789→        {notifications.length === 0 ? (
+   790→          <div className="p-6 text-center text-sm text-[#94a3b8]">No notifications</div>
+   791→        ) : (
+   792→          notifications.slice(0, 10).map(n => (
+   793→            <button
+   794→              key={n.id}
+   795→              onClick={onNotifClick}
+   796→              className={`w-full px-4 py-3 text-left hover:bg-gray-50 border-b border-gray-50 last:border-0 transition-colors ${!n.isRead ? 'bg-emerald-50/50' : ''}`}
+   797→            >
+   798→              <p className="text-sm font-medium text-[#0f172a]">{n.title}</p>
+   799→              <p className="text-xs text-[#64748b] mt-0.5 line-clamp-1">{n.message}</p>
+   800→            </button>
+   801→          ))
+   802→        )}
+   803→      </ScrollArea>
+   804→      <button
+   805→        onClick={onViewAll}
+   806→        className="w-full p-2.5 text-center text-xs font-medium text-[#059669] hover:bg-emerald-50 border-t border-gray-100 transition-colors"
+   807→      >
+   808→        View all notifications
+   809→      </button>
+   810→    </div>
+   811→  );
+   812→}
+   813→
+   814→// ─── User Menu Content ─────────────────────────────────────────
+   815→function UserMenuContent({
+   816→  user,
+   817→  isAdmin,
+   818→  onNavigate,
+   819→  onLogout,
+   820→}: {
+   821→  user: { name: string; email: string; state?: { name: string } | null };
+   822→  isAdmin: boolean;
+   823→  onNavigate: (view: string) => void;
+   824→  onLogout: () => void;
+   825→}) {
+   826→  return (
+   827→    <DropdownMenuContent align="end" className="w-56">
+   828→      <div className="px-3 py-2 border-b border-gray-100">
+   829→        <p className="text-sm font-semibold text-[#0f172a]">{user.name}</p>
+   830→        <p className="text-xs text-[#64748b]">{user.email}</p>
+   831→        {user.state && (
+   832→          <p className="text-xs text-[#94a3b8] mt-0.5">• {user.state.name}</p>
+   833→        )}
+   834→      </div>
+   835→      <DropdownMenuItem onClick={() => onNavigate('dashboard')}>
+   836→        <LayoutDashboard className="w-4 h-4 mr-2" />
+   837→        Dashboard
+   838→      </DropdownMenuItem>
+   839→      <DropdownMenuItem onClick={() => onNavigate('my-rentals')}>
+   840→        <Package className="w-4 h-4 mr-2" />
+   841→        My Rentals
+   842→      </DropdownMenuItem>
+   843→      <DropdownMenuItem onClick={() => onNavigate('my-listings')}>
+   844→        <Store className="w-4 h-4 mr-2" />
+   845→        My Listings
+   846→      </DropdownMenuItem>
+   847→      <DropdownMenuItem onClick={() => onNavigate('favorites')}>
+   848→        <Heart className="w-4 h-4 mr-2" />
+   849→        Favorites
+   850→      </DropdownMenuItem>
+   851→      <DropdownMenuItem onClick={() => onNavigate('messages')}>
+   852→        <MessageCircle className="w-4 h-4 mr-2" />
+   853→        Messages
+   854→      </DropdownMenuItem>
+   855→      {isAdmin && (
+   856→        <>
+   857→          <DropdownMenuSeparator />
+   858→          <DropdownMenuItem onClick={() => onNavigate('admin-dashboard')}>
+   859→            <Shield className="w-4 h-4 mr-2" />
+   860→            Admin Panel
+   861→          </DropdownMenuItem>
+   862→        </>
+   863→      )}
+   864→      <DropdownMenuSeparator />
+   865→      <DropdownMenuItem onClick={onLogout} className="text-red-600">
+   866→        <LogOut className="w-4 h-4 mr-2" />
+   867→        Logout
+   868→      </DropdownMenuItem>
+   869→    </DropdownMenuContent>
+   870→  );
+   871→}
+   872→
+   873→// ─── Mobile Side Sheet ─────────────────────────────────────────
+   874→function MobileSideSheet({
+   875→  open,
+   876→  onOpenChange,
+   877→  user,
+   878→  isAdmin,
+   879→  onNavigate,
+   880→  onAuth,
+   881→  onLogout,
+   882→}: {
+   883→  open: boolean;
+   884→  onOpenChange: (v: boolean) => void;
+   885→  user: { name?: string } | null;
+   886→  isAdmin: boolean;
+   887→  onNavigate: (view: string) => void;
+   888→  onAuth: (view: 'login' | 'register') => void;
+   889→  onLogout: () => void;
+   890→}) {
+   891→  return (
+   892→    <Sheet open={open} onOpenChange={onOpenChange}>
+   893→      <SheetContent side="right" className="w-72 p-0">
+   894→        <SheetHeader className="p-4 border-b border-[#e2e8f0]">
+   895→          <SheetTitle className="flex items-center gap-2">
+   896→            <div className="w-7 h-7 bg-[#059669] rounded-lg flex items-center justify-center">
+   897→              <Store className="w-4 h-4 text-white" />
+   898→            </div>
+   899→            <span className="text-[#0f172a]">
+   900→              Rent<span className="text-emerald-600">Cart</span>
+   901→            </span>
+   902→          </SheetTitle>
+   903→        </SheetHeader>
+   904→        <ScrollArea className="flex-1">
+   905→          <div className="p-3 space-y-1">
+   906→            <MobileNavItem icon={<Search className="w-4 h-4" />} label="Explore" onClick={() => onNavigate('marketplace')} />
+   907→            {user ? (
+   908→              <>
+   909→                <MobileNavItem icon={<Plus className="w-4 h-4" />} label="List Item Free" onClick={() => onNavigate('list-item')} />
+   910→                <MobileNavItem icon={<LayoutDashboard className="w-4 h-4" />} label="Dashboard" onClick={() => onNavigate('dashboard')} />
+   911→                <MobileNavItem icon={<Package className="w-4 h-4" />} label="My Rentals" onClick={() => onNavigate('my-rentals')} />
+   912→                <MobileNavItem icon={<Store className="w-4 h-4" />} label="My Listings" onClick={() => onNavigate('my-listings')} />
+   913→                <MobileNavItem icon={<Heart className="w-4 h-4" />} label="Favorites" onClick={() => onNavigate('favorites')} />
+   914→                <MobileNavItem icon={<MessageCircle className="w-4 h-4" />} label="Messages" onClick={() => onNavigate('messages')} />
+   915→                {isAdmin && (
+   916→                  <MobileNavItem icon={<Shield className="w-4 h-4" />} label="Admin Panel" onClick={() => onNavigate('admin-dashboard')} />
+   917→                )}
+   918→              </>
+   919→            ) : (
+   920→              <>
+   921→                <MobileNavItem icon={<User className="w-4 h-4" />} label="Login" onClick={() => onAuth('login')} />
+   922→                <MobileNavItem icon={<User className="w-4 h-4" />} label="Sign Up" onClick={() => onAuth('register')} />
+   923→              </>
+   924→            )}
+   925→          </div>
+   926→        </ScrollArea>
+   927→        {user && (
+   928→          <div className="p-3 border-t border-[#e2e8f0]">
+   929→            <button
+   930→              onClick={onLogout}
+   931→              className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-red-600 hover:bg-red-50 transition-colors"
+   932→            >
+   933→              <LogOut className="w-4 h-4" />
+   934→              Logout
+   935→            </button>
+   936→          </div>
+   937→        )}
+   938→      </SheetContent>
+   939→    </Sheet>
+   940→  );
+   941→}
+   942→
+   943→// ─── Mobile Nav Item ───────────────────────────────────────────
+   944→function MobileNavItem({ icon, label, onClick }: { icon: React.ReactNode; label: string; onClick: () => void }) {
+   945→  return (
+   946→    <button
+   947→      onClick={onClick}
+   948→      className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-[#0f172a] hover:bg-gray-100 transition-colors"
+   949→    >
+   950→      {icon}
+   951→      {label}
+   952→    </button>
+   953→  );
+   954→}
+   955→

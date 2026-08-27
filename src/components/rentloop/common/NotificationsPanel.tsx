@@ -25,7 +25,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Separator } from '@/components/ui/separator';
 import { useAppStore } from '@/store';
 import { api } from '@/lib/api';
-import type { Notification } from '@/types';
+import type { Notification, AppView } from '@/types';
 import { formatDistanceToNow } from 'date-fns';
 import { toast } from 'sonner';
 
@@ -82,9 +82,19 @@ export default function NotificationsPanel({ mode = 'fullpage', onClose }: Notif
       try {
         const data = JSON.parse(notif.data);
         if (data.view) {
-          const validViews = ['rental', 'product', 'messages', 'my-rentals'] as const;
-          const view = validViews.includes(data.view) ? data.view : null;
-          if (view) navigate(view as never);
+          const viewMap: Record<string, string> = {
+            rental: 'my-rentals',
+            product: 'product',
+            messages: 'messages',
+            'my-rentals': 'my-rentals',
+          };
+          const resolvedView = viewMap[data.view];
+          if (resolvedView) {
+            const navData: Record<string, unknown> = {};
+            if (data.productId) navData.productId = data.productId;
+            if (data.rentalId) navData.rentalId = data.rentalId;
+            navigate(resolvedView as AppView, navData);
+          }
         }
       } catch {
         // ignore parse errors

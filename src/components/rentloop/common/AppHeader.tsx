@@ -416,7 +416,7 @@ export default function AppHeader() {
                   >
                     <MapPin className={`w-3.5 h-3.5 shrink-0 ${hasLocationSelection ? 'text-[#059669]' : 'text-[#94a3b8]'}`} />
                     <span className="truncate">{locationLabel}</span>
-                    <ChevronDown className="w-3 h-3 shrink-0 transition-transform ${showLocationPopover ? 'rotate-180' : ''} hidden lg:block" />
+                    <ChevronDown className={`w-3 h-3 shrink-0 transition-transform ${showLocationPopover ? 'rotate-180' : ''} hidden lg:block`} />
                   </button>
                   {showLocationPopover && (
                     <div className="absolute top-full left-0 mt-1 w-64 bg-white rounded-lg shadow-xl border border-gray-100 p-4 z-50">
@@ -503,7 +503,7 @@ export default function AppHeader() {
                   className="w-12 h-full bg-[#059669] hover:bg-[#10b981] text-white flex items-center justify-center transition-colors shrink-0"
                   aria-label="Search"
                 >
-                  <Search className="w-4.5 h-4.5" />
+                  <Search className="w-[18px] h-[18px]" />
                 </button>
               </div>
             </div>
@@ -823,6 +823,7 @@ function UserMenuContent({
   onNavigate: (view: string) => void;
   onLogout: () => void;
 }) {
+  const nav = onNavigate as (view: string) => void;
   return (
     <DropdownMenuContent align="end" className="w-56">
       <div className="px-3 py-2 border-b border-gray-100">
@@ -832,30 +833,30 @@ function UserMenuContent({
           <p className="text-xs text-[#94a3b8] mt-0.5">• {user.state.name}</p>
         )}
       </div>
-      <DropdownMenuItem onClick={() => onNavigate('dashboard')}>
+      <DropdownMenuItem onClick={() => nav('dashboard')}>
         <LayoutDashboard className="w-4 h-4 mr-2" />
         Dashboard
       </DropdownMenuItem>
-      <DropdownMenuItem onClick={() => onNavigate('my-rentals')}>
+      <DropdownMenuItem onClick={() => nav('my-rentals')}>
         <Package className="w-4 h-4 mr-2" />
         My Rentals
       </DropdownMenuItem>
-      <DropdownMenuItem onClick={() => onNavigate('my-listings')}>
+      <DropdownMenuItem onClick={() => nav('my-listings')}>
         <Store className="w-4 h-4 mr-2" />
         My Listings
       </DropdownMenuItem>
-      <DropdownMenuItem onClick={() => onNavigate('favorites')}>
+      <DropdownMenuItem onClick={() => nav('favorites')}>
         <Heart className="w-4 h-4 mr-2" />
         Favorites
       </DropdownMenuItem>
-      <DropdownMenuItem onClick={() => onNavigate('messages')}>
+      <DropdownMenuItem onClick={() => nav('messages')}>
         <MessageCircle className="w-4 h-4 mr-2" />
         Messages
       </DropdownMenuItem>
       {isAdmin && (
         <>
           <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={() => onNavigate('admin-dashboard')}>
+          <DropdownMenuItem onClick={() => nav('admin-dashboard')}>
             <Shield className="w-4 h-4 mr-2" />
             Admin Panel
           </DropdownMenuItem>
@@ -888,6 +889,7 @@ function MobileSideSheet({
   onAuth: (view: 'login' | 'register') => void;
   onLogout: () => void;
 }) {
+  const nav = onNavigate as (view: string) => void;
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="right" className="w-72 p-0">
@@ -903,17 +905,17 @@ function MobileSideSheet({
         </SheetHeader>
         <ScrollArea className="flex-1">
           <div className="p-3 space-y-1">
-            <MobileNavItem icon={<Search className="w-4 h-4" />} label="Explore" onClick={() => onNavigate('marketplace')} />
+            <MobileNavItem icon={<Search className="w-4 h-4" />} label="Explore" onClick={() => nav('marketplace')} />
             {user ? (
               <>
-                <MobileNavItem icon={<Plus className="w-4 h-4" />} label="List Item Free" onClick={() => onNavigate('list-item')} />
-                <MobileNavItem icon={<LayoutDashboard className="w-4 h-4" />} label="Dashboard" onClick={() => onNavigate('dashboard')} />
-                <MobileNavItem icon={<Package className="w-4 h-4" />} label="My Rentals" onClick={() => onNavigate('my-rentals')} />
-                <MobileNavItem icon={<Store className="w-4 h-4" />} label="My Listings" onClick={() => onNavigate('my-listings')} />
-                <MobileNavItem icon={<Heart className="w-4 h-4" />} label="Favorites" onClick={() => onNavigate('favorites')} />
-                <MobileNavItem icon={<MessageCircle className="w-4 h-4" />} label="Messages" onClick={() => onNavigate('messages')} />
+                <MobileNavItem icon={<Plus className="w-4 h-4" />} label="List Item Free" onClick={() => nav('list-item')} />
+                <MobileNavItem icon={<LayoutDashboard className="w-4 h-4" />} label="Dashboard" onClick={() => nav('dashboard')} />
+                <MobileNavItem icon={<Package className="w-4 h-4" />} label="My Rentals" onClick={() => nav('my-rentals')} />
+                <MobileNavItem icon={<Store className="w-4 h-4" />} label="My Listings" onClick={() => nav('my-listings')} />
+                <MobileNavItem icon={<Heart className="w-4 h-4" />} label="Favorites" onClick={() => nav('favorites')} />
+                <MobileNavItem icon={<MessageCircle className="w-4 h-4" />} label="Messages" onClick={() => nav('messages')} />
                 {isAdmin && (
-                  <MobileNavItem icon={<Shield className="w-4 h-4" />} label="Admin Panel" onClick={() => onNavigate('admin-dashboard')} />
+                  <MobileNavItem icon={<Shield className="w-4 h-4" />} label="Admin Panel" onClick={() => nav('admin-dashboard')} />
                 )}
               </>
             ) : (

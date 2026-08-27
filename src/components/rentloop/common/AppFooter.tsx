@@ -1,6 +1,7 @@
 'use client';
 
 import { useAppStore } from '@/store';
+import type { AppView } from '@/types';
 import {
   Store, Mail, Phone, MapPin, Facebook, Twitter, Instagram, Linkedin, Youtube,
 } from 'lucide-react';
@@ -9,8 +10,20 @@ import { toast } from 'sonner';
 export default function AppFooter() {
   const navigate = useAppStore((s) => s.navigate);
   const currentView = useAppStore((s) => s.currentView);
+  const user = useAppStore((s) => s.user);
+  const setAuthModalOpen = useAppStore((s) => s.setAuthModalOpen);
+  const setAuthModalView = useAppStore((s) => s.setAuthModalView);
 
   if (currentView === 'landing') return null;
+
+  const requireAuth = (view: AppView) => {
+    if (!user) {
+      setAuthModalView('login');
+      setAuthModalOpen(true);
+      return;
+    }
+    navigate(view);
+  };
 
   const handleSocialClick = (platform: string) => {
     toast.info(`${platform} page coming soon!`);
@@ -103,7 +116,7 @@ export default function AppFooter() {
                 </button>
               </li>
               <li>
-                <button onClick={() => navigate('favorites')} className="text-sm text-gray-400 hover:text-[#10b981] transition-colors">
+                <button onClick={() => requireAuth('favorites')} className="text-sm text-gray-400 hover:text-[#10b981] transition-colors">
                   My Favourites
                 </button>
               </li>
@@ -115,22 +128,22 @@ export default function AppFooter() {
             <h3 className="text-sm font-semibold text-white uppercase tracking-wider mb-4">For Owners</h3>
             <ul className="space-y-2.5">
               <li>
-                <button onClick={() => navigate('list-item')} className="text-sm text-gray-400 hover:text-[#10b981] transition-colors">
+                <button onClick={() => requireAuth('list-item')} className="text-sm text-gray-400 hover:text-[#10b981] transition-colors">
                   List Your Item
                 </button>
               </li>
               <li>
-                <button onClick={() => navigate('dashboard')} className="text-sm text-gray-400 hover:text-[#10b981] transition-colors">
+                <button onClick={() => requireAuth('dashboard')} className="text-sm text-gray-400 hover:text-[#10b981] transition-colors">
                   Owner Dashboard
                 </button>
               </li>
               <li>
-                <button onClick={() => navigate('my-listings')} className="text-sm text-gray-400 hover:text-[#10b981] transition-colors">
+                <button onClick={() => requireAuth('my-listings')} className="text-sm text-gray-400 hover:text-[#10b981] transition-colors">
                   My Listings
                 </button>
               </li>
               <li>
-                <button onClick={() => navigate('dashboard')} className="text-sm text-gray-400 hover:text-[#10b981] transition-colors">
+                <button onClick={() => requireAuth('dashboard')} className="text-sm text-gray-400 hover:text-[#10b981] transition-colors">
                   Earnings
                 </button>
               </li>

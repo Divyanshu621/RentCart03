@@ -696,45 +696,49 @@
    696→          <div className="max-w-3xl mx-auto flex items-center gap-3">
    697→            <Button
    698→              variant="outline"
-   699→              onClick={() => {
-   700→                saveDraft();
-   701→                toast.success('Draft saved');
-   702→                navigate('dashboard');
-   703→              }}
-   704→              className="h-11 flex-1 sm:flex-none sm:px-6"
-   705→            >
-   706→              Save Draft
-   707→            </Button>
-   708→            <Button
-   709→              onClick={handleSubmit}
-   710→              disabled={submitting}
-   711→              className="h-11 flex-[2] sm:flex-none sm:px-8 bg-emerald-600 hover:bg-emerald-700 text-white font-medium"
-   712→            >
-   713→              {submitting ? (
-   714→                <><Loader2 className="w-4 h-4 animate-spin mr-2" /> Submitting...</>
-   715→              ) : (
-   716→                <><FileCheck className="w-4 h-4 mr-2" /> Submit for Verification</>
-   717→              )}
-   718→            </Button>
-   719→          </div>
-   720→        </div>
-   721→      )}
-   722→
-   723→      {/* Verified - Go to Dashboard */}
-   724→      {kyc?.status === 'VERIFIED' && (
-   725→        <div className="fixed bottom-16 left-0 right-0 md:bottom-0 bg-white/90 backdrop-blur-md border-t border-gray-200 p-3 sm:p-4 z-30 safe-area-bottom">
-   726→          <div className="max-w-3xl mx-auto">
-   727→            <Button
-   728→              onClick={() => navigate('dashboard')}
-   729→              className="w-full h-11 bg-emerald-600 hover:bg-emerald-700 text-white font-medium"
-   730→            >
-   731→              Go to Dashboard
-   732→              <ChevronRight className="w-4 h-4 ml-1" />
-   733→            </Button>
-   734→          </div>
-   735→        </div>
-   736→      )}
-   737→    </div>
-   738→  );
-   739→}
-   740→
+   699→              onClick={async () => {
+   700→                try {
+   701→                  await saveDraft();
+   702→                  toast.success('Draft saved');
+   703→                  navigate('dashboard');
+   704→                } catch {
+   705→                  toast.error('Failed to save draft. Please try again.');
+   706→                }
+   707→              }}
+   708→              className="h-11 flex-1 sm:flex-none sm:px-6"
+   709→            >
+   710→              Save Draft
+   711→            </Button>
+   712→            <Button
+   713→              onClick={handleSubmit}
+   714→              disabled={submitting}
+   715→              className="h-11 flex-[2] sm:flex-none sm:px-8 bg-emerald-600 hover:bg-emerald-700 text-white font-medium"
+   716→            >
+   717→              {submitting ? (
+   718→                <><Loader2 className="w-4 h-4 animate-spin mr-2" /> Submitting...</>
+   719→              ) : (
+   720→                <><FileCheck className="w-4 h-4 mr-2" /> Submit for Verification</>
+   721→              )}
+   722→            </Button>
+   723→          </div>
+   724→        </div>
+   725→      )}
+   726→
+   727→      {/* Verified - Go to Dashboard */}
+   728→      {kyc?.status === 'VERIFIED' && (
+   729→        <div className="fixed bottom-16 left-0 right-0 md:bottom-0 bg-white/90 backdrop-blur-md border-t border-gray-200 p-3 sm:p-4 z-30 safe-area-bottom">
+   730→          <div className="max-w-3xl mx-auto">
+   731→            <Button
+   732→              onClick={() => navigate('dashboard')}
+   733→              className="w-full h-11 bg-emerald-600 hover:bg-emerald-700 text-white font-medium"
+   734→            >
+   735→              Go to Dashboard
+   736→              <ChevronRight className="w-4 h-4 ml-1" />
+   737→            </Button>
+   738→          </div>
+   739→        </div>
+   740→      )}
+   741→    </div>
+   742→  );
+   743→}
+   744→

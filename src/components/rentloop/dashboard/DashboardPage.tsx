@@ -343,7 +343,7 @@ export default function DashboardPage() {
         {/* ─── Welcome Header ──────────────────────────────── */}
         <motion.div variants={itemVariants} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
           <div className="flex items-center gap-4">
-            <Avatar className="w-14 h-14 h-14 ring-2 ring-emerald-500/20 ring-offset-2 ring-offset-background">
+            <Avatar className="w-14 h-14 ring-2 ring-emerald-500/20 ring-offset-2 ring-offset-background">
               <AvatarImage src={user?.avatarUrl} alt={user?.name} />
               <AvatarFallback className="bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 text-lg font-bold">
                 {user?.name?.charAt(0)?.toUpperCase() || 'U'}

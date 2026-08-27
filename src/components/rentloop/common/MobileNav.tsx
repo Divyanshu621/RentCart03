@@ -1,6 +1,7 @@
 'use client';
 
 import { useAppStore } from '@/store';
+import type { AppView } from '@/types';
 import { Home, Search, PlusCircle, Package, UserCircle } from 'lucide-react';
 
 export default function MobileNav() {
@@ -9,21 +10,21 @@ export default function MobileNav() {
   // Don't show on landing page
   if (currentView === 'landing') return null;
 
-  const requireAuth = (view: string) => {
+  const requireAuth = (view: AppView) => {
     if (!user) {
       setAuthModalView('login');
       setAuthModalOpen(true);
       return;
     }
-    navigate(view as never);
+    navigate(view);
   };
 
   const items = [
-    { icon: Home, label: 'Home', view: 'landing', action: () => navigate('landing'), auth: false },
-    { icon: Search, label: 'Explore', view: 'marketplace', action: () => navigate('marketplace'), auth: false },
-    { icon: PlusCircle, label: 'List', view: 'list-item', action: () => requireAuth('list-item'), auth: true },
-    { icon: Package, label: 'Rentals', view: 'my-rentals', action: () => requireAuth('my-rentals'), auth: true },
-    { icon: UserCircle, label: 'Profile', view: 'dashboard', action: () => requireAuth('dashboard'), auth: true },
+    { icon: Home, label: 'Home', view: 'landing' as AppView, action: () => navigate('landing') },
+    { icon: Search, label: 'Explore', view: 'marketplace' as AppView, action: () => navigate('marketplace') },
+    { icon: PlusCircle, label: 'List', view: 'list-item' as AppView, action: () => requireAuth('list-item') },
+    { icon: Package, label: 'Rentals', view: 'my-rentals' as AppView, action: () => requireAuth('my-rentals') },
+    { icon: UserCircle, label: 'Profile', view: 'dashboard' as AppView, action: () => requireAuth('dashboard') },
   ];
 
   return (
