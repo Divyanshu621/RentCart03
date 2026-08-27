@@ -389,7 +389,7 @@ export default function MyRentalsPage() {
     queryKey: ['rentals', 'customer'],
     queryFn: async () => {
       const data = await api.getRentals({ role: 'customer' });
-      return data as unknown as Rental[];
+      return Array.isArray((data as any).rentals) ? (data as any).rentals as Rental[] : [];
     },
     enabled: !!user,
   });
@@ -399,7 +399,7 @@ export default function MyRentalsPage() {
     queryKey: ['rentals', 'owner'],
     queryFn: async () => {
       const data = await api.getRentals({ role: 'owner' });
-      return data as unknown as Rental[];
+      return Array.isArray((data as any).rentals) ? (data as any).rentals as Rental[] : [];
     },
     enabled: !!user,
   });

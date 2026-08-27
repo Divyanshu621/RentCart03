@@ -46,14 +46,14 @@ export default function MessagesPage() {
 
   const { data: conversations = [], isLoading: loadingConversations } = useQuery({
     queryKey: ['conversations'],
-    queryFn: () => api.getConversations() as Promise<Conversation[]>,
+    queryFn: () => api.getConversations().then((data: any) => Array.isArray(data?.conversations) ? data.conversations as Conversation[] : []),
     enabled: !!user,
   });
 
   const { data: messages = [], isLoading: loadingMessages } = useQuery({
     queryKey: ['messages', selectedConversation?.id],
     queryFn: () =>
-      api.getMessages(selectedConversation!.id) as Promise<ChatMessage[]>,
+      api.getMessages(selectedConversation!.id).then((data: any) => Array.isArray(data?.messages) ? data.messages as ChatMessage[] : []),
     enabled: !!selectedConversation,
   });
 

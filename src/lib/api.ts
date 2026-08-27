@@ -16,7 +16,13 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
     const err = await res.json().catch(() => ({ error: 'Request failed' }));
     throw new Error(err.error || `HTTP ${res.status}`);
   }
-  return res.json();
+  const json = await res.json();
+  // Strip the { success: true, ...data } wrapper that all API routes use
+  if (json && typeof json === 'object' && json.success === true) {
+    const { success: _, ...data } = json;
+    return data as T;
+  }
+  return json as T;
 }
 
 export const api = {
@@ -60,7 +66,7 @@ export const api = {
     request<Record<string, unknown>>(`/api/products/${id}`),
 
   createProduct: (data: Record<string, unknown>) =>
-    request<Record<string, unknown>>('/api/products', { method: 'POST', body: JSON.stringify(data) }),
+    request<{ product: Record<string, unknown> }>('/api/products', { method: 'POST', body: JSON.stringify(data) }),
 
   uploadImages: (files: File[]) => {
     const formData = new FormData();
@@ -74,10 +80,10 @@ export const api = {
   },
 
   updateProduct: (id: string, data: Record<string, unknown>) =>
-    request<Record<string, unknown>>(`/api/products/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+    request<{ product: Record<string, unknown> }>(`/api/products/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
 
   deleteProduct: (id: string) =>
-    request<{ success: boolean }>(`/api/products/${id}`, { method: 'DELETE' }),
+    request<{ message: string }>(`/api/products/${id}`, { method: 'DELETE' }),
 
   toggleFavorite: (productId: string) =>
     request<{ isFavorited: boolean }>(`/api/products/${productId}/favorite`, { method: 'POST' }),
@@ -93,18 +99,18 @@ export const api = {
 
   // Rentals
   createRental: (data: { productId: string; startDate: string; endDate: string; couponCode?: string }) =>
-    request<Record<string, unknown>>('/api/rentals', { method: 'POST', body: JSON.stringify(data) }),
+    request<{ rental: Record<string, unknown> }>('/api/rentals', { method: 'POST', body: JSON.stringify(data) }),
 
   getRentals: (params?: Record<string, string>) => {
     const qs = new URLSearchParams(params).toString();
-    return request<Record<string, unknown>[]>(`/api/rentals${qs ? `?${qs}` : ''}`);
+    return request<{ rentals: Record<string, unknown>[] }>(`/api/rentals${qs ? `?${qs}` : ''}`);
   },
 
   getRental: (id: string) =>
-    request<Record<string, unknown>>(`/api/rentals/${id}`),
+    request<{ rental: Record<string, unknown> }>(`/api/rentals/${id}`),
 
   updateRental: (id: string, data: Record<string, unknown>) =>
-    request<Record<string, unknown>>(`/api/rentals/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+    request<{ rental: Record<string, unknown> }>(`/api/rentals/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
 
   payRental: (id: string) =>
     request<Record<string, unknown>>(`/api/rentals/${id}/pay`, { method: 'POST' }),
@@ -120,53 +126,53 @@ export const api = {
     request<Record<string, unknown>>(`/api/rentals/${id}/cancel`, { method: 'POST', body: JSON.stringify({ reason }) }),
 
   acceptRental: (id: string) =>
-    request<Record<string, unknown>>(`/api/rentals/${id}`, { method: 'PATCH', body: JSON.stringify({ status: 'OWNER_ACCEPTED' }) }),
+    request<{ rental: Record<string, unknown> }>(`/api/rentals/${id}`, { method: 'PATCH', body: JSON.stringify({ status: 'OWNER_ACCEPTED' }) }),
 
   rejectRental: (id: string, reason?: string) =>
-    request<Record<string, unknown>>(`/api/rentals/${id}`, { method: 'PATCH', body: JSON.stringify({ status: 'OWNER_REJECTED', cancellationReason: reason || 'Owner rejected the rental request' }) }),
+    request<{ rental: Record<string, unknown> }>(`/api/rentals/${id}`, { method: 'PATCH', body: JSON.stringify({ status: 'OWNER_REJECTED', cancellationReason: reason || 'Owner rejected the rental request' }) }),
 
   returnRental: (id: string, data?: { inspectionResult?: string; inspectionNotes?: string }) =>
-    request<Record<string, unknown>>(`/api/rentals/${id}/return`, { method: 'POST', body: JSON.stringify(data || {}) }),
+    request<{ rental: Record<string, unknown> }>(`/api/rentals/${id}/return`, { method: 'POST', body: JSON.stringify(data || {}) }),
 
   extendRental: (id: string, data: { requestedDays: number; reason?: string }) =>
-    request<Record<string, unknown>>(`/api/rentals/${id}/extend`, { method: 'POST', body: JSON.stringify(data) }),
+    request<{ extension: Record<string, unknown> }>(`/api/rentals/${id}/extend`, { method: 'POST', body: JSON.stringify(data) }),
 
   respondExtension: (rentalId: string, extId: string, data: { approved: boolean }) =>
     request<Record<string, unknown>>(`/api/rentals/${rentalId}/extend/${extId}/respond`, { method: 'POST', body: JSON.stringify(data) }),
 
   // Reviews
   createReview: (data: { rentalId: string; rating: number; comment?: string }) =>
-    request<Record<string, unknown>>('/api/reviews', { method: 'POST', body: JSON.stringify(data) }),
+    request<{ review: Record<string, unknown> }>('/api/reviews', { method: 'POST', body: JSON.stringify(data) }),
 
   // Conversations
   getConversations: () =>
-    request<Record<string, unknown>[]>('/api/conversations'),
+    request<{ conversations: Record<string, unknown>[] }>('/api/conversations'),
 
   createConversation: (otherUserId: string, productId?: string) =>
-    request<Record<string, unknown>>('/api/conversations', { method: 'POST', body: JSON.stringify({ otherUserId, productId }) }),
+    request<{ conversation: Record<string, unknown> }>('/api/conversations', { method: 'POST', body: JSON.stringify({ otherUserId, productId }) }),
 
   getMessages: (conversationId: string) =>
-    request<Record<string, unknown>[]>(`/api/conversations/${conversationId}/messages`),
+    request<{ messages: Record<string, unknown>[] }>(`/api/conversations/${conversationId}/messages`),
 
   sendMessage: (conversationId: string, content: string) =>
     request<Record<string, unknown>>(`/api/conversations/${conversationId}/messages`, { method: 'POST', body: JSON.stringify({ content }) }),
 
   // Notifications
   getNotifications: () =>
-    request<Record<string, unknown>[]>('/api/notifications'),
+    request<{ notifications: Record<string, unknown>[] }>('/api/notifications'),
 
   markNotificationsRead: (ids?: string[], markAll?: boolean) =>
     request<{ success: boolean }>('/api/notifications', { method: 'PATCH', body: JSON.stringify({ ids, markAll }) }),
 
   // Disputes
   createDispute: (data: { rentalId: string; reason: string; description: string }) =>
-    request<Record<string, unknown>>('/api/disputes', { method: 'POST', body: JSON.stringify(data) }),
+    request<{ dispute: Record<string, unknown> }>('/api/disputes', { method: 'POST', body: JSON.stringify(data) }),
 
   getDisputes: () =>
-    request<Record<string, unknown>[]>('/api/disputes'),
+    request<{ disputes: Record<string, unknown>[] }>('/api/disputes'),
 
   updateDispute: (id: string, data: Record<string, unknown>) =>
-    request<Record<string, unknown>>(`/api/disputes/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+    request<{ dispute: Record<string, unknown> }>(`/api/disputes/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
 
   // Coupons
   validateCoupon: (code: string, orderAmount: number) =>

@@ -65,7 +65,7 @@ export default function AdminDisputesPage() {
 
   const { data: disputes = [], isLoading } = useQuery({
     queryKey: ['disputes'],
-    queryFn: () => api.getDisputes() as Promise<Dispute[]>,
+    queryFn: () => api.getDisputes().then((data: any) => Array.isArray(data?.disputes) ? data.disputes as Dispute[] : []),
   });
 
   const updateMutation = useMutation({

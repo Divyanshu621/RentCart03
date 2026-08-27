@@ -1167,4 +1167,73 @@
   1167→- All footer links (Help Center, Contact, Privacy, Terms, Cookies) verified working
   1168→- Auth modal Terms/Privacy links navigate correctly and close modal
   1169→- All major user flows verified via agent-browser
-  1170→
+  1170→---
+  1171→Task ID: comprehensive-audit-fix
+  1172→Agent: Main
+  1173→Task: Comprehensive audit and fix of all components - resolve critical crashes, broken navigation, and non-functional elements
+  1174→
+  1175→Work Log:
+  1176→- Analyzed user screenshot showing ErrorBoundary "Something went wrong" error
+  1177→- Used VLM to identify the error state from the uploaded screenshot
+  1178→- Launched 3 parallel subagent audits covering: auth components, header/footer/mobileNav, dashboard/productCard/marketplace, and remaining pages (MyRentals, Messages, Notifications, Payment)
+  1179→- Identified and fixed 20+ bugs across 10 files
+  1180→- Ran ESLint - 0 errors, 3 warnings (cleaned up)
+  1181→- Browser-verified all pages load without errors: landing, marketplace, product detail, help center, contact, login
+  1182→
+  1183→Stage Summary:
+  1184→- CRITICAL FIXES:
+  1185→  1. MyRentalsPage.tsx: RentalCard referenced out-of-scope `acceptMutation` - passed as prop `isAccepting`
+  1186→  2. ProductCard.tsx: Missing `?.` on `product.category.slug` and `product.category.name` - would crash if category null
+  1187→  3. AppHeader.tsx: Template literal `${}` inside double-quoted className string - fixed to backticks
+  1188→  4. AppHeader.tsx: Invalid Tailwind classes `w-4.5` `h-4.5` - changed to `w-[18px] h-[18px]`
+  1189→  5. AppHeader.tsx: `onNavigate((view) => navigate(view))` type mismatch - added `nav` cast in UserMenuContent and MobileSideSheet
+  1190→  6. NotificationsPanel.tsx: Navigation to invalid `'rental'` view (not in AppView union) - mapped to `'my-rentals'`
+  1191→  7. AppFooter.tsx: 5 links (favorites, list-item, dashboard, my-listings, earnings) had no auth guard - added `requireAuth` helper
+  1192→  8. MobileNav.tsx: `navigate(view as never)` unsafe cast - properly typed with `AppView`
+  1193→  9. ProductDetailPage.tsx: Dead store selector `s.n` removed
+  1194→  10. ProductDetailPage.tsx: Trust score showed `%` when undefined - now shows `N/A`
+  1195→  11. PaymentCheckoutModal.tsx: Missing Razorpay `handler` - users would be permanently stuck on "Processing..." - added success handler
+  1196→- HIGH PRIORITY FIXES:
+  1197→  12. MyRentalsPage.tsx: Category icon/gradient maps were defined but never used - now uses `rental.product?.category?.slug`
+  1198→  13. MyRentalsPage.tsx: "Contact" button showed "coming soon" toast - now navigates to Messages
+  1199→  14. MyRentalsPage.tsx: Dead imports `ExtensionRequest`, `Payment` removed
+  1200→  15. AuthModal.tsx: Stale Google GSI callback closure - moved handler inside useEffect, added `onSuccess` dep, added cleanup
+  1201→  16. AuthModal.tsx: Duplicate "Rental Agreement" link pointing to terms-of-service removed
+  1202→  17. AuthModal.tsx: Missing script `onerror` handler and cleanup - both added
+  1203→  18. ProductCard.tsx: Weekly price with misleading `line-through` - changed to "or ₹X/week"
+  1204→  19. DashboardPage.tsx: Duplicate `h-14` CSS class removed
+  1205→  20. NotificationsPanel.tsx: Properly typed navigation with `AppView` import
+  1206→
+  1207→---
+  1208→Task ID: 2-a
+  1209→Agent: Sub-agent
+  1210→Task: Fix DashboardPage call sites after api.ts unwrapping change
+  1211→
+  1212→Work Log:
+  1213→- Read worklog for context on api.ts change (strips `{ success: true, ...data }` wrappers)
+  1214→- Read DashboardPage.tsx lines 215-275 to identify affected code
+  1215→- Confirmed `useState` defaults for `customerRentals` and `ownerRentals` already set to `[]` (defensive)
+  1216→- Changed lines 234-235: `custRes.value` and `ownRes.value` now extract `.rentals` property with `Array.isArray()` guard
+  1217→- Verified derived `.filter()` calls at lines 252+ are safe since state always holds an array
+  1218→
+  1219→Stage Summary:
+  1220→- DashboardPage.tsx: Updated `setCustomerRentals` and `setOwnerRentals` to extract `.rentals` from the unwrapped response object `{ rentals: [...] }` instead of treating the whole response as `Rental[]`
+  1221→- Added `Array.isArray()` defensive check so setters always receive an array, preventing crashes in downstream `.filter()` calls
+  1222→- No other changes needed — `useState` defaults were already `[]`
+  1223→
+  1224→---
+  1225→Task ID: 2-b
+  1226→Agent: Sub-agent (fix-myrentals-callsites)
+  1227→Task: Fix MyRentalsPage call sites for new api.getRentals() return shape
+  1228→
+  1229→Work Log:
+  1230→- Read worklog to understand prior API layer changes
+  1231→- Read MyRentalsPage.tsx and identified two `api.getRentals()` calls at lines 391 and 401
+  1232→- Changed both `queryFn` return statements from `return data as unknown as Rental[]` to `return Array.isArray((data as any).rentals) ? (data as any).rentals as Rental[] : []`
+  1233→- Audited all other api calls in the file: `api.payRental`, `api.cancelRental`, `api.acceptRental`, `api.rejectRental`, `api.returnRental` — all used as mutation functions with no response property access, so no changes needed
+  1234→
+  1235→Stage Summary:
+  1236→- MyRentalsPage.tsx: Updated both `api.getRentals()` calls (customer and owner) to extract `.rentals` from the new `{ rentals: [...] }` response shape
+  1237→- Added `Array.isArray()` defensive guard matching the pattern used in DashboardPage.tsx
+  1238→- No other api calls in the file required changes
+  1239→

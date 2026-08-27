@@ -343,7 +343,7 @@
    343→        {/* ─── Welcome Header ──────────────────────────────── */}
    344→        <motion.div variants={itemVariants} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
    345→          <div className="flex items-center gap-4">
-   346→            <Avatar className="w-14 h-14 h-14 ring-2 ring-emerald-500/20 ring-offset-2 ring-offset-background">
+   346→            <Avatar className="w-14 h-14 ring-2 ring-emerald-500/20 ring-offset-2 ring-offset-background">
    347→              <AvatarImage src={user?.avatarUrl} alt={user?.name} />
    348→              <AvatarFallback className="bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 text-lg font-bold">
    349→                {user?.name?.charAt(0)?.toUpperCase() || 'U'}

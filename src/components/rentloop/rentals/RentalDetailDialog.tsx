@@ -121,7 +121,7 @@ export default function RentalDetailDialog({ rentalId, open, onClose }: RentalDe
     queryKey: ['rental', rentalId],
     queryFn: async () => {
       const data = await api.getRental(rentalId!);
-      return data as unknown as Rental;
+      return (data as any)?.rental as Rental;
     },
     enabled: !!rentalId && open,
   });

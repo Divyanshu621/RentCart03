@@ -231,8 +231,8 @@ export default function DashboardPage() {
       ]);
 
       if (statsRes.status === 'fulfilled') setStats(statsRes.value as unknown as DashboardStats);
-      if (custRes.status === 'fulfilled') setCustomerRentals(custRes.value as unknown as Rental[]);
-      if (ownRes.status === 'fulfilled') setOwnerRentals(ownRes.value as unknown as Rental[]);
+      if (custRes.status === 'fulfilled') setCustomerRentals(Array.isArray((custRes.value as any).rentals) ? (custRes.value as any).rentals as Rental[] : []);
+      if (ownRes.status === 'fulfilled') setOwnerRentals(Array.isArray((ownRes.value as any).rentals) ? (ownRes.value as any).rentals as Rental[] : []);
 
       if (statsRes.status === 'rejected' && custRes.status === 'rejected' && ownRes.status === 'rejected') {
         setError('Failed to load dashboard data');

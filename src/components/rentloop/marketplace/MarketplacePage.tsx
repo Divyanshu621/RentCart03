@@ -79,15 +79,7 @@ export default function MarketplacePage() {
   const [filtersOpen, setFiltersOpen] = useState(false);
 
   const [initialSearchDone, setInitialSearchDone] = useState(false);
-
-  useEffect(() => {
-    if (!initialSearchDone && viewData?.searchQuery && typeof viewData.searchQuery === 'string') {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- sync viewData to local state on first load
-    setSearch(viewData.searchQuery);
-    setDebouncedSearch(viewData.searchQuery);
-    setInitialSearchDone(true);
-  }
-  }, [viewData?.searchQuery, initialSearchDone]);
+  const [initialCategoryDone, setInitialCategoryDone] = useState(false);
 
   const ITEMS_PER_PAGE = 12;
 
@@ -120,6 +112,37 @@ export default function MarketplacePage() {
     queryFn: async () => api.getCategories() as unknown as Promise<Category[]>,
     staleTime: 1000 * 60 * 10,
   });
+
+  // Sync search query from navigation (e.g. hero search)
+  useEffect(() => {
+    if (!initialSearchDone && viewData?.searchQuery && typeof viewData.searchQuery === 'string') {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- sync viewData to local state on first load
+      setSearch(viewData.searchQuery);
+      setDebouncedSearch(viewData.searchQuery);
+      setInitialSearchDone(true);
+    }
+  }, [viewData?.searchQuery, initialSearchDone]);
+
+  // Sync category from navigation (e.g. landing page category click)
+  useEffect(() => {
+    if (!initialCategoryDone) {
+      const catId = viewData?.categoryId as string | undefined;
+      if (catId) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- sync viewData to local state on first load
+        setSelectedCategory(catId);
+        setInitialCategoryDone(true);
+      } else if (viewData?.category && typeof viewData.category === 'string') {
+        // Map slug to category ID
+        const allCats = (categoriesData ?? categories) as Category[];
+        const match = allCats.find((c) => (c as unknown as { slug?: string }).slug === viewData.category);
+        if (match) {
+          // eslint-disable-next-line react-hooks/set-state-in-effect -- sync viewData to local state on first load
+          setSelectedCategory(match.id);
+        }
+        setInitialCategoryDone(true);
+      }
+    }
+  }, [viewData?.categoryId, viewData?.category, initialCategoryDone, categoriesData, categories]);
 
   const { data: productsResponse, isLoading, isError, error } = useQuery({
     queryKey: ['products', debouncedSearch, selectedCategory, condition, minPrice, maxPrice, deliveryOnly, selectedState?.id, selectedCity?.id, selectedArea?.id, sort, page],

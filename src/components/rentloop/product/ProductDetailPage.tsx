@@ -53,6 +53,11 @@ import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import PaymentCheckoutModal from '@/components/rentloop/payment/PaymentCheckoutModal';
 
+/** Clamp a rating value to valid 0-5 range */
+function safeRating(v: unknown): number {
+  return Math.max(0, Math.min(5, Number(v) || 0));
+}
+
 const categoryIcons: Record<string, LucideIcon> = {
   'cameras': Camera,
   'laptops': Laptop,
@@ -477,7 +482,7 @@ export default function ProductDetailPage() {
                     <Star
                       key={i}
                       className={`h-4 w-4 ${
-                        i < Math.round(product.avgRating)
+                        i < Math.round(safeRating(product.avgRating))
                           ? 'fill-amber-400 text-amber-400'
                           : 'fill-slate-200 text-slate-200'
                       }`}
@@ -485,7 +490,7 @@ export default function ProductDetailPage() {
                   ))}
                 </div>
                 <span className="text-sm font-medium text-slate-700">
-                  {product.avgRating > 0 ? product.avgRating.toFixed(1) : 'No ratings yet'}
+                  {safeRating(product.avgRating) > 0 ? safeRating(product.avgRating).toFixed(1) : 'No ratings yet'}
                 </span>
                 <span className="text-sm text-slate-400">
                   ({product.totalReviews} review{product.totalReviews !== 1 ? 's' : ''})
@@ -543,7 +548,7 @@ export default function ProductDetailPage() {
                       <div className="flex items-center gap-2 text-xs text-slate-500">
                         <span className="flex items-center gap-0.5">
                           <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
-                          {product.owner.avgRating > 0 ? product.owner.avgRating.toFixed(1) : 'New'}
+                          {safeRating(product.owner?.avgRating) > 0 ? safeRating(product.owner?.avgRating).toFixed(1) : 'New'}
                         </span>
                         <span>·</span>
                         <span>{product.totalRentals} rentals</span>
@@ -885,14 +890,14 @@ export default function ProductDetailPage() {
                 <div className="flex items-start gap-4">
                   <div className="text-center">
                     <div className="text-3xl font-bold text-slate-900">
-                      {product.avgRating > 0 ? product.avgRating.toFixed(1) : '—'}
+                      {safeRating(product.avgRating) > 0 ? safeRating(product.avgRating).toFixed(1) : '—'}
                     </div>
                     <div className="flex items-center gap-0.5 mt-1">
                       {Array.from({ length: 5 }, (_, i) => (
                         <Star
                           key={i}
                           className={`h-3.5 w-3.5 ${
-                            i < Math.round(product.avgRating) ? 'fill-amber-400 text-amber-400' : 'fill-slate-200 text-slate-200'
+                            i < Math.round(safeRating(product.avgRating)) ? 'fill-amber-400 text-amber-400' : 'fill-slate-200 text-slate-200'
                           }`}
                         />
                       ))}

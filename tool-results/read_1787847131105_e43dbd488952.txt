@@ -416,7 +416,7 @@
    416→                  >
    417→                    <MapPin className={`w-3.5 h-3.5 shrink-0 ${hasLocationSelection ? 'text-[#059669]' : 'text-[#94a3b8]'}`} />
    418→                    <span className="truncate">{locationLabel}</span>
-   419→                    <ChevronDown className="w-3 h-3 shrink-0 transition-transform ${showLocationPopover ? 'rotate-180' : ''} hidden lg:block" />
+   419→                    <ChevronDown className={`w-3 h-3 shrink-0 transition-transform ${showLocationPopover ? 'rotate-180' : ''} hidden lg:block`} />
    420→                  </button>
    421→                  {showLocationPopover && (
    422→                    <div className="absolute top-full left-0 mt-1 w-64 bg-white rounded-lg shadow-xl border border-gray-100 p-4 z-50">
@@ -503,7 +503,7 @@
    503→                  className="w-12 h-full bg-[#059669] hover:bg-[#10b981] text-white flex items-center justify-center transition-colors shrink-0"
    504→                  aria-label="Search"
    505→                >
-   506→                  <Search className="w-4.5 h-4.5" />
+   506→                  <Search className="w-[18px] h-[18px]" />
    507→                </button>
    508→              </div>
    509→            </div>
@@ -823,133 +823,135 @@
    823→  onNavigate: (view: string) => void;
    824→  onLogout: () => void;
    825→}) {
-   826→  return (
-   827→    <DropdownMenuContent align="end" className="w-56">
-   828→      <div className="px-3 py-2 border-b border-gray-100">
-   829→        <p className="text-sm font-semibold text-[#0f172a]">{user.name}</p>
-   830→        <p className="text-xs text-[#64748b]">{user.email}</p>
-   831→        {user.state && (
-   832→          <p className="text-xs text-[#94a3b8] mt-0.5">• {user.state.name}</p>
-   833→        )}
-   834→      </div>
-   835→      <DropdownMenuItem onClick={() => onNavigate('dashboard')}>
-   836→        <LayoutDashboard className="w-4 h-4 mr-2" />
-   837→        Dashboard
-   838→      </DropdownMenuItem>
-   839→      <DropdownMenuItem onClick={() => onNavigate('my-rentals')}>
-   840→        <Package className="w-4 h-4 mr-2" />
-   841→        My Rentals
-   842→      </DropdownMenuItem>
-   843→      <DropdownMenuItem onClick={() => onNavigate('my-listings')}>
-   844→        <Store className="w-4 h-4 mr-2" />
-   845→        My Listings
-   846→      </DropdownMenuItem>
-   847→      <DropdownMenuItem onClick={() => onNavigate('favorites')}>
-   848→        <Heart className="w-4 h-4 mr-2" />
-   849→        Favorites
-   850→      </DropdownMenuItem>
-   851→      <DropdownMenuItem onClick={() => onNavigate('messages')}>
-   852→        <MessageCircle className="w-4 h-4 mr-2" />
-   853→        Messages
-   854→      </DropdownMenuItem>
-   855→      {isAdmin && (
-   856→        <>
-   857→          <DropdownMenuSeparator />
-   858→          <DropdownMenuItem onClick={() => onNavigate('admin-dashboard')}>
-   859→            <Shield className="w-4 h-4 mr-2" />
-   860→            Admin Panel
-   861→          </DropdownMenuItem>
-   862→        </>
-   863→      )}
-   864→      <DropdownMenuSeparator />
-   865→      <DropdownMenuItem onClick={onLogout} className="text-red-600">
-   866→        <LogOut className="w-4 h-4 mr-2" />
-   867→        Logout
-   868→      </DropdownMenuItem>
-   869→    </DropdownMenuContent>
-   870→  );
-   871→}
-   872→
-   873→// ─── Mobile Side Sheet ─────────────────────────────────────────
-   874→function MobileSideSheet({
-   875→  open,
-   876→  onOpenChange,
-   877→  user,
-   878→  isAdmin,
-   879→  onNavigate,
-   880→  onAuth,
-   881→  onLogout,
-   882→}: {
-   883→  open: boolean;
-   884→  onOpenChange: (v: boolean) => void;
-   885→  user: { name?: string } | null;
-   886→  isAdmin: boolean;
-   887→  onNavigate: (view: string) => void;
-   888→  onAuth: (view: 'login' | 'register') => void;
-   889→  onLogout: () => void;
-   890→}) {
-   891→  return (
-   892→    <Sheet open={open} onOpenChange={onOpenChange}>
-   893→      <SheetContent side="right" className="w-72 p-0">
-   894→        <SheetHeader className="p-4 border-b border-[#e2e8f0]">
-   895→          <SheetTitle className="flex items-center gap-2">
-   896→            <div className="w-7 h-7 bg-[#059669] rounded-lg flex items-center justify-center">
-   897→              <Store className="w-4 h-4 text-white" />
-   898→            </div>
-   899→            <span className="text-[#0f172a]">
-   900→              Rent<span className="text-emerald-600">Cart</span>
-   901→            </span>
-   902→          </SheetTitle>
-   903→        </SheetHeader>
-   904→        <ScrollArea className="flex-1">
-   905→          <div className="p-3 space-y-1">
-   906→            <MobileNavItem icon={<Search className="w-4 h-4" />} label="Explore" onClick={() => onNavigate('marketplace')} />
-   907→            {user ? (
-   908→              <>
-   909→                <MobileNavItem icon={<Plus className="w-4 h-4" />} label="List Item Free" onClick={() => onNavigate('list-item')} />
-   910→                <MobileNavItem icon={<LayoutDashboard className="w-4 h-4" />} label="Dashboard" onClick={() => onNavigate('dashboard')} />
-   911→                <MobileNavItem icon={<Package className="w-4 h-4" />} label="My Rentals" onClick={() => onNavigate('my-rentals')} />
-   912→                <MobileNavItem icon={<Store className="w-4 h-4" />} label="My Listings" onClick={() => onNavigate('my-listings')} />
-   913→                <MobileNavItem icon={<Heart className="w-4 h-4" />} label="Favorites" onClick={() => onNavigate('favorites')} />
-   914→                <MobileNavItem icon={<MessageCircle className="w-4 h-4" />} label="Messages" onClick={() => onNavigate('messages')} />
-   915→                {isAdmin && (
-   916→                  <MobileNavItem icon={<Shield className="w-4 h-4" />} label="Admin Panel" onClick={() => onNavigate('admin-dashboard')} />
-   917→                )}
-   918→              </>
-   919→            ) : (
-   920→              <>
-   921→                <MobileNavItem icon={<User className="w-4 h-4" />} label="Login" onClick={() => onAuth('login')} />
-   922→                <MobileNavItem icon={<User className="w-4 h-4" />} label="Sign Up" onClick={() => onAuth('register')} />
-   923→              </>
-   924→            )}
-   925→          </div>
-   926→        </ScrollArea>
-   927→        {user && (
-   928→          <div className="p-3 border-t border-[#e2e8f0]">
-   929→            <button
-   930→              onClick={onLogout}
-   931→              className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-red-600 hover:bg-red-50 transition-colors"
-   932→            >
-   933→              <LogOut className="w-4 h-4" />
-   934→              Logout
-   935→            </button>
-   936→          </div>
-   937→        )}
-   938→      </SheetContent>
-   939→    </Sheet>
-   940→  );
-   941→}
-   942→
-   943→// ─── Mobile Nav Item ───────────────────────────────────────────
-   944→function MobileNavItem({ icon, label, onClick }: { icon: React.ReactNode; label: string; onClick: () => void }) {
-   945→  return (
-   946→    <button
-   947→      onClick={onClick}
-   948→      className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-[#0f172a] hover:bg-gray-100 transition-colors"
-   949→    >
-   950→      {icon}
-   951→      {label}
-   952→    </button>
-   953→  );
-   954→}
-   955→
+   826→  const nav = onNavigate as (view: string) => void;
+   827→  return (
+   828→    <DropdownMenuContent align="end" className="w-56">
+   829→      <div className="px-3 py-2 border-b border-gray-100">
+   830→        <p className="text-sm font-semibold text-[#0f172a]">{user.name}</p>
+   831→        <p className="text-xs text-[#64748b]">{user.email}</p>
+   832→        {user.state && (
+   833→          <p className="text-xs text-[#94a3b8] mt-0.5">• {user.state.name}</p>
+   834→        )}
+   835→      </div>
+   836→      <DropdownMenuItem onClick={() => nav('dashboard')}>
+   837→        <LayoutDashboard className="w-4 h-4 mr-2" />
+   838→        Dashboard
+   839→      </DropdownMenuItem>
+   840→      <DropdownMenuItem onClick={() => nav('my-rentals')}>
+   841→        <Package className="w-4 h-4 mr-2" />
+   842→        My Rentals
+   843→      </DropdownMenuItem>
+   844→      <DropdownMenuItem onClick={() => nav('my-listings')}>
+   845→        <Store className="w-4 h-4 mr-2" />
+   846→        My Listings
+   847→      </DropdownMenuItem>
+   848→      <DropdownMenuItem onClick={() => nav('favorites')}>
+   849→        <Heart className="w-4 h-4 mr-2" />
+   850→        Favorites
+   851→      </DropdownMenuItem>
+   852→      <DropdownMenuItem onClick={() => nav('messages')}>
+   853→        <MessageCircle className="w-4 h-4 mr-2" />
+   854→        Messages
+   855→      </DropdownMenuItem>
+   856→      {isAdmin && (
+   857→        <>
+   858→          <DropdownMenuSeparator />
+   859→          <DropdownMenuItem onClick={() => nav('admin-dashboard')}>
+   860→            <Shield className="w-4 h-4 mr-2" />
+   861→            Admin Panel
+   862→          </DropdownMenuItem>
+   863→        </>
+   864→      )}
+   865→      <DropdownMenuSeparator />
+   866→      <DropdownMenuItem onClick={onLogout} className="text-red-600">
+   867→        <LogOut className="w-4 h-4 mr-2" />
+   868→        Logout
+   869→      </DropdownMenuItem>
+   870→    </DropdownMenuContent>
+   871→  );
+   872→}
+   873→
+   874→// ─── Mobile Side Sheet ─────────────────────────────────────────
+   875→function MobileSideSheet({
+   876→  open,
+   877→  onOpenChange,
+   878→  user,
+   879→  isAdmin,
+   880→  onNavigate,
+   881→  onAuth,
+   882→  onLogout,
+   883→}: {
+   884→  open: boolean;
+   885→  onOpenChange: (v: boolean) => void;
+   886→  user: { name?: string } | null;
+   887→  isAdmin: boolean;
+   888→  onNavigate: (view: string) => void;
+   889→  onAuth: (view: 'login' | 'register') => void;
+   890→  onLogout: () => void;
+   891→}) {
+   892→  const nav = onNavigate as (view: string) => void;
+   893→  return (
+   894→    <Sheet open={open} onOpenChange={onOpenChange}>
+   895→      <SheetContent side="right" className="w-72 p-0">
+   896→        <SheetHeader className="p-4 border-b border-[#e2e8f0]">
+   897→          <SheetTitle className="flex items-center gap-2">
+   898→            <div className="w-7 h-7 bg-[#059669] rounded-lg flex items-center justify-center">
+   899→              <Store className="w-4 h-4 text-white" />
+   900→            </div>
+   901→            <span className="text-[#0f172a]">
+   902→              Rent<span className="text-emerald-600">Cart</span>
+   903→            </span>
+   904→          </SheetTitle>
+   905→        </SheetHeader>
+   906→        <ScrollArea className="flex-1">
+   907→          <div className="p-3 space-y-1">
+   908→            <MobileNavItem icon={<Search className="w-4 h-4" />} label="Explore" onClick={() => nav('marketplace')} />
+   909→            {user ? (
+   910→              <>
+   911→                <MobileNavItem icon={<Plus className="w-4 h-4" />} label="List Item Free" onClick={() => nav('list-item')} />
+   912→                <MobileNavItem icon={<LayoutDashboard className="w-4 h-4" />} label="Dashboard" onClick={() => nav('dashboard')} />
+   913→                <MobileNavItem icon={<Package className="w-4 h-4" />} label="My Rentals" onClick={() => nav('my-rentals')} />
+   914→                <MobileNavItem icon={<Store className="w-4 h-4" />} label="My Listings" onClick={() => nav('my-listings')} />
+   915→                <MobileNavItem icon={<Heart className="w-4 h-4" />} label="Favorites" onClick={() => nav('favorites')} />
+   916→                <MobileNavItem icon={<MessageCircle className="w-4 h-4" />} label="Messages" onClick={() => nav('messages')} />
+   917→                {isAdmin && (
+   918→                  <MobileNavItem icon={<Shield className="w-4 h-4" />} label="Admin Panel" onClick={() => nav('admin-dashboard')} />
+   919→                )}
+   920→              </>
+   921→            ) : (
+   922→              <>
+   923→                <MobileNavItem icon={<User className="w-4 h-4" />} label="Login" onClick={() => onAuth('login')} />
+   924→                <MobileNavItem icon={<User className="w-4 h-4" />} label="Sign Up" onClick={() => onAuth('register')} />
+   925→              </>
+   926→            )}
+   927→          </div>
+   928→        </ScrollArea>
+   929→        {user && (
+   930→          <div className="p-3 border-t border-[#e2e8f0]">
+   931→            <button
+   932→              onClick={onLogout}
+   933→              className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-red-600 hover:bg-red-50 transition-colors"
+   934→            >
+   935→              <LogOut className="w-4 h-4" />
+   936→              Logout
+   937→            </button>
+   938→          </div>
+   939→        )}
+   940→      </SheetContent>
+   941→    </Sheet>
+   942→  );
+   943→}
+   944→
+   945→// ─── Mobile Nav Item ───────────────────────────────────────────
+   946→function MobileNavItem({ icon, label, onClick }: { icon: React.ReactNode; label: string; onClick: () => void }) {
+   947→  return (
+   948→    <button
+   949→      onClick={onClick}
+   950→      className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-[#0f172a] hover:bg-gray-100 transition-colors"
+   951→    >
+   952→      {icon}
+   953→      {label}
+   954→    </button>
+   955→  );
+   956→}
+   957→

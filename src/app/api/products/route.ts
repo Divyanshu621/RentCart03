@@ -73,6 +73,8 @@ export async function GET(request: NextRequest) {
     const limit = Math.min(50, Math.max(1, parseInt(searchParams.get('limit') || '20')));
 
     const ownerId = searchParams.get('ownerId');
+    const favorited = searchParams.get('favorited');
+    const deliveryAvailable = searchParams.get('deliveryAvailable');
     const where: Record<string, unknown> = {};
 
     if (ownerId) {
@@ -95,6 +97,19 @@ export async function GET(request: NextRequest) {
     if (maxPrice) where.dailyPrice = { ...((where.dailyPrice as Record<string, unknown>) || {}), lte: parseFloat(maxPrice) };
     if (minPrice && maxPrice) where.dailyPrice = { gte: parseFloat(minPrice), lte: parseFloat(maxPrice) };
     if (condition) where.condition = condition;
+    if (deliveryAvailable === 'true') where.deliveryAvailable = true;
+
+    // Filter by user's favorites
+    if (favorited === 'true' && session) {
+      const favoriteIds = await db.favorite.findMany({
+        where: { userId: session.userId },
+        select: { productId: true },
+      });
+      where.id = { in: favoriteIds.map(f => f.productId) };
+    } else if (favorited === 'true') {
+      // Not logged in - return nothing for favorites
+      where.id = { in: [] };
+    }
 
     let orderBy: Record<string, string>[] | Record<string, string> = { createdAt: 'desc' };
     if (sort === 'price_asc' || sort === 'price_low') orderBy = { dailyPrice: 'asc' };

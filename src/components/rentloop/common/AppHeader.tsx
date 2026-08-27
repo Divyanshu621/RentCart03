@@ -95,7 +95,7 @@ export default function AppHeader() {
   useEffect(() => {
     if (!user) return;
     api.getNotifications().then((data) => {
-      const notifs = data as unknown as Notification[];
+      const notifs = Array.isArray((data as any).notifications) ? (data as any).notifications as Notification[] : [];
       setNotifications(notifs);
       setUnreadCount(notifs.filter(n => !n.isRead).length);
     }).catch(() => {});

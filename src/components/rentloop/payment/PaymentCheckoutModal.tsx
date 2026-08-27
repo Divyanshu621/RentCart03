@@ -329,6 +329,17 @@ export default function PaymentCheckoutModal({
 
         rzp.open();
         // Don't reset processing here — the handler callbacks will do it
+        // Fallback: if user dismisses the Razorpay modal, reset processing after a timeout check
+        const dismissCheck = setInterval(() => {
+          const razorpayContainer = document.getElementById('razorpay-container');
+          if (!razorpayContainer || razorpayContainer.style.display === 'none') {
+            clearInterval(dismissCheck);
+            setProcessing(false);
+            setStep('checkout');
+          }
+        }, 1000);
+        // Auto-clear the interval after 30 seconds to avoid memory leak
+        setTimeout(() => clearInterval(dismissCheck), 30000);
         return;
       }
 

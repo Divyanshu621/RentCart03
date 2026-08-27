@@ -60,7 +60,7 @@ export default function NotificationsPanel({ mode = 'fullpage', onClose }: Notif
 
   const { data: notifications = [], isLoading } = useQuery({
     queryKey: ['notifications'],
-    queryFn: () => api.getNotifications() as Promise<Notification[]>,
+    queryFn: () => api.getNotifications().then((data: any) => Array.isArray(data?.notifications) ? data.notifications as Notification[] : []),
     enabled: !!user,
   });
 

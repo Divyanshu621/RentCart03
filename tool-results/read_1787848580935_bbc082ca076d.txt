@@ -231,8 +231,8 @@
    231→   231→      ]);
    232→   232→
    233→   233→      if (statsRes.status === 'fulfilled') setStats(statsRes.value as unknown as DashboardStats);
-   234→   234→      if (custRes.status === 'fulfilled') setCustomerRentals(custRes.value as unknown as Rental[]);
-   235→   235→      if (ownRes.status === 'fulfilled') setOwnerRentals(ownRes.value as unknown as Rental[]);
+   234→   234→      if (custRes.status === 'fulfilled') setCustomerRentals(Array.isArray((custRes.value as any).rentals) ? (custRes.value as any).rentals as Rental[] : []);
+   235→   235→      if (ownRes.status === 'fulfilled') setOwnerRentals(Array.isArray((ownRes.value as any).rentals) ? (ownRes.value as any).rentals as Rental[] : []);
    236→   236→
    237→   237→      if (statsRes.status === 'rejected' && custRes.status === 'rejected' && ownRes.status === 'rejected') {
    238→   238→        setError('Failed to load dashboard data');
@@ -343,7 +343,7 @@
    343→   343→        {/* ─── Welcome Header ──────────────────────────────── */}
    344→   344→        <motion.div variants={itemVariants} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
    345→   345→          <div className="flex items-center gap-4">
-   346→   346→            <Avatar className="w-14 h-14 h-14 ring-2 ring-emerald-500/20 ring-offset-2 ring-offset-background">
+   346→   346→            <Avatar className="w-14 h-14 ring-2 ring-emerald-500/20 ring-offset-2 ring-offset-background">
    347→   347→              <AvatarImage src={user?.avatarUrl} alt={user?.name} />
    348→   348→              <AvatarFallback className="bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 text-lg font-bold">
    349→   349→                {user?.name?.charAt(0)?.toUpperCase() || 'U'}

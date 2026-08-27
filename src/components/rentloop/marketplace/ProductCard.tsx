@@ -93,6 +93,11 @@ function formatINR(amount: number): string {
 function StarRating({ rating, totalReviews }: { rating: number; totalReviews: number }) {
   if (totalReviews === 0) return null;
 
+  // Clamp rating to valid 0-5 range to handle bad data
+  const clampedRating = Math.max(0, Math.min(5, Number(rating) || 0));
+  const clampedTotal = Math.max(0, Number(totalReviews) || 0);
+  if (clampedTotal === 0) return null;
+
   return (
     <div className="flex items-center gap-1">
       <div className="flex items-center">
@@ -100,7 +105,7 @@ function StarRating({ rating, totalReviews }: { rating: number; totalReviews: nu
           <Star
             key={star}
             className={`h-3 w-3 ${
-              star <= Math.round(rating)
+              star <= Math.round(clampedRating)
                 ? 'fill-amber-400 text-amber-400'
                 : 'fill-slate-200 text-slate-200'
             }`}
@@ -108,11 +113,11 @@ function StarRating({ rating, totalReviews }: { rating: number; totalReviews: nu
         ))}
       </div>
       <span className="text-xs font-medium text-slate-600">
-        {rating.toFixed(1)}
+        {clampedRating.toFixed(1)}
       </span>
-      {totalReviews > 0 && (
+      {clampedTotal > 0 && (
         <span className="text-xs text-slate-400">
-          ({totalReviews})
+          ({clampedTotal})
         </span>
       )}
     </div>
