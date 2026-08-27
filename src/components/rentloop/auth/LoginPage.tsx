@@ -180,13 +180,9 @@ export default function LoginPage() {
     setIsGoogleLoading(true);
     try {
       const name = googleName.trim() || emailLower.split('@')[0].replace(/[._]/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
-      const result = await api.googleAuth({ email: emailLower, name });
-      try {
-        const meData = await api.me();
-        setUser(meData as unknown as UserType);
-      } catch {
-        setUser(result.user as unknown as UserType);
-      }
+      await api.googleAuth({ email: emailLower, name });
+      const meData = await api.me();
+      setUser((meData as Record<string, unknown>).user as unknown as UserType);
       toast.success('Welcome back!');
       setShowGoogleDialog(false);
       navigate('marketplace');
@@ -204,7 +200,7 @@ export default function LoginPage() {
       const res = await api.login({ email: data.email, password: data.password });
       try {
         const meData = await api.me();
-        setUser(meData as unknown as UserType);
+        setUser((meData as Record<string, unknown>).user as unknown as UserType);
       } catch {
         setUser(res.user as unknown as UserType);
       }
@@ -362,7 +358,7 @@ export default function LoginPage() {
               <div className="pt-1 text-right">
                 <button
                   type="button"
-                  onClick={() => toast.info('Password reset link sent to your email!')}
+                  onClick={() => toast.info('Password reset feature is coming soon. Please contact support@rentcart.in for assistance.')}
                   className="text-sm text-emerald-600 hover:text-emerald-700 font-medium transition-colors"
                 >
                   Forgot password?
@@ -422,9 +418,9 @@ export default function LoginPage() {
             {/* Terms notice */}
             <p className="mt-4 text-center text-xs text-slate-400 leading-relaxed">
               By continuing, you agree to RentCart&apos;s{' '}
-              <span className="underline cursor-pointer hover:text-slate-600">Terms of Service</span>
+              <button type="button" onClick={() => navigate('terms-of-service')} className="underline cursor-pointer hover:text-slate-600 bg-transparent p-0 text-inherit border-0">Terms of Service</button>
               {' '}and acknowledge our{' '}
-              <span className="underline cursor-pointer hover:text-slate-600">Privacy Policy</span>.
+              <button type="button" onClick={() => navigate('privacy-policy')} className="underline cursor-pointer hover:text-slate-600 bg-transparent p-0 text-inherit border-0">Privacy Policy</button>.
             </p>
           </motion.div>
         </div>

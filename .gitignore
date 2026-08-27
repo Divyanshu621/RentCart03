@@ -32,6 +32,30 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+!.env.example
+
+# Database (contains user data, PII, password hashes)
+/db/*.db
+/db/*.db-journal
+/db/*.db-wal
+prisma/*.db
+
+# Uploaded files (may contain PII)
+/public/uploads/kyc/
+/public/uploads/profiles/
+public/uploads/profile/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Tool results
+.tool-results/
+
+# OS files
+Thumbs.db
 
 # vercel
 .vercel

@@ -82,7 +82,9 @@ export default function NotificationsPanel({ mode = 'fullpage', onClose }: Notif
       try {
         const data = JSON.parse(notif.data);
         if (data.view) {
-          navigate(data.view as 'rental' | 'product' | 'messages' | 'my-rentals', data);
+          const validViews = ['rental', 'product', 'messages', 'my-rentals'] as const;
+          const view = validViews.includes(data.view) ? data.view : null;
+          if (view) navigate(view as never);
         }
       } catch {
         // ignore parse errors

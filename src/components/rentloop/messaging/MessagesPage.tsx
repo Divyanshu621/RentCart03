@@ -16,7 +16,7 @@ import {
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -148,7 +148,7 @@ export default function MessagesPage() {
     const other = getOtherUser(conv);
     if (!other) return null;
     const isSelected = selectedConversation?.id === conv.id;
-    const hasUnread = !conv.lastMessage && conv.lastMessageAt;
+    const hasUnread = (conv.unreadCount ?? 0) > 0;
     return (
       <motion.button
         key={conv.id}
@@ -166,10 +166,16 @@ export default function MessagesPage() {
         }`}
         whileTap={{ scale: 0.98 }}
       >
-        <Avatar className="h-11 w-11 shrink-0">
-          {other.avatarUrl && <AvatarFallback>{getInitials(other.name)}</AvatarFallback>}
-          {!other.avatarUrl && <AvatarFallback className="bg-slate-100 text-slate-600 text-sm font-medium">{getInitials(other.name)}</AvatarFallback>}
-        </Avatar>
+        {other.avatarUrl ? (
+          <Avatar className="h-11 w-11 shrink-0">
+            <AvatarImage src={other.avatarUrl} />
+            <AvatarFallback>{getInitials(other.name)}</AvatarFallback>
+          </Avatar>
+        ) : (
+          <Avatar className="h-11 w-11 shrink-0">
+            <AvatarFallback className="bg-slate-100 text-slate-600 text-sm font-medium">{getInitials(other.name)}</AvatarFallback>
+          </Avatar>
+        )}
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between gap-2">
             <span className="font-medium text-sm text-slate-900 truncate">{other.name}</span>

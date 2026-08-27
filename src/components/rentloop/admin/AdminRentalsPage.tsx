@@ -399,12 +399,14 @@ export default function AdminRentalsPage() {
                       size="sm"
                       className="text-xs"
                       disabled={selectedRental.status === st || updateMutation.isPending}
-                      onClick={() =>
+                      onClick={() => {
+                        const newStatus = st;
+                        if (!window.confirm(`Change rental status to ${newStatus}? This action cannot be undone.`)) return;
                         updateMutation.mutate({
                           id: selectedRental.id,
-                          data: { action: 'updateStatus', status: st },
-                        })
-                      }
+                          data: { action: 'updateStatus', status: newStatus },
+                        });
+                      }}
                     >
                       {st.replace(/_/g, ' ')}
                     </Button>

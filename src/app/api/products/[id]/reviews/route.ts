@@ -1,5 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { db } from '@/lib/db';
+import { safeError, notFound, success } from '@/lib/secure-handler';
 
 export async function GET(
   request: NextRequest,
@@ -14,7 +15,7 @@ export async function GET(
 
     const product = await db.product.findUnique({ where: { id: productId } });
     if (!product) {
-      return NextResponse.json({ error: 'Product not found' }, { status: 404 });
+      return notFound('Product not found');
     }
 
     const [reviews, total] = await Promise.all([
@@ -30,7 +31,7 @@ export async function GET(
       db.review.count({ where: { productId } }),
     ]);
 
-    return NextResponse.json({
+    return success({
       reviews,
       total,
       page,
@@ -39,7 +40,6 @@ export async function GET(
       totalReviews: product.totalReviews,
     });
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : 'Internal server error';
-    return NextResponse.json({ error: message }, { status: 500 });
+    return safeError(error, 'PRODUCT_REVIEWS_GET');
   }
 }

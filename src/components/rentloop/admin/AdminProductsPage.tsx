@@ -135,6 +135,8 @@ export default function AdminProductsPage() {
   });
 
   const handleAction = (productId: string, status: string) => {
+    if (status === 'REJECTED' && !window.confirm('Are you sure you want to reject this product?')) return;
+    if (status === 'SUSPENDED' && !window.confirm('Are you sure you want to suspend this product?')) return;
     updateMutation.mutate({ id: productId, status });
   };
 

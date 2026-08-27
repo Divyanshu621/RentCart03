@@ -1,22 +1,33 @@
 // GET /api/settings/payment — Public: returns which payment methods are enabled
 // PUT /api/settings/payment — Admin only: update payment method toggles
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
+import { z } from 'zod';
 import { db } from '@/lib/db';
 import { getSession } from '@/lib/auth';
+import { rateLimiters, getClientIp, rateLimitResponse } from '@/lib/rate-limiter';
+import { safeError, validationError, unauthorized, forbidden, success } from '@/lib/secure-handler';
+import { securityLogger } from '@/lib/security-logger';
 
-// Public: return enabled payment methods
+const putPaymentSettingsSchema = z.object({
+  razorpayEnabled: z.boolean().optional(),
+  upiEnabled: z.boolean().optional(),
+  cardEnabled: z.boolean().optional(),
+  netbankingEnabled: z.boolean().optional(),
+  walletEnabled: z.boolean().optional(),
+  cashOnPickupEnabled: z.boolean().optional(),
+}).strict();
+
 export async function GET() {
   try {
     let settings = await db.paymentSettings.findUnique({ where: { id: 'default' } });
 
-    // Auto-create if missing
     if (!settings) {
       settings = await db.paymentSettings.create({
         data: { id: 'default' },
       });
     }
 
-    return NextResponse.json({
+    return success({
       enabledMethods: {
         razorpay: settings.razorpayEnabled,
         upi: settings.upiEnabled,
@@ -27,56 +38,44 @@ export async function GET() {
       },
     });
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : 'Failed to fetch payment settings';
-    return NextResponse.json({ error: message }, { status: 500 });
+    return safeError(error, 'PAYMENT_SETTINGS_GET');
   }
 }
 
-// Admin only: update payment method toggles
 export async function PUT(request: NextRequest) {
+  const clientIp = getClientIp(request);
+
   try {
     const session = await getSession(request);
-    if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const rl = rateLimiters.admin.check(session?.userId || clientIp);
+    if (rl.limited) return rateLimitResponse(rl.retryAfterMs);
 
-    // Check admin role
+    if (!session) return unauthorized();
+
     const user = await db.user.findUnique({ where: { id: session.userId }, select: { role: true } });
     if (!user || !['ADMIN', 'SUPER_ADMIN'].includes(user.role)) {
-      return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
+      return forbidden('Admin access required');
     }
 
     const body = await request.json();
-    const {
-      razorpayEnabled,
-      upiEnabled,
-      cardEnabled,
-      netbankingEnabled,
-      walletEnabled,
-      cashOnPickupEnabled,
-    } = body as Partial<{
-      razorpayEnabled: boolean;
-      upiEnabled: boolean;
-      cardEnabled: boolean;
-      netbankingEnabled: boolean;
-      walletEnabled: boolean;
-      cashOnPickupEnabled: boolean;
-    }>;
+    const parsed = putPaymentSettingsSchema.safeParse(body);
+    if (!parsed.success) {
+      return validationError(parsed.error.issues[0].message);
+    }
 
-    // Build update data with only provided fields
     const updateData: Record<string, boolean> = {};
-    if (razorpayEnabled !== undefined) updateData.razorpayEnabled = razorpayEnabled;
-    if (upiEnabled !== undefined) updateData.upiEnabled = upiEnabled;
-    if (cardEnabled !== undefined) updateData.cardEnabled = cardEnabled;
-    if (netbankingEnabled !== undefined) updateData.netbankingEnabled = netbankingEnabled;
-    if (walletEnabled !== undefined) updateData.walletEnabled = walletEnabled;
-    if (cashOnPickupEnabled !== undefined) updateData.cashOnPickupEnabled = cashOnPickupEnabled;
+    if (parsed.data.razorpayEnabled !== undefined) updateData.razorpayEnabled = parsed.data.razorpayEnabled;
+    if (parsed.data.upiEnabled !== undefined) updateData.upiEnabled = parsed.data.upiEnabled;
+    if (parsed.data.cardEnabled !== undefined) updateData.cardEnabled = parsed.data.cardEnabled;
+    if (parsed.data.netbankingEnabled !== undefined) updateData.netbankingEnabled = parsed.data.netbankingEnabled;
+    if (parsed.data.walletEnabled !== undefined) updateData.walletEnabled = parsed.data.walletEnabled;
+    if (parsed.data.cashOnPickupEnabled !== undefined) updateData.cashOnPickupEnabled = parsed.data.cashOnPickupEnabled;
 
-    // Ensure at least one method stays enabled
     let settings = await db.paymentSettings.findUnique({ where: { id: 'default' } });
     if (!settings) {
       settings = await db.paymentSettings.create({ data: { id: 'default' } });
     }
 
-    // Check we're not disabling all methods
     const afterUpdate = { ...settings, ...updateData };
     const anyEnabled = [
       afterUpdate.razorpayEnabled,
@@ -88,10 +87,7 @@ export async function PUT(request: NextRequest) {
     ].some(Boolean);
 
     if (!anyEnabled) {
-      return NextResponse.json(
-        { error: 'At least one payment method must remain enabled' },
-        { status: 400 }
-      );
+      return validationError('At least one payment method must remain enabled');
     }
 
     const updated = await db.paymentSettings.update({
@@ -99,7 +95,9 @@ export async function PUT(request: NextRequest) {
       data: updateData,
     });
 
-    return NextResponse.json({
+    securityLogger.info('PAYMENT_SETTINGS_UPDATED', 'Settings', session.userId, { changes: updateData, ip: clientIp });
+
+    return success({
       message: 'Payment settings updated',
       enabledMethods: {
         razorpay: updated.razorpayEnabled,
@@ -111,7 +109,7 @@ export async function PUT(request: NextRequest) {
       },
     });
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : 'Failed to update payment settings';
-    return NextResponse.json({ error: message }, { status: 500 });
+    securityLogger.error('PAYMENT_SETTINGS_UPDATE_FAILED', 'Settings', null, { ip: clientIp, error: error instanceof Error ? error.message : String(error) });
+    return safeError(error, 'PAYMENT_SETTINGS_PUT');
   }
 }

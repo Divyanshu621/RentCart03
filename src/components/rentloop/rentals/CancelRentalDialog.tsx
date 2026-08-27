@@ -84,10 +84,8 @@ export default function CancelRentalDialog({
     }
   };
 
-  // Transition to success when parent signals it
-  if (isSuccess && step === 'confirm') {
-    setStep('success');
-  }
+  // Derive effective step from parent's isSuccess signal to avoid setState during render
+  const effectiveStep = isSuccess ? 'success' : step;
 
   if (!isCancellable) return null;
 
@@ -95,7 +93,7 @@ export default function CancelRentalDialog({
     <Dialog open={open} onOpenChange={(v) => { if (!v) handleClose(); }}>
       <DialogContent className="sm:max-w-md p-0 overflow-hidden rounded-2xl border-gray-200">
         <AnimatePresence mode="wait">
-          {step === 'confirm' ? (
+          {effectiveStep === 'confirm' ? (
             <motion.div
               key="confirm"
               initial={{ opacity: 0, y: 10 }}

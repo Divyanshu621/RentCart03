@@ -1,50 +1,119 @@
 // POST /api/payments/verify
 // Verifies Razorpay payment signature and completes the rental
-// In demo mode, directly completes the payment
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 import { db } from '@/lib/db';
 import { getSession } from '@/lib/auth';
+import { unauthorized, forbidden, notFound, validationError, safeError, success } from '@/lib/secure-handler';
+import { rateLimiters, getClientIp, rateLimitResponse } from '@/lib/rate-limiter';
+import { securityLogger } from '@/lib/security-logger';
 import crypto from 'crypto';
 
 const RAZORPAY_KEY_SECRET = process.env.RAZORPAY_KEY_SECRET;
+const RAZORPAY_KEY_ID = process.env.RAZORPAY_KEY_ID;
 
 const isRazorpayConfigured = !!(
-  process.env.RAZORPAY_KEY_ID &&
+  RAZORPAY_KEY_ID &&
   RAZORPAY_KEY_SECRET &&
-  process.env.RAZORPAY_KEY_SECRET!.length > 10
+  RAZORPAY_KEY_SECRET.length > 10
 );
 
+const verifySchema = z.object({
+  rentalId: z.string().min(1, 'Rental ID required'),
+  razorpayOrderId: z.string().optional(),
+  razorpayPaymentId: z.string().optional(),
+  razorpaySignature: z.string().optional(),
+  paymentMethod: z.string().optional(),
+});
+
 export async function POST(request: NextRequest) {
+  const clientIp = getClientIp(request);
+
   try {
     const session = await getSession(request);
-    if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (!session) return unauthorized();
+
+    // Rate limit payment verification
+    const rateResult = rateLimiters.payment.check(`verify-${session.userId}`);
+    if (rateResult.limited) {
+      return rateLimitResponse(rateResult.retryAfterMs);
+    }
 
     const body = await request.json();
-    const { rentalId, razorpayOrderId, razorpayPaymentId, razorpaySignature, paymentMethod } = body;
+    const parsed = verifySchema.safeParse(body);
 
-    if (!rentalId) return NextResponse.json({ error: 'Rental ID required' }, { status: 400 });
+    if (!parsed.success) {
+      return validationError(parsed.error.issues[0].message);
+    }
 
-    // Verify Razorpay signature if real mode
-    if (isRazorpayConfigured && razorpayOrderId && razorpayPaymentId && razorpaySignature) {
+    const { rentalId, razorpayOrderId, razorpayPaymentId, razorpaySignature, paymentMethod } = parsed.data;
+
+    // Validate rental ID format
+    if (!rentalId || rentalId.length < 10 || rentalId.length > 50) {
+      return validationError('Invalid rental ID');
+    }
+
+    // ─── Verify Razorpay Signature (mandatory in production) ────
+    if (isRazorpayConfigured) {
+      if (!razorpayOrderId || !razorpayPaymentId || !razorpaySignature) {
+        securityLogger.warn('PAYMENT_VERIFY_MISSING_FIELDS', 'Payment', session.userId, { rentalId });
+        return validationError('Razorpay payment details are required');
+      }
+
       const expectedSignature = crypto
         .createHmac('sha256', RAZORPAY_KEY_SECRET!)
         .update(`${razorpayOrderId}|${razorpayPaymentId}`)
         .digest('hex');
 
       if (expectedSignature !== razorpaySignature) {
-        return NextResponse.json({ error: 'Payment verification failed' }, { status: 400 });
+        securityLogger.critical('PAYMENT_SIGNATURE_MISMATCH', 'Payment', session.userId, {
+          rentalId,
+          orderId: razorpayOrderId,
+        });
+        return NextResponse.json(
+          { success: false, error: 'Payment verification failed' },
+          { status: 400 }
+        );
       }
+    } else {
+      // In non-Razorpay mode (dev only), require explicit demo flag
+      if (process.env.NODE_ENV === 'production') {
+        securityLogger.critical('PAYMENT_WITHOUT_GATEWAY', 'Payment', session.userId, { rentalId });
+        return forbidden('Payment gateway is not configured');
+      }
+      securityLogger.info('DEV_PAYMENT_VERIFICATION', 'Payment', session.userId, { rentalId });
     }
 
-    // Complete the rental payment
-    const rental = await db.rental.findUnique({ where: { id: rentalId } });
-    if (!rental) return NextResponse.json({ error: 'Rental not found' }, { status: 404 });
-    if (rental.customerId !== session.userId) return NextResponse.json({ error: 'Not your rental' }, { status: 403 });
-    if (rental.status !== 'PENDING_PAYMENT') return NextResponse.json({ error: 'Invalid rental status' }, { status: 400 });
+    // ─── Ownership Check (IDOR prevention) ─────────────────────
+    const rental = await db.rental.findUnique({
+      where: { id: rentalId },
+      include: { product: { select: { title: true } } },
+    });
 
-    // Mark rental payment as completed
-    const txnId = razorpayPaymentId || `TXN-${Date.now()}-${Math.random().toString(36).substring(2, 8)}`;
-    await db.payment.updateMany({
+    if (!rental) return notFound('Rental not found');
+    if (rental.customerId !== session.userId) {
+      securityLogger.warn('PAYMENT_IDOR_ATTEMPT', 'Payment', session.userId, { rentalId, ownerId: rental.customerId });
+      return forbidden('Not your rental');
+    }
+    if (rental.status !== 'PENDING_PAYMENT') {
+      return validationError('Invalid rental status for payment');
+    }
+
+    // ─── Idempotency Check ─────────────────────────────────────
+    const existingPayment = await db.payment.findFirst({
+      where: { rentalId, type: 'RENTAL', status: 'COMPLETED' },
+    });
+    if (existingPayment) {
+      securityLogger.warn('DUPLICATE_PAYMENT_ATTEMPT', 'Payment', session.userId, {
+        rentalId,
+        existingTxnId: existingPayment.transactionId,
+      });
+      return validationError('Payment has already been processed for this rental');
+    }
+
+    // ─── Complete Payment ──────────────────────────────────────
+    const txnId = razorpayPaymentId || `DEV-TXN-${Date.now()}-${crypto.randomBytes(4).toString('hex')}`;
+    const updateResult = await db.payment.updateMany({
       where: { rentalId, type: 'RENTAL', status: 'PENDING' },
       data: {
         status: 'COMPLETED',
@@ -52,6 +121,10 @@ export async function POST(request: NextRequest) {
         paymentMethod: paymentMethod || (isRazorpayConfigured ? 'RAZORPAY' : 'SIMULATED'),
       },
     });
+
+    if (updateResult.count === 0) {
+      return validationError('No pending payment found');
+    }
 
     // Security deposit
     if (rental.securityDeposit > 0) {
@@ -61,7 +134,7 @@ export async function POST(request: NextRequest) {
           amount: rental.securityDeposit,
           type: 'DEPOSIT',
           status: 'COMPLETED',
-          transactionId: `DEP-${Date.now()}-${Math.random().toString(36).substring(2, 8)}`,
+          transactionId: `DEP-${Date.now()}-${crypto.randomBytes(4).toString('hex')}`,
           paymentMethod: paymentMethod || (isRazorpayConfigured ? 'RAZORPAY' : 'SIMULATED'),
         },
       });
@@ -87,13 +160,18 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    return NextResponse.json({
+    securityLogger.info('PAYMENT_COMPLETED', 'Payment', session.userId, {
+      rentalId,
+      transactionId: txnId,
+      method: paymentMethod,
+    });
+
+    return success({
       rental: updatedRental,
       message: 'Payment successful!',
       transactionId: txnId,
     });
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : 'Internal server error';
-    return NextResponse.json({ error: message }, { status: 500 });
+    return safeError(error, 'PAYMENT_VERIFY');
   }
 }

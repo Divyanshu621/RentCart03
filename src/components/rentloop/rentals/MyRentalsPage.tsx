@@ -17,7 +17,6 @@ import {
   Timer,
   Eye,
   Phone,
-  Send,
   Loader2,
   PackageOpen,
   ChevronRight,
@@ -267,9 +266,14 @@ function RentalCard({
                 {rental.status === 'OWNER_PENDING' && (
                   <>
                     {isOwner && (
-                      <Button size="sm" variant="outline" className="h-7 px-2.5 text-[11px] border-red-200 text-red-600 hover:bg-red-50" onClick={() => onAction(rental, 'reject')}>
-                        <XCircle className="h-3 w-3 mr-1" />Reject
-                      </Button>
+                      <>
+                        <Button size="sm" variant="outline" className="h-7 px-2.5 text-[11px] border-emerald-200 text-emerald-700 hover:bg-emerald-50" onClick={() => onAction(rental, 'accept')} disabled={acceptMutation.isPending}>
+                          <CheckCircle2 className="h-3 w-3 mr-1" />Accept
+                        </Button>
+                        <Button size="sm" variant="outline" className="h-7 px-2.5 text-[11px] border-red-200 text-red-600 hover:bg-red-50" onClick={() => onAction(rental, 'reject')}>
+                          <XCircle className="h-3 w-3 mr-1" />Reject
+                        </Button>
+                      </>
                     )}
                     {isCustomer && (
                       <Button size="sm" variant="outline" className="h-7 px-2.5 text-[11px] border-red-200 text-red-600 hover:bg-red-50" onClick={() => onAction(rental, 'cancel')}>
@@ -431,6 +435,12 @@ export default function MyRentalsPage() {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const acceptMutation = useMutation({
+    mutationFn: (id: string) => api.acceptRental(id),
+    onSuccess: () => { toast.success('Rental accepted'); queryClient.invalidateQueries({ queryKey: ['rentals'] }); },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   const rejectMutation = useMutation({
     mutationFn: (id: string) => api.rejectRental(id),
     onSuccess: () => { toast.success('Rental rejected'); queryClient.invalidateQueries({ queryKey: ['rentals'] }); },
@@ -456,6 +466,9 @@ export default function MyRentalsPage() {
       case 'reject':
         rejectMutation.mutate(rental.id);
         break;
+      case 'accept':
+        acceptMutation.mutate(rental.id);
+        break;
       case 'return':
         returnMutation.mutate(rental.id);
         break;
@@ -473,7 +486,7 @@ export default function MyRentalsPage() {
         navigate('product', { productId: rental.productId });
         break;
     }
-  }, [payMutation, cancelMutation, rejectMutation, returnMutation, navigate]);
+  }, [payMutation, cancelMutation, acceptMutation, rejectMutation, returnMutation, navigate]);
 
   const handleSelect = (rental: Rental) => {
     setSelectedRental(rental);

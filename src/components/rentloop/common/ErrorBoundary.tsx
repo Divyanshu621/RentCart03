@@ -38,8 +38,8 @@ export default class ErrorBoundary extends React.Component<Props, State> {
               <AlertTriangle className="h-8 w-8 text-red-500" />
             </div>
             <h2 className="text-xl font-bold text-slate-900 mb-2">Something went wrong</h2>
-            <p className="text-sm text-red-600 bg-red-50 rounded-lg p-3 mb-4 font-mono text-left break-all">
-              {this.state.error?.message}
+            <p className="text-sm text-red-600 bg-red-50 rounded-lg p-3 mb-4 text-left">
+              Something went wrong while loading this section. Please try again or contact support if the issue persists.
             </p>
             <Button
               onClick={() => { this.setState({ hasError: false, error: null }); }}

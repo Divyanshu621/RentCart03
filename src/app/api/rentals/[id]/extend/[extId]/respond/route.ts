@@ -1,7 +1,10 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { z } from 'zod';
 import { db } from '@/lib/db';
 import { getSession } from '@/lib/auth';
+import { rateLimiters, getClientIp, rateLimitResponse } from '@/lib/rate-limiter';
+import { securityLogger } from '@/lib/security-logger';
+import { safeError, validationError, unauthorized, forbidden, notFound, success } from '@/lib/secure-handler';
 
 const respondSchema = z.object({
   action: z.enum(['APPROVED', 'REJECTED']),
@@ -12,37 +15,37 @@ export async function POST(
   { params }: { params: Promise<{ id: string; extId: string }> }
 ) {
   try {
+    const ip = getClientIp(request);
     const session = await getSession(request);
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const rl = rateLimiters.api.check(session?.userId || ip);
+    if (rl.limited) return rateLimitResponse(rl.retryAfterMs);
+
+    if (!session) return unauthorized();
 
     const { id, extId } = await params;
     const body = await request.json();
     const parsed = respondSchema.safeParse(body);
 
     if (!parsed.success) {
-      return NextResponse.json({ error: parsed.error.issues[0].message }, { status: 400 });
+      return validationError(parsed.error.issues[0].message);
     }
 
     const { action } = parsed.data;
 
     const rental = await db.rental.findUnique({ where: { id } });
-    if (!rental) {
-      return NextResponse.json({ error: 'Rental not found' }, { status: 404 });
-    }
+    if (!rental) return notFound('Rental not found');
 
     if (rental.ownerId !== session.userId) {
-      return NextResponse.json({ error: 'Only the owner can respond to extension requests' }, { status: 403 });
+      return forbidden('Only the owner can respond to extension requests');
     }
 
     const extension = await db.extensionRequest.findUnique({ where: { id: extId } });
     if (!extension || extension.rentalId !== id) {
-      return NextResponse.json({ error: 'Extension request not found' }, { status: 404 });
+      return notFound('Extension request not found');
     }
 
     if (extension.status !== 'PENDING') {
-      return NextResponse.json({ error: 'Extension request already processed' }, { status: 400 });
+      return validationError('Extension request already processed');
     }
 
     const updatedExtension = await db.extensionRequest.update({
@@ -51,13 +54,11 @@ export async function POST(
     });
 
     if (action === 'APPROVED') {
-      // Update rental end date
       const updatedRental = await db.rental.update({
         where: { id },
         data: { endDate: extension.newEndDate },
       });
 
-      // Create additional payment
       await db.payment.create({
         data: {
           rentalId: id,
@@ -67,7 +68,6 @@ export async function POST(
         },
       });
 
-      // Notify customer
       await db.notification.create({
         data: {
           userId: rental.customerId,
@@ -77,10 +77,10 @@ export async function POST(
         },
       });
 
-      return NextResponse.json({ extension: updatedExtension, rental: updatedRental });
+      securityLogger.info('EXTENSION_RESPONDED', 'Rental', session.userId, { rentalId: id, extId, action });
+      return success({ extension: updatedExtension, rental: updatedRental });
     }
 
-    // Notify customer of rejection
     await db.notification.create({
       data: {
         userId: rental.customerId,
@@ -90,9 +90,9 @@ export async function POST(
       },
     });
 
-    return NextResponse.json({ extension: updatedExtension });
+    securityLogger.info('EXTENSION_RESPONDED', 'Rental', session.userId, { rentalId: id, extId, action });
+    return success({ extension: updatedExtension });
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : 'Internal server error';
-    return NextResponse.json({ error: message }, { status: 500 });
+    return safeError(error, 'EXTENSION_RESPOND');
   }
 }

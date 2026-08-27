@@ -1,31 +1,42 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { z } from 'zod';
 import { getSession } from '@/lib/auth';
 import { db } from '@/lib/db';
+import { rateLimiters, getClientIp, rateLimitResponse } from '@/lib/rate-limiter';
+import { unauthorized, forbidden, notFound, validationError, safeError, success } from '@/lib/secure-handler';
+import { securityLogger } from '@/lib/security-logger';
 
 const reviewSchema = z.object({
   action: z.enum(['APPROVE', 'REJECT']),
-  rejectionReason: z.string().optional(),
+  rejectionReason: z.string().max(500).optional(),
 });
 
 export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  let adminUserId: string | null = null;
   try {
+    const clientIp = getClientIp(request);
+    const rl = rateLimiters.admin.check(clientIp);
+    if (rl.limited) return rateLimitResponse(rl.retryAfterMs);
+
     const session = await getSession(request);
     if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      securityLogger.warn('ADMIN_KYC_REVIEW_UNAUTHORIZED', 'AdminKYC', null, { ip: clientIp });
+      return unauthorized();
     }
+    adminUserId = session.userId;
 
-    // Check admin permissions
+    // Check admin permissions (role from DB, never from client)
     const adminUser = await db.user.findUnique({
       where: { id: session.userId },
       select: { role: true },
     });
 
     if (!adminUser || (adminUser.role !== 'ADMIN' && adminUser.role !== 'SUPER_ADMIN')) {
-      return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
+      securityLogger.error('ADMIN_KYC_REVIEW_FORBIDDEN', 'AdminKYC', session.userId, { role: adminUser?.role, ip: clientIp });
+      return forbidden('Admin access required');
     }
 
     const { id } = await params;
@@ -33,7 +44,7 @@ export async function PATCH(
     const parsed = reviewSchema.safeParse(body);
 
     if (!parsed.success) {
-      return NextResponse.json({ error: 'Invalid request' }, { status: 400 });
+      return validationError('Invalid request. Action must be APPROVE or REJECT.');
     }
 
     const { action, rejectionReason } = parsed.data;
@@ -43,11 +54,11 @@ export async function PATCH(
     });
 
     if (!kyc) {
-      return NextResponse.json({ error: 'KYC record not found' }, { status: 404 });
+      return notFound('KYC record not found');
     }
 
     if (kyc.status !== 'SUBMITTED' && kyc.status !== 'UNDER_REVIEW') {
-      return NextResponse.json({ error: `Cannot review KYC with status: ${kyc.status}` }, { status: 400 });
+      return validationError(`Cannot review KYC with status: ${kyc.status}`);
     }
 
     const now = new Date();
@@ -86,12 +97,25 @@ export async function PATCH(
       });
     }
 
-    return NextResponse.json({
-      success: true,
-      message: action === 'APPROVE' ? 'KYC verified successfully' : 'KYC rejected',
+    // Create audit log
+    await db.auditLog.create({
+      data: {
+        userId: session.userId,
+        action: `KYC_${action}`,
+        entity: 'SellerKyc',
+        entityId: id,
+        details: `Admin reviewed KYC for user ${kyc.userId}: ${action}`,
+      },
     });
+
+    securityLogger.info('ADMIN_KYC_REVIEW_SUCCESS', 'AdminKYC', session.userId, {
+      kycId: id,
+      targetUserId: kyc.userId,
+      action,
+    });
+
+    return success({ message: action === 'APPROVE' ? 'KYC verified successfully' : 'KYC rejected' });
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : 'Internal server error';
-    return NextResponse.json({ error: message }, { status: 500 });
+    return safeError(error, 'ADMIN_KYC_REVIEW', adminUserId);
   }
 }

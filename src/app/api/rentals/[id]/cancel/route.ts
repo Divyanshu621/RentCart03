@@ -1,22 +1,29 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
+import { z } from 'zod';
 import { db } from '@/lib/db';
 import { getSession } from '@/lib/auth';
+import { rateLimiters, getClientIp, rateLimitResponse } from '@/lib/rate-limiter';
+import { securityLogger } from '@/lib/security-logger';
+import { safeError, validationError, unauthorized, forbidden, notFound, success } from '@/lib/secure-handler';
 
-// Statuses from which a customer can cancel (with full refund)
 const FULL_REFUND_STATUSES = ['PENDING_PAYMENT', 'OWNER_PENDING'];
-
-// Statuses from which a customer can cancel (with possible partial refund)
 const PARTIAL_REFUND_STATUSES = ['PAYMENT_COMPLETED', 'OWNER_ACCEPTED', 'READY_FOR_PICKUP'];
+
+const cancelBodySchema = z.object({
+  reason: z.string().max(1000, 'Reason must be at most 1000 characters').optional(),
+}).strict();
 
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const ip = getClientIp(request);
     const session = await getSession(request);
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const rl = rateLimiters.api.check(session?.userId || ip);
+    if (rl.limited) return rateLimitResponse(rl.retryAfterMs);
+
+    if (!session) return unauthorized();
 
     const { id } = await params;
     const rental = await db.rental.findUnique({
@@ -24,27 +31,25 @@ export async function POST(
       include: { payments: true, product: true },
     });
 
-    if (!rental) {
-      return NextResponse.json({ error: 'Rental not found' }, { status: 404 });
-    }
+    if (!rental) return notFound('Rental not found');
 
     // Only the customer can cancel
     if (rental.customerId !== session.userId) {
-      return NextResponse.json({ error: 'Only the customer can cancel this rental' }, { status: 403 });
+      return forbidden('Only the customer can cancel this rental');
     }
 
     const allCancellable = [...FULL_REFUND_STATUSES, ...PARTIAL_REFUND_STATUSES];
     if (!allCancellable.includes(rental.status)) {
-      return NextResponse.json(
-        { error: `Cannot cancel rental with status: ${rental.status}. Cancellation is only available before the rental becomes active.` },
-        { status: 400 }
-      );
+      return validationError('Cannot cancel rental in its current status');
     }
 
-    const body = await request.json();
-    const reason = body.reason || 'Customer cancelled';
+    const body = await request.json().catch(() => ({}));
+    const parsed = cancelBodySchema.safeParse(body);
+    if (!parsed.success) {
+      return validationError(parsed.error.issues[0].message);
+    }
+    const reason = parsed.data.reason || 'Customer cancelled';
 
-    // Calculate refund based on cancellation timing
     const isFullRefund = FULL_REFUND_STATUSES.includes(rental.status);
     const completedPayments = rental.payments.filter((p) => p.status === 'COMPLETED');
     const totalPaid = completedPayments.reduce((sum, p) => sum + p.amount, 0);
@@ -52,20 +57,16 @@ export async function POST(
     let refundAmount = 0;
     if (totalPaid > 0) {
       if (isFullRefund) {
-        // Full refund for early cancellations
         refundAmount = totalPaid;
       } else {
-        // Partial refund: 90% of rental amount (10% cancellation fee), full refund of security deposit
         const rentalPayments = completedPayments.filter((p) => p.type === 'RENTAL');
         const depositPayments = completedPayments.filter((p) => p.type === 'DEPOSIT');
         const rentalPaid = rentalPayments.reduce((sum, p) => sum + p.amount, 0);
         const depositPaid = depositPayments.reduce((sum, p) => sum + p.amount, 0);
-        // 90% of rental payment + 100% of deposit
         refundAmount = Math.round(rentalPaid * 0.9) + depositPaid;
       }
     }
 
-    // Update rental status
     const updatedRental = await db.rental.update({
       where: { id },
       data: {
@@ -74,7 +75,6 @@ export async function POST(
       },
     });
 
-    // Create refund record if applicable
     if (refundAmount > 0) {
       await db.refund.create({
         data: {
@@ -85,7 +85,6 @@ export async function POST(
         },
       });
 
-      // Mark payments as refunded
       for (const payment of completedPayments) {
         await db.payment.update({
           where: { id: payment.id },
@@ -93,14 +92,12 @@ export async function POST(
         });
       }
 
-      // Re-activate product availability
       await db.product.update({
         where: { id: rental.productId },
         data: { status: 'APPROVED' },
       });
     }
 
-    // Notify owner
     await db.notification.create({
       data: {
         userId: rental.ownerId,
@@ -110,7 +107,6 @@ export async function POST(
       },
     });
 
-    // Notify customer about refund
     if (refundAmount > 0) {
       await db.notification.create({
         data: {
@@ -122,7 +118,8 @@ export async function POST(
       });
     }
 
-    return NextResponse.json({
+    securityLogger.info('RENTAL_CANCELLED', 'Rental', session.userId, { rentalId: id, isFullRefund, refundAmount });
+    return success({
       rental: updatedRental,
       refundAmount,
       isFullRefund,
@@ -131,7 +128,6 @@ export async function POST(
         : `Rental cancelled. Refund of ₹${refundAmount.toLocaleString('en-IN')} will be processed (10% cancellation fee deducted).`,
     });
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : 'Internal server error';
-    return NextResponse.json({ error: message }, { status: 500 });
+    return safeError(error, 'RENTAL_CANCEL');
   }
 }

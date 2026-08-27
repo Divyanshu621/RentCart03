@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { Store, Menu, X, ChevronDown, LogIn, UserPlus } from 'lucide-react';
+import { Store, Menu, X, ChevronDown, LogIn, UserPlus, Package, Heart } from 'lucide-react';
 import { useAppStore } from '@/store';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
@@ -19,7 +19,7 @@ const navLinks = [
   { label: 'Browse Rentals', action: 'navigate', target: 'marketplace' as const },
   { label: 'How It Works', action: 'scroll', target: '#how-it-works' },
   { label: 'Categories', action: 'scroll', target: '#categories' },
-  { label: 'Pricing', action: 'navigate', target: 'marketplace' as const },
+  { label: 'Pricing', action: 'navigate', target: 'help-center' as const },
 ];
 
 const scrollToSection = (selector: string) => {
@@ -264,6 +264,28 @@ export default function LandingNavbar() {
                   }}
                 >
                   My Rentals
+                </Button>
+                <Button
+                  variant="outline"
+                  className="w-full border-white/20 text-white hover:bg-white/10 hover:text-white"
+                  onClick={() => {
+                    navigate('my-listings');
+                    setMobileOpen(false);
+                  }}
+                >
+                  <Package className="mr-2 h-4 w-4" />
+                  My Listings
+                </Button>
+                <Button
+                  variant="outline"
+                  className="w-full border-white/20 text-white hover:bg-white/10 hover:text-white"
+                  onClick={() => {
+                    navigate('favorites');
+                    setMobileOpen(false);
+                  }}
+                >
+                  <Heart className="mr-2 h-4 w-4" />
+                  Favourites
                 </Button>
                 <Button
                   variant="ghost"

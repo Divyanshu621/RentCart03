@@ -1,10 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { createSession } from '@/lib/auth';
+import { createSession, setAuthCookie } from '@/lib/auth';
+import { findOrCreateGoogleUser } from '../route';
+import { securityLogger } from '@/lib/security-logger';
 
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || '';
 const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET || '';
 const APP_URL = process.env.NEXTAUTH_URL || process.env.APP_URL || '';
+
+const isGoogleConfigured = !!(GOOGLE_CLIENT_ID && GOOGLE_CLIENT_ID.length > 10 && GOOGLE_CLIENT_SECRET);
 
 interface GoogleTokenResponse {
   access_token: string;
@@ -32,18 +36,20 @@ export async function GET(request: NextRequest) {
     const error = searchParams.get('error');
 
     if (error) {
-      return redirectToAppWithError(request, `Google auth failed: ${error}`);
+      securityLogger.warn('GOOGLE_AUTH_ERROR', 'Auth', null, { error });
+      return redirectToAppWithError(request, 'Google auth failed');
     }
 
     if (!code) {
       return redirectToAppWithError(request, 'No authorization code received');
     }
 
-    if (!GOOGLE_CLIENT_ID || GOOGLE_CLIENT_ID.length < 10) {
-      return redirectToAppWithError(request, 'Google OAuth not configured');
+    if (!isGoogleConfigured) {
+      securityLogger.critical('GOOGLE_OAUTH_NOT_CONFIGURED_CALLBACK', 'Auth', null);
+      return redirectToAppWithError(request, 'Google OAuth is not configured');
     }
 
-    // 1. Exchange code for tokens
+    // 1. Exchange code for tokens (server-to-server, no client access to secret)
     const redirectUri = `${APP_URL || new URL(request.url).origin}/api/auth/google/callback`;
     const tokenRes = await fetch('https://oauth2.googleapis.com/token', {
       method: 'POST',
@@ -58,9 +64,8 @@ export async function GET(request: NextRequest) {
     });
 
     if (!tokenRes.ok) {
-      const errBody = await tokenRes.text();
-      console.error('Google token exchange failed:', errBody);
-      return redirectToAppWithError(request, 'Failed to exchange authorization code');
+      securityLogger.error('GOOGLE_TOKEN_EXCHANGE_FAILED', 'Auth', null);
+      return redirectToAppWithError(request, 'Authentication failed');
     }
 
     const tokens = await tokenRes.json() as GoogleTokenResponse;
@@ -71,79 +76,49 @@ export async function GET(request: NextRequest) {
     });
 
     if (!userRes.ok) {
-      return redirectToAppWithError(request, 'Failed to fetch Google profile');
+      securityLogger.error('GOOGLE_USERINFO_FAILED', 'Auth', null);
+      return redirectToAppWithError(request, 'Authentication failed');
     }
 
     const googleUser = await userRes.json() as GoogleUserInfo;
 
     if (!googleUser.verified_email) {
-      return redirectToAppWithError(request, 'Google email is not verified');
+      securityLogger.warn('GOOGLE_EMAIL_NOT_VERIFIED', 'Auth', null, { email: googleUser.email });
+      return redirectToAppWithError(request, 'Your Google email is not verified');
     }
 
     // 3. Find or create user in our database
-    const existing = await db.user.findUnique({ where: { email: googleUser.email } });
-
-    let user;
-    if (existing) {
-      if (!existing.isActive) {
-        return redirectToAppWithError(request, 'Account is suspended');
-      }
-      // Update avatar if needed
-      if (googleUser.picture && !existing.avatarUrl) {
-        user = await db.user.update({
-          where: { id: existing.id },
-          data: { avatarUrl: googleUser.picture },
-          include: { state: true, city: true },
-        });
-      } else {
-        user = existing;
-      }
-    } else {
-      // Create new user (need a dummy password hash since field is required)
-      const { hash } = await import('bcryptjs');
-      const dummyPw = `g_${Date.now()}_${Math.random().toString(36).slice(2)}`;
-      const passwordHash = await hash(dummyPw, 12);
-
-      user = await db.user.create({
-        data: {
-          name: googleUser.name,
-          email: googleUser.email,
-          passwordHash,
-          role: 'CUSTOMER',
-          isVerified: true,
-          isActive: true,
-          trustScore: 50,
-          avatarUrl: googleUser.picture || null,
-        },
-        include: { state: true, city: true },
-      });
-    }
+    const user = await findOrCreateGoogleUser({
+      email: googleUser.email,
+      name: googleUser.name,
+      googleId: googleUser.id,
+      avatarUrl: googleUser.picture || null,
+    });
 
     // 4. Create our session
-    const token = await createSession(user.id);
+    const token = await createSession(user.id, request);
 
-    // 5. Redirect to app with session cookie
-    const { passwordHash: _, ...userWithoutPassword } = user;
+    securityLogger.info('GOOGLE_LOGIN_SUCCESS', 'Auth', user.id);
+
+    // 5. Redirect to app with secure httpOnly session cookie
     const redirectUrl = `${APP_URL || new URL(request.url).origin}/`;
 
     const response = NextResponse.redirect(redirectUrl);
-    response.cookies.set('token', token, {
-      httpOnly: true,
-      sameSite: 'lax',
-      maxAge: 7 * 24 * 60 * 60,
-      path: '/',
-    });
-    // Store user data in a short-lived cookie so the frontend can pick it up
+    setAuthCookie(response, token);
+
+    // Store minimal user info in a short-lived, httpOnly cookie for the frontend
+    const { passwordHash: _, ...userWithoutPassword } = user;
     response.cookies.set('google_auth_success', JSON.stringify(userWithoutPassword), {
-      httpOnly: false,
+      httpOnly: true, // CHANGED: was false, now httpOnly
       sameSite: 'lax',
       maxAge: 10,
       path: '/',
+      secure: process.env.NODE_ENV === 'production',
     });
 
     return response;
   } catch (err) {
-    console.error('Google OAuth callback error:', err);
+    securityLogger.error('GOOGLE_CALLBACK_ERROR', 'Auth', null);
     return redirectToAppWithError(request, 'Authentication failed');
   }
 }

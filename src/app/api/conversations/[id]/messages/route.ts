@@ -1,10 +1,13 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { z } from 'zod';
 import { db } from '@/lib/db';
 import { getSession } from '@/lib/auth';
+import { rateLimiters, getClientIp, rateLimitResponse } from '@/lib/rate-limiter';
+import { securityLogger } from '@/lib/security-logger';
+import { safeError, validationError, unauthorized, forbidden, notFound, success } from '@/lib/secure-handler';
 
 const messageSchema = z.object({
-  content: z.string().min(1, 'Message content is required'),
+  content: z.string().min(1, 'Message content is required').max(5000, 'Message must be at most 5000 characters'),
   type: z.enum(['TEXT', 'IMAGE', 'FILE']).default('TEXT'),
 });
 
@@ -13,10 +16,11 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const clientIp = getClientIp(request);
     const session = await getSession(request);
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    if (!session) return unauthorized();
+    const rl = rateLimiters.api.check(session?.userId || clientIp);
+    if (rl.limited) return rateLimitResponse(rl.retryAfterMs);
 
     const { id: conversationId } = await params;
 
@@ -24,15 +28,12 @@ export async function GET(
       where: { id: conversationId },
     });
 
-    if (!conversation) {
-      return NextResponse.json({ error: 'Conversation not found' }, { status: 404 });
-    }
+    if (!conversation) return notFound('Conversation not found');
 
     if (conversation.user1Id !== session.userId && conversation.user2Id !== session.userId) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+      return forbidden('You do not have access to this conversation');
     }
 
-    // Mark messages as read
     await db.message.updateMany({
       where: {
         conversationId,
@@ -50,10 +51,9 @@ export async function GET(
       orderBy: { createdAt: 'asc' },
     });
 
-    return NextResponse.json(messages);
+    return success({ messages });
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : 'Internal server error';
-    return NextResponse.json({ error: message }, { status: 500 });
+    return safeError(error, 'MESSAGES_GET');
   }
 }
 
@@ -62,10 +62,12 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const ip = getClientIp(request);
     const session = await getSession(request);
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const rl = rateLimiters.api.check(session?.userId || ip);
+    if (rl.limited) return rateLimitResponse(rl.retryAfterMs);
+
+    if (!session) return unauthorized();
 
     const { id: conversationId } = await params;
 
@@ -73,19 +75,17 @@ export async function POST(
       where: { id: conversationId },
     });
 
-    if (!conversation) {
-      return NextResponse.json({ error: 'Conversation not found' }, { status: 404 });
-    }
+    if (!conversation) return notFound('Conversation not found');
 
     if (conversation.user1Id !== session.userId && conversation.user2Id !== session.userId) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+      return forbidden('You do not have access to this conversation');
     }
 
     const body = await request.json();
     const parsed = messageSchema.safeParse(body);
 
     if (!parsed.success) {
-      return NextResponse.json({ error: parsed.error.issues[0].message }, { status: 400 });
+      return validationError(parsed.error.issues[0].message);
     }
 
     const { content, type } = parsed.data;
@@ -102,7 +102,6 @@ export async function POST(
       },
     });
 
-    // Update conversation
     await db.conversation.update({
       where: { id: conversationId },
       data: {
@@ -111,9 +110,9 @@ export async function POST(
       },
     });
 
-    return NextResponse.json({ message }, { status: 201 });
+    securityLogger.info('MESSAGE_SENT', 'Message', session.userId, { conversationId });
+    return success({ message }, 201);
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : 'Internal server error';
-    return NextResponse.json({ error: message }, { status: 500 });
+    return safeError(error, 'MESSAGE_SEND');
   }
 }

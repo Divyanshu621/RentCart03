@@ -1,16 +1,29 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
+import { z } from 'zod';
 import { db } from '@/lib/db';
 import { getSession } from '@/lib/auth';
+import { rateLimiters, getClientIp, rateLimitResponse } from '@/lib/rate-limiter';
+import { securityLogger } from '@/lib/security-logger';
+import { safeError, validationError, unauthorized, forbidden, notFound, success } from '@/lib/secure-handler';
+
+const VALID_INSPECTION_RESULTS = ['GOOD', 'MINOR_DAMAGE', 'MAJOR_DAMAGE', 'LOST'] as const;
+
+const returnBodySchema = z.object({
+  inspectionResult: z.enum(VALID_INSPECTION_RESULTS).optional(),
+  inspectionNotes: z.string().max(2000, 'Inspection notes must be at most 2000 characters').optional(),
+}).strict();
 
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const ip = getClientIp(request);
     const session = await getSession(request);
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const rl = rateLimiters.api.check(session?.userId || ip);
+    if (rl.limited) return rateLimitResponse(rl.retryAfterMs);
+
+    if (!session) return unauthorized();
 
     const { id } = await params;
     const rental = await db.rental.findUnique({
@@ -18,23 +31,24 @@ export async function POST(
       include: { payments: true },
     });
 
-    if (!rental) {
-      return NextResponse.json({ error: 'Rental not found' }, { status: 404 });
-    }
+    if (!rental) return notFound('Rental not found');
 
     const isCustomer = rental.customerId === session.userId;
     const isOwner = rental.ownerId === session.userId;
 
     if (!isCustomer && !isOwner) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+      return forbidden('You are not part of this rental');
     }
 
     const body = await request.json().catch(() => ({}));
+    const parsed = returnBodySchema.safeParse(body);
+    if (!parsed.success) {
+      return validationError(parsed.error.issues[0].message);
+    }
 
     if (isCustomer) {
-      // Customer initiates return
       if (!['ACTIVE'].includes(rental.status)) {
-        return NextResponse.json({ error: `Cannot return rental with status: ${rental.status}` }, { status: 400 });
+        return validationError(`Cannot return rental with status: ${rental.status}`);
       }
 
       const updatedRental = await db.rental.update({
@@ -42,7 +56,6 @@ export async function POST(
         data: { status: 'RETURN_PENDING' },
       });
 
-      // Notify owner
       await db.notification.create({
         data: {
           userId: rental.ownerId,
@@ -52,16 +65,17 @@ export async function POST(
         },
       });
 
-      return NextResponse.json({ rental: updatedRental });
+      securityLogger.info('RENTAL_RETURNED', 'Rental', session.userId, { rentalId: id, role: 'customer' });
+      return success({ rental: updatedRental });
     }
 
     // Owner processes return
     if (!['RETURN_PENDING'].includes(rental.status)) {
-      return NextResponse.json({ error: `Cannot process return with status: ${rental.status}` }, { status: 400 });
+      return validationError(`Cannot process return with status: ${rental.status}`);
     }
 
-    const inspectionResult = body.inspectionResult || 'GOOD';
-    const inspectionNotes = body.inspectionNotes || '';
+    const inspectionResult = parsed.data.inspectionResult || 'GOOD';
+    const inspectionNotes = parsed.data.inspectionNotes || '';
 
     const updatedRental = await db.rental.update({
       where: { id },
@@ -73,13 +87,11 @@ export async function POST(
       },
     });
 
-    // Move to INSPECTION
     const inspectedRental = await db.rental.update({
       where: { id },
       data: { status: 'INSPECTION' },
     });
 
-    // If inspection is GOOD, create refund for security deposit
     if (inspectionResult === 'GOOD') {
       const depositPayments = rental.payments.filter(
         (p) => p.type === 'DEPOSIT' && p.status === 'COMPLETED'
@@ -98,7 +110,6 @@ export async function POST(
       }
     }
 
-    // Notify customer
     await db.notification.create({
       data: {
         userId: rental.customerId,
@@ -108,9 +119,9 @@ export async function POST(
       },
     });
 
-    return NextResponse.json({ rental: inspectedRental });
+    securityLogger.info('RENTAL_RETURNED', 'Rental', session.userId, { rentalId: id, role: 'owner', inspectionResult });
+    return success({ rental: inspectedRental });
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : 'Internal server error';
-    return NextResponse.json({ error: message }, { status: 500 });
+    return safeError(error, 'RENTAL_RETURN');
   }
 }

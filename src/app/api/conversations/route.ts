@@ -1,19 +1,23 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { z } from 'zod';
 import { db } from '@/lib/db';
 import { getSession } from '@/lib/auth';
+import { rateLimiters, getClientIp, rateLimitResponse } from '@/lib/rate-limiter';
+import { securityLogger } from '@/lib/security-logger';
+import { safeError, validationError, unauthorized, forbidden, notFound, success } from '@/lib/secure-handler';
 
 const createConvSchema = z.object({
   otherUserId: z.string().min(1, 'Other user ID is required'),
-  productId: z.string().optional(),
+  productId: z.string().min(1).optional(),
 });
 
 export async function GET(request: NextRequest) {
   try {
+    const clientIp = getClientIp(request);
     const session = await getSession(request);
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    if (!session) return unauthorized();
+    const rl = rateLimiters.api.check(session?.userId || clientIp);
+    if (rl.limited) return rateLimitResponse(rl.retryAfterMs);
 
     const conversations = await db.conversation.findMany({
       where: {
@@ -30,7 +34,6 @@ export async function GET(request: NextRequest) {
       orderBy: { lastMessageAt: 'desc' },
     });
 
-    // Add other user info and unread count
     const enriched = conversations.map((conv) => {
       const isUser1 = conv.user1Id === session.userId;
       const otherUser = isUser1 ? conv.user2 : conv.user1;
@@ -40,39 +43,37 @@ export async function GET(request: NextRequest) {
       };
     });
 
-    return NextResponse.json(enriched);
+    return success({ conversations: enriched });
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : 'Internal server error';
-    return NextResponse.json({ error: message }, { status: 500 });
+    return safeError(error, 'CONVERSATIONS_LIST');
   }
 }
 
 export async function POST(request: NextRequest) {
   try {
+    const ip = getClientIp(request);
     const session = await getSession(request);
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const rl = rateLimiters.api.check(session?.userId || ip);
+    if (rl.limited) return rateLimitResponse(rl.retryAfterMs);
+
+    if (!session) return unauthorized();
 
     const body = await request.json();
     const parsed = createConvSchema.safeParse(body);
 
     if (!parsed.success) {
-      return NextResponse.json({ error: parsed.error.issues[0].message }, { status: 400 });
+      return validationError(parsed.error.issues[0].message);
     }
 
     const { otherUserId, productId } = parsed.data;
 
     if (otherUserId === session.userId) {
-      return NextResponse.json({ error: 'Cannot create conversation with yourself' }, { status: 400 });
+      return validationError('Cannot create conversation with yourself');
     }
 
     const otherUser = await db.user.findUnique({ where: { id: otherUserId } });
-    if (!otherUser) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 });
-    }
+    if (!otherUser) return notFound('User not found');
 
-    // Find or create conversation - use consistent ordering for user IDs
     const [smallerId, largerId] = [session.userId, otherUserId].sort();
 
     let conversation = await db.conversation.findUnique({
@@ -105,9 +106,9 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    return NextResponse.json({ conversation });
+    securityLogger.info('CONVERSATION_CREATED', 'Conversation', session.userId);
+    return success({ conversation });
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : 'Internal server error';
-    return NextResponse.json({ error: message }, { status: 500 });
+    return safeError(error, 'CONVERSATION_CREATE');
   }
 }

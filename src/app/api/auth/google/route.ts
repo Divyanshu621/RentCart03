@@ -2,28 +2,31 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { hash } from 'bcryptjs';
 import { db } from '@/lib/db';
-import { createSession } from '@/lib/auth';
+import { createSession, setAuthCookie } from '@/lib/auth';
+import { rateLimiters, getClientIp, rateLimitResponse } from '@/lib/rate-limiter';
+import { safeError, success, validationError } from '@/lib/secure-handler';
+import { securityLogger } from '@/lib/security-logger';
 
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || '';
 const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET || '';
 const APP_URL = process.env.NEXTAUTH_URL || process.env.APP_URL || '';
 
-// ─── GET: Start real Google OAuth flow ───────────────────────
+const isGoogleConfigured = !!(GOOGLE_CLIENT_ID && GOOGLE_CLIENT_ID.length > 10 && GOOGLE_CLIENT_SECRET);
+
+// ─── GET: Redirect-based Google OAuth flow (for production) ───
 export async function GET(request: NextRequest) {
-  // If Google OAuth is not configured, return error so frontend falls back to demo
-  if (!GOOGLE_CLIENT_ID || GOOGLE_CLIENT_ID.length < 10) {
+  if (!isGoogleConfigured) {
     return NextResponse.json(
-      { error: 'Google OAuth not configured. Use demo mode.', demoMode: true },
-      { status: 200 }
+      { error: 'Google OAuth is not configured' },
+      { status: 503 }
     );
   }
 
-  // Build Google OAuth consent URL
   const redirectUri = `${APP_URL || new URL(request.url).origin}/api/auth/google/callback`;
   const scope = encodeURIComponent('openid email profile');
   const state = Buffer.from(JSON.stringify({
     ts: Date.now(),
-    nonce: Math.random().toString(36).slice(2),
+    nonce: crypto.randomUUID(),
   })).toString('base64url');
 
   const googleAuthUrl =
@@ -39,51 +42,109 @@ export async function GET(request: NextRequest) {
   return NextResponse.redirect(googleAuthUrl);
 }
 
-// ─── POST: Demo mode (manual Gmail sign-in) ──────────────────
-const demoAuthSchema = z.object({
-  email: z.string().email('Invalid email address'),
-  name: z.string().min(1, 'Name is required'),
-  googleId: z.string().optional(),
-  avatarUrl: z.string().optional(),
+// ─── POST: Verify Google ID token (for client-side GIS flow) ─
+const googleTokenSchema = z.object({
+  credential: z.string().min(50, 'Invalid Google credential'),
 });
 
 export async function POST(request: NextRequest) {
-  try {
-    const body = await request.json();
-    const parsed = demoAuthSchema.safeParse(body);
+  const clientIp = getClientIp(request);
 
-    if (!parsed.success) {
-      return NextResponse.json({ error: parsed.error.issues[0].message }, { status: 400 });
+  try {
+    // Rate limiting
+    const ipResult = rateLimiters.auth.check(clientIp);
+    if (ipResult.limited) {
+      return rateLimitResponse(ipResult.retryAfterMs);
     }
 
-    const { email, name, avatarUrl } = parsed.data;
+    if (!isGoogleConfigured) {
+      return NextResponse.json(
+        { success: false, error: 'Google OAuth is not configured. Please use email/password login.' },
+        { status: 503 }
+      );
+    }
 
+    const body = await request.json();
+    const parsed = googleTokenSchema.safeParse(body);
+
+    if (!parsed.success) {
+      return validationError('Invalid Google credential');
+    }
+
+    // ─── Verify ID token with Google ──────────────────
+    const verifyRes = await fetch(
+      `https://oauth2.googleapis.com/tokeninfo?id_token=${encodeURIComponent(parsed.data.credential)}`
+    );
+
+    if (!verifyRes.ok) {
+      securityLogger.warn('GOOGLE_TOKEN_VERIFY_FAILED', 'Auth', null, { ip: clientIp });
+      return validationError('Google authentication failed. Please try again.');
+    }
+
+    const googleUser = await verifyRes.json() as {
+      sub: string;
+      email: string;
+      email_verified: boolean;
+      name: string;
+      given_name: string;
+      family_name: string;
+      picture?: string;
+      locale?: string;
+      aud: string;
+      iss: string;
+    };
+
+    // ─── Validate audience (must match our client ID) ──
+    if (googleUser.aud !== GOOGLE_CLIENT_ID) {
+      securityLogger.warn('GOOGLE_TOKEN_AUDIENCE_MISMATCH', 'Auth', null, {
+        expected: GOOGLE_CLIENT_ID,
+        got: googleUser.aud,
+        ip: clientIp,
+      });
+      return validationError('Invalid authentication');
+    }
+
+    // ─── Validate issuer ───────────────────────────────
+    if (googleUser.iss !== 'accounts.google.com' && googleUser.iss !== 'https://accounts.google.com') {
+      securityLogger.warn('GOOGLE_TOKEN_INVALID_ISSUER', 'Auth', null, {
+        iss: googleUser.iss,
+        ip: clientIp,
+      });
+      return validationError('Invalid authentication');
+    }
+
+    if (!googleUser.email_verified) {
+      securityLogger.warn('GOOGLE_EMAIL_NOT_VERIFIED', 'Auth', null, { email: googleUser.email });
+      return validationError('Your Google email is not verified');
+    }
+
+    // ─── Find or create user ───────────────────────────
     const user = await findOrCreateGoogleUser({
-      email,
-      name,
-      googleId: parsed.data.googleId || null,
-      avatarUrl: avatarUrl || null,
+      email: googleUser.email,
+      name: googleUser.name,
+      googleId: googleUser.sub,
+      avatarUrl: googleUser.picture || null,
     });
 
-    const token = await createSession(user.id);
+    // ─── Create session ────────────────────────────────
+    const token = await createSession(user.id, request);
+
+    securityLogger.info('GOOGLE_LOGIN_SUCCESS', 'Auth', user.id, { ip: clientIp });
+
+    // Update last login
+    await db.user.update({
+      where: { id: user.id },
+      data: { lastLoginAt: new Date().toISOString() },
+    }).catch(() => {});
 
     const { passwordHash: _, ...userWithoutPassword } = user;
 
-    const response = NextResponse.json(
-      { user: userWithoutPassword, message: 'Signed in via Google' },
-      { status: 200 },
-    );
-    response.cookies.set('token', token, {
-      httpOnly: true,
-      sameSite: 'lax',
-      maxAge: 7 * 24 * 60 * 60,
-      path: '/',
-    });
+    const response = success({ user: userWithoutPassword });
+    setAuthCookie(response, token);
 
     return response;
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : 'Internal server error';
-    return NextResponse.json({ error: message }, { status: 500 });
+    return safeError(error, 'GOOGLE_AUTH');
   }
 }
 
@@ -95,8 +156,9 @@ interface GoogleUserData {
   avatarUrl: string | null;
 }
 
-async function findOrCreateGoogleUser(data: GoogleUserData) {
-  const existing = await db.user.findUnique({ where: { email: data.email } });
+export async function findOrCreateGoogleUser(data: GoogleUserData) {
+  const normalizedEmail = data.email.toLowerCase().trim();
+  const existing = await db.user.findUnique({ where: { email: normalizedEmail } });
 
   if (existing) {
     if (!existing.isActive) {
@@ -113,16 +175,16 @@ async function findOrCreateGoogleUser(data: GoogleUserData) {
     return existing;
   }
 
-  // Create new user
-  const randomPassword = `g_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+  // Create new user - role is ALWAYS set server-side
+  const randomPassword = crypto.randomUUID() + crypto.randomUUID();
   const passwordHash = await hash(randomPassword, 12);
 
   return db.user.create({
     data: {
       name: data.name,
-      email: data.email,
+      email: normalizedEmail,
       passwordHash,
-      role: 'CUSTOMER',
+      role: 'CUSTOMER', // Server-enforced, never from client
       isVerified: true,
       isActive: true,
       trustScore: 50,
@@ -130,6 +192,3 @@ async function findOrCreateGoogleUser(data: GoogleUserData) {
     },
   });
 }
-
-// Export for use in callback route
-export { findOrCreateGoogleUser };

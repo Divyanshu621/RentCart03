@@ -1,11 +1,14 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { z } from 'zod';
 import { db } from '@/lib/db';
 import { getSession } from '@/lib/auth';
+import { rateLimiters, getClientIp, rateLimitResponse } from '@/lib/rate-limiter';
+import { securityLogger } from '@/lib/security-logger';
+import { safeError, validationError, unauthorized, forbidden, notFound, success } from '@/lib/secure-handler';
 
 const extendSchema = z.object({
-  requestedDays: z.number().int().min(1, 'Must request at least 1 day'),
-  reason: z.string().optional(),
+  requestedDays: z.number().int().min(1, 'Must request at least 1 day').max(90, 'Cannot extend more than 90 days at once'),
+  reason: z.string().max(500, 'Reason must be at most 500 characters').optional(),
 });
 
 export async function POST(
@@ -13,39 +16,38 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const ip = getClientIp(request);
     const session = await getSession(request);
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const rl = rateLimiters.api.check(session?.userId || ip);
+    if (rl.limited) return rateLimitResponse(rl.retryAfterMs);
+
+    if (!session) return unauthorized();
 
     const { id } = await params;
     const body = await request.json();
     const parsed = extendSchema.safeParse(body);
 
     if (!parsed.success) {
-      return NextResponse.json({ error: parsed.error.issues[0].message }, { status: 400 });
+      return validationError(parsed.error.issues[0].message);
     }
 
     const { requestedDays, reason } = parsed.data;
 
     const rental = await db.rental.findUnique({ where: { id } });
-    if (!rental) {
-      return NextResponse.json({ error: 'Rental not found' }, { status: 404 });
-    }
+    if (!rental) return notFound('Rental not found');
 
     if (rental.customerId !== session.userId) {
-      return NextResponse.json({ error: 'Only the customer can request extension' }, { status: 403 });
+      return forbidden('Only the customer can request extension');
     }
 
     if (!['ACTIVE', 'RETURN_PENDING'].includes(rental.status)) {
-      return NextResponse.json({ error: `Cannot extend rental with status: ${rental.status}` }, { status: 400 });
+      return validationError(`Cannot extend rental with status: ${rental.status}`);
     }
 
     const currentEnd = new Date(rental.endDate);
     const newEndDate = new Date(currentEnd);
     newEndDate.setDate(newEndDate.getDate() + requestedDays);
 
-    // Check availability for the extended period
     const overlappingRentals = await db.rental.findMany({
       where: {
         productId: rental.productId,
@@ -58,7 +60,7 @@ export async function POST(
     });
 
     if (overlappingRentals.length > 0) {
-      return NextResponse.json({ error: 'Product is not available for the extended dates' }, { status: 400 });
+      return validationError('Product is not available for the extended dates');
     }
 
     const additionalFee = rental.dailyRate * requestedDays;
@@ -74,7 +76,6 @@ export async function POST(
       },
     });
 
-    // Notify owner
     await db.notification.create({
       data: {
         userId: rental.ownerId,
@@ -84,9 +85,9 @@ export async function POST(
       },
     });
 
-    return NextResponse.json({ extension }, { status: 201 });
+    securityLogger.info('EXTENSION_REQUESTED', 'Rental', session.userId, { rentalId: id, requestedDays });
+    return success({ extension }, 201);
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : 'Internal server error';
-    return NextResponse.json({ error: message }, { status: 500 });
+    return safeError(error, 'RENTAL_EXTEND');
   }
 }

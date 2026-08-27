@@ -1,23 +1,25 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { db } from '@/lib/db';
 import { getSession } from '@/lib/auth';
+import { rateLimiters, getClientIp, rateLimitResponse } from '@/lib/rate-limiter';
+import { safeError, unauthorized, notFound, success } from '@/lib/secure-handler';
 
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const ip = getClientIp(request);
     const session = await getSession(request);
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const rl = rateLimiters.api.check(session?.userId || ip);
+    if (rl.limited) return rateLimitResponse(rl.retryAfterMs);
+
+    if (!session) return unauthorized();
 
     const { id: productId } = await params;
 
     const product = await db.product.findUnique({ where: { id: productId } });
-    if (!product) {
-      return NextResponse.json({ error: 'Product not found' }, { status: 404 });
-    }
+    if (!product) return notFound('Product not found');
 
     const existing = await db.favorite.findUnique({
       where: { userId_productId: { userId: session.userId, productId } },
@@ -35,9 +37,8 @@ export async function POST(
       isFavorited = true;
     }
 
-    return NextResponse.json({ isFavorited });
+    return success({ isFavorited });
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : 'Internal server error';
-    return NextResponse.json({ error: message }, { status: 500 });
+    return safeError(error, 'PRODUCT_FAVORITE');
   }
 }

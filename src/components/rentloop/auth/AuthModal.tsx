@@ -1,10 +1,10 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { useForm, Controller, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Loader2, Eye, EyeOff, X, Phone, MapPin, Home } from 'lucide-react';
+import { Loader2, Eye, EyeOff, Phone, MapPin, Home } from 'lucide-react';
 
 import { useAppStore } from '@/store';
 import { api } from '@/lib/api';
@@ -48,18 +48,6 @@ const registerSchema = z.object({
 type LoginFormData = z.infer<typeof loginSchema>;
 type RegisterFormData = z.infer<typeof registerSchema>;
 
-// ─── Shared Google SVG ──────────────────────────────────────
-function GoogleIcon({ className = 'w-5 h-5' }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24">
-      <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4" />
-      <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
-      <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
-      <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
-    </svg>
-  );
-}
-
 // ─── Pinterest-style Input class ────────────────────────────
 const inputClass =
   'h-11 rounded-2xl border-gray-300 text-[15px] placeholder:text-gray-500 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:border-blue-500 px-4';
@@ -101,12 +89,12 @@ export default function AuthModal() {
   const handleAuthSuccess = useCallback(async (userData: Record<string, unknown>) => {
     try {
       const meData = await api.me();
-      setUser(meData as unknown as UserType);
-      const u = meData as unknown as UserType;
+      const userObj = (meData as Record<string, unknown>).user as unknown as UserType;
+      setUser(userObj);
       toast.success(authModalView === 'login' ? 'Welcome back!' : 'Account created successfully!');
       setAuthModalOpen(false);
       setReturnUrl(null);
-      if (u.role === 'OWNER' && u.kycStatus !== 'VERIFIED') {
+      if (userObj.role === 'OWNER' && userObj.kycStatus !== 'VERIFIED') {
         navigate('seller-kyc');
       } else {
         navigate(returnUrl ? (returnUrl as 'marketplace' | 'dashboard') : 'marketplace');
@@ -147,14 +135,13 @@ function LoginForm({
   onSuccess: (data: Record<string, unknown>) => void;
   onToggleView: () => void;
 }) {
+  const navigate = useAppStore((s) => s.navigate);
+  const setAuthModalOpen = useAppStore((s) => s.setAuthModalOpen);
   const [showPassword, setShowPassword] = useState(false);
   const [serverError, setServerError] = useState('');
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
-  const [showGoogleDialog, setShowGoogleDialog] = useState(false);
-  const [googleEmail, setGoogleEmail] = useState('');
-  const [googleName, setGoogleName] = useState('');
-  const [googleConfigured, setGoogleConfigured] = useState(false);
-  const [checkedConfig, setCheckedConfig] = useState(false);
+  const [googleClientId, setGoogleClientId] = useState<string | null>(null);
+  const googleBtnRef = useRef<HTMLDivElement>(null);
 
   const {
     register,
@@ -162,40 +149,53 @@ function LoginForm({
     formState: { errors, isSubmitting },
   } = useForm<LoginFormData>({ resolver: zodResolver(loginSchema) });
 
+  // Fetch Google Client ID
   useEffect(() => {
     api.getGoogleConfig()
-      .then((c) => setGoogleConfigured(c.configured))
-      .catch(() => setGoogleConfigured(false))
-      .finally(() => setCheckedConfig(true));
+      .then((c) => setGoogleClientId(c.clientId || null))
+      .catch(() => {});
   }, []);
 
-  const handleGoogleClick = async () => {
-    if (googleConfigured) {
-      setIsGoogleLoading(true);
-      window.location.href = '/api/auth/google';
-    } else {
-      setGoogleEmail('');
-      setGoogleName('');
-      setShowGoogleDialog(true);
-    }
-  };
+  // Initialize Google Identity Services
+  useEffect(() => {
+    if (!googleClientId) return;
 
-  const handleDemoGoogleLogin = async () => {
-    if (!googleEmail.trim() || !googleEmail.includes('@')) {
-      toast.error('Please enter a valid email address');
-      return;
-    }
-    const emailLower = googleEmail.trim().toLowerCase();
-    if (!emailLower.endsWith('@gmail.com') && !emailLower.endsWith('@googlemail.com')) {
-      toast.error('Please enter a valid Gmail address (e.g., you@gmail.com)');
-      return;
-    }
+    // Load GIS script
+    const script = document.createElement('script');
+    script.src = 'https://accounts.google.com/gsi/client';
+    script.async = true;
+    script.defer = true;
+    document.head.appendChild(script);
+
+    script.onload = () => {
+      if (typeof window.google === 'undefined' || !window.google.accounts) return;
+
+      window.google.accounts.id.initialize({
+        client_id: googleClientId,
+        callback: handleGoogleCredentialResponse,
+        auto_select: false,
+        cancel_on_tap_outside: true,
+      });
+
+      // Render the button if the ref is available
+      if (googleBtnRef.current) {
+        window.google.accounts.id.renderButton(googleBtnRef.current, {
+          theme: 'outline',
+          size: 'large',
+          width: googleBtnRef.current.offsetWidth,
+          text: 'continue_with',
+          shape: 'rectangular',
+          logo_alignment: 'center',
+        });
+      }
+    };
+  }, [googleClientId]);
+
+  const handleGoogleCredentialResponse = async (response: { credential: string }) => {
     setIsGoogleLoading(true);
     try {
-      const name = googleName.trim() || emailLower.split('@')[0].replace(/[._]/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
-      const result = await api.googleAuth({ email: emailLower, name });
-      setShowGoogleDialog(false);
-      onSuccess(result.user);
+      const res = await api.googleAuth({ credential: response.credential });
+      onSuccess(res.user);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Google sign-in failed');
     } finally {
@@ -270,7 +270,7 @@ function LoginForm({
           <div className="pt-0.5">
             <button
               type="button"
-              onClick={() => toast.info('Password reset link sent to your email!')}
+              onClick={() => toast.info('Password reset feature is coming soon. Please contact support@rentcart.in for assistance.')}
               className="text-[15px] text-[#0074e8] hover:text-[#0060b8] font-medium transition-colors"
             >
               Forgot password?
@@ -302,19 +302,24 @@ function LoginForm({
         </div>
 
         {/* Continue with Google */}
-        <button
-          type="button"
-          onClick={handleGoogleClick}
-          disabled={isGoogleLoading || !checkedConfig}
-          className="w-full h-[52px] rounded-2xl border border-gray-300 bg-white hover:bg-gray-50 active:bg-gray-100 flex items-center justify-center gap-2.5 text-[15px] font-medium text-[#0f172a] transition-colors disabled:opacity-60"
-        >
-          {isGoogleLoading ? (
-            <Loader2 className="w-5 h-5 animate-spin text-gray-500" />
-          ) : (
-            <GoogleIcon />
+        <div className="relative">
+          {isGoogleLoading && (
+            <div className="absolute inset-0 z-10 bg-white/80 flex items-center justify-center rounded-2xl">
+              <Loader2 className="w-5 h-5 animate-spin text-gray-500" />
+            </div>
           )}
-          {isGoogleLoading ? 'Signing in...' : 'Continue with Google'}
-        </button>
+          {googleClientId ? (
+            <div ref={googleBtnRef} className="w-full flex justify-center overflow-hidden" style={{ minHeight: 52 }} />
+          ) : (
+            <button
+              type="button"
+              disabled
+              className="w-full h-[52px] rounded-2xl border border-gray-300 bg-gray-50 flex items-center justify-center gap-2.5 text-[15px] font-medium text-gray-400 cursor-not-allowed"
+            >
+              Google Sign-In unavailable
+            </button>
+          )}
+        </div>
 
         {/* Sign up link */}
         <p className="mt-5 text-center text-sm text-[#0f172a]">
@@ -330,47 +335,11 @@ function LoginForm({
         {/* Terms */}
         <p className="mt-3 text-center text-xs text-gray-500 leading-relaxed">
           By continuing, you agree to RentCart&apos;s{' '}
-          <span className="underline cursor-pointer">Terms of Service</span>
+          <button type="button" onClick={() => { setAuthModalOpen(false); setTimeout(() => navigate('terms-of-service'), 300); }} className="underline cursor-pointer bg-transparent p-0 text-inherit">Terms of Service</button>
           {' '}and acknowledge our{' '}
-          <span className="underline cursor-pointer">Privacy Policy</span>.
+          <button type="button" onClick={() => { setAuthModalOpen(false); setTimeout(() => navigate('privacy-policy'), 300); }} className="underline cursor-pointer bg-transparent p-0 text-inherit">Privacy Policy</button>.
         </p>
       </div>
-
-      {/* Google Dialog (Demo) */}
-      {showGoogleDialog && (
-        <div className="fixed inset-0 z-[200] bg-black/50 flex items-center justify-center p-4" onClick={() => !isGoogleLoading && setShowGoogleDialog(false)}>
-          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-sm p-7" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center gap-3">
-                <GoogleIcon className="w-7 h-7" />
-                <div>
-                  <h3 className="font-bold text-[#0f172a] text-[17px]">Sign in with Google</h3>
-                  <p className="text-xs text-gray-500 mt-0.5">Enter your Gmail to continue</p>
-                </div>
-              </div>
-              <button onClick={() => setShowGoogleDialog(false)} disabled={isGoogleLoading} className="p-1.5 rounded-full hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors">
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-            <div className="space-y-4">
-              <div>
-                <label className="text-sm font-medium text-[#0f172a] mb-1.5 block">Gmail Address</label>
-                <Input type="email" placeholder="you@gmail.com" value={googleEmail} onChange={(e) => setGoogleEmail(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleDemoGoogleLogin()} disabled={isGoogleLoading} className={inputClass} autoFocus />
-                <p className="text-xs text-gray-500 mt-1.5">Only Gmail addresses are supported for demo mode</p>
-              </div>
-              <div>
-                <label className="text-sm font-medium text-[#0f172a] mb-1.5 block">
-                  Display Name <span className="text-gray-400 font-normal">(optional)</span>
-                </label>
-                <Input type="text" placeholder="Your name" value={googleName} onChange={(e) => setGoogleName(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleDemoGoogleLogin()} disabled={isGoogleLoading} className={inputClass} />
-              </div>
-              <Button onClick={handleDemoGoogleLogin} disabled={isGoogleLoading || !googleEmail.trim()} className="w-full h-[48px] rounded-full bg-[#e60023] hover:bg-[#cc001f] active:bg-[#b3001b] text-white font-semibold text-[15px] transition-colors shadow-none">
-                {isGoogleLoading ? (<><Loader2 className="w-5 h-5 animate-spin" /> Signing in...</>) : 'Continue'}
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
     </>
   );
 }
@@ -387,6 +356,8 @@ function RegisterForm({
   states: State[];
   loadingStates: boolean;
 }) {
+  const navigate = useAppStore((s) => s.navigate);
+  const setAuthModalOpen = useAppStore((s) => s.setAuthModalOpen);
   const [showPassword, setShowPassword] = useState(false);
   const [serverError, setServerError] = useState('');
 
@@ -601,11 +572,11 @@ function RegisterForm({
               }}
             >
               I agree to the{' '}
-              <span className="text-[#0074e8] font-medium hover:underline cursor-pointer">Terms of Service</span>
+              <button type="button" onClick={() => { setAuthModalOpen(false); setTimeout(() => navigate('terms-of-service'), 300); }} className="text-[#0074e8] font-medium hover:underline cursor-pointer bg-transparent p-0 border-0">Terms of Service</button>
               {', '}
-              <span className="text-[#0074e8] font-medium hover:underline cursor-pointer">Privacy Policy</span>
+              <button type="button" onClick={() => { setAuthModalOpen(false); setTimeout(() => navigate('privacy-policy'), 300); }} className="text-[#0074e8] font-medium hover:underline cursor-pointer bg-transparent p-0 border-0">Privacy Policy</button>
               {' '}and{' '}
-              <span className="text-[#0074e8] font-medium hover:underline cursor-pointer">Rental Agreement</span>
+              <button type="button" onClick={() => { setAuthModalOpen(false); setTimeout(() => navigate('terms-of-service'), 300); }} className="text-[#0074e8] font-medium hover:underline cursor-pointer bg-transparent p-0 border-0">Rental Agreement</button>
             </label>
           </div>
           {errors.agreeTerms && <p className="text-xs text-red-600 ml-1">{errors.agreeTerms.message}</p>}
@@ -641,9 +612,9 @@ function RegisterForm({
         {/* Terms */}
         <p className="mt-3 text-center text-xs text-gray-500 leading-relaxed">
           By continuing, you agree to RentCart&apos;s{' '}
-          <span className="underline cursor-pointer">Terms of Service</span>
+          <button type="button" onClick={() => { setAuthModalOpen(false); setTimeout(() => navigate('terms-of-service'), 300); }} className="underline cursor-pointer bg-transparent p-0 text-inherit">Terms of Service</button>
           {' '}and acknowledge our{' '}
-          <span className="underline cursor-pointer">Privacy Policy</span>.
+          <button type="button" onClick={() => { setAuthModalOpen(false); setTimeout(() => navigate('privacy-policy'), 300); }} className="underline cursor-pointer bg-transparent p-0 text-inherit">Privacy Policy</button>.
         </p>
       </div>
     </>

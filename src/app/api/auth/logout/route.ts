@@ -1,31 +1,27 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getSession, destroySession } from '@/lib/auth';
+import { getSession, destroySession, clearAuthCookie } from '@/lib/auth';
+import { securityLogger } from '@/lib/security-logger';
+import { success, safeError } from '@/lib/secure-handler';
 
 export async function POST(request: NextRequest) {
   try {
     const session = await getSession(request);
+    const userId = session?.userId || null;
 
     if (session) {
-      // Try to get the token from cookie or header to destroy it
-      const cookieToken = request.cookies.get('token')?.value;
-      const authHeader = request.headers.get('authorization');
-      const headerToken = authHeader?.startsWith('Bearer ') ? authHeader.substring(7) : null;
-
-      if (cookieToken) destroySession(cookieToken);
-      if (headerToken) destroySession(headerToken);
+      // Destroy ALL sessions for this user (complete logout)
+      await destroyAllUserSessions(session.userId);
+      securityLogger.info('LOGOUT', 'Auth', session.userId);
     }
 
-    const response = NextResponse.json({ success: true, message: 'Logged out' });
-    response.cookies.set('token', '', {
-      httpOnly: true,
-      sameSite: 'lax',
-      maxAge: 0,
-      path: '/',
-    });
+    const response = success({ message: 'Logged out successfully' });
+    clearAuthCookie(response);
 
     return response;
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : 'Internal server error';
-    return NextResponse.json({ error: message }, { status: 500 });
+    return safeError(error, 'LOGOUT');
   }
 }
+
+// Re-export for direct import
+import { destroyAllUserSessions } from '@/lib/auth';

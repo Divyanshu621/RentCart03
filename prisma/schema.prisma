@@ -84,6 +84,10 @@ model User {
   avgRating     Float     @default(0)
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
+  emailVerified     Boolean   @default(false)
+  mfaEnabled        Boolean   @default(false)
+  mfaSecret         String?
+  lastLoginAt       DateTime?
 
   ownedProducts      Product[]
   sentRentals        Rental[]  @relation("CustomerRentals")
@@ -100,6 +104,8 @@ model User {
   couponUsages       CouponUsage[]
   auditLogs          AuditLog[]
   sellerKyc          SellerKyc?
+  sessions               Session[]
+  passwordResetTokens     PasswordResetToken[]
 }
 
 // ─── Product ────────────────────────────────────────────────
@@ -206,6 +212,7 @@ model Payment {
   status          String   @default("PENDING") // PENDING, COMPLETED, FAILED, REFUNDED
   paymentMethod   String   @default("SIMULATED")
   transactionId   String?
+  razorpayOrderId String?
   createdAt       DateTime @default(now())
 }
 
@@ -397,6 +404,38 @@ model PaymentSettings {
   walletEnabled       Boolean  @default(false)
   cashOnPickupEnabled Boolean  @default(true)
   updatedAt           DateTime @updatedAt
+}
+
+// ─── Session ──────────────────────────────────────────────
+model Session {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String   @unique
+  userAgent String?
+  ipAddress String?
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+}
+
+// ─── Login Attempt (Brute-force protection) ──────────────────
+model LoginAttempt {
+  id        String   @id @default(cuid())
+  email     String
+  ipAddress String?
+  success   Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+// ─── Password Reset Token ──────────────────────────────────
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token     String   @unique
+  used      Boolean  @default(false)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
 }
 
 // ─── Audit Log ──────────────────────────────────────────────

@@ -21,7 +21,6 @@ import {
   Eye,
   Loader2,
   Shield,
-  ChevronRight as ChevronRightIcon,
 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -408,7 +407,7 @@ export default function DashboardPage() {
                      'Upload Aadhaar, PAN & bank details to start listing items.'}
                   </p>
                 </div>
-                <ChevronRightIcon className={`w-5 h-5 shrink-0 ${
+                <ChevronRight className={`w-5 h-5 shrink-0 ${
                   kycStatus === 'REJECTED' ? 'text-red-400' : kycStatus === 'SUBMITTED' ? 'text-blue-400' : 'text-amber-400'
                 }`} />
               </div>

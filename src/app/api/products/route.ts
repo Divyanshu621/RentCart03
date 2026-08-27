@@ -2,29 +2,32 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { db } from '@/lib/db';
 import { getSession } from '@/lib/auth';
+import { rateLimiters, getClientIp, rateLimitResponse } from '@/lib/rate-limiter';
+import { safeError, validationError, unauthorized, forbidden, success } from '@/lib/secure-handler';
+import { securityLogger } from '@/lib/security-logger';
 
 const createProductSchema = z.object({
-  title: z.string().min(3, 'Title must be at least 3 characters'),
+  title: z.string().min(3, 'Title must be at least 3 characters').max(200, 'Title must be at most 200 characters'),
   categoryId: z.string().min(1, 'Category is required'),
-  description: z.string().optional(),
+  description: z.string().max(2000, 'Description must be at most 2000 characters').optional(),
   condition: z.enum(['NEW', 'LIKE_NEW', 'GOOD', 'FAIR', 'DAMAGED']),
   dailyPrice: z.number().positive('Daily price must be positive'),
-  weeklyPrice: z.number().optional(),
-  securityDeposit: z.number().min(0),
-  minRentalDays: z.number().int().min(1),
-  maxRentalDays: z.number().int().min(1),
+  weeklyPrice: z.number().positive().optional(),
+  securityDeposit: z.number().min(0, 'Security deposit must be non-negative'),
+  minRentalDays: z.number().int().min(1, 'Minimum rental days must be at least 1'),
+  maxRentalDays: z.number().int().min(1, 'Maximum rental days must be at least 1'),
   stateId: z.string().min(1, 'State is required'),
   cityId: z.string().min(1, 'City is required'),
-  pickupAddress: z.string().optional(),
+  pickupAddress: z.string().max(500, 'Pickup address must be at most 500 characters').optional(),
   deliveryAvailable: z.boolean(),
-  deliveryFee: z.number().min(0),
-  rentalRules: z.string().optional(),
-  cancellationPolicy: z.string().optional(),
-  brand: z.string().optional(),
-  model: z.string().optional(),
+  deliveryFee: z.number().min(0, 'Delivery fee must be non-negative'),
+  rentalRules: z.string().max(2000).optional(),
+  cancellationPolicy: z.string().max(2000).optional(),
+  brand: z.string().max(200).optional(),
+  model: z.string().max(200).optional(),
   purchaseYear: z.number().int().min(1990).max(new Date().getFullYear()).optional(),
-  ownerNotes: z.string().optional(),
-  imageUrls: z.array(z.string().url().or(z.string().startsWith('/'))).max(5).optional(),
+  ownerNotes: z.string().max(2000).optional(),
+  imageUrls: z.array(z.string().max(2048).url().or(z.string().max(2048).startsWith('/'))).max(5, 'Maximum 5 images allowed').optional(),
 });
 
 function generateSlug(title: string): string {
@@ -42,7 +45,6 @@ async function ensureUniqueSlug(baseSlug: string): Promise<string> {
   const existing = await db.product.findUnique({ where: { slug } });
   if (!existing) return slug;
 
-  // Append random 4 chars
   const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
   let random = '';
   for (let i = 0; i < 4; i++) {
@@ -54,6 +56,10 @@ async function ensureUniqueSlug(baseSlug: string): Promise<string> {
 
 export async function GET(request: NextRequest) {
   try {
+    const ip = getClientIp(request);
+    const rl = rateLimiters.search.check(ip);
+    if (rl.limited) return rateLimitResponse(rl.retryAfterMs);
+
     const { searchParams } = new URL(request.url);
     const search = searchParams.get('search') || '';
     const categoryId = searchParams.get('categoryId');
@@ -90,7 +96,6 @@ export async function GET(request: NextRequest) {
     if (minPrice && maxPrice) where.dailyPrice = { gte: parseFloat(minPrice), lte: parseFloat(maxPrice) };
     if (condition) where.condition = condition;
 
-    // Build order
     let orderBy: Record<string, string>[] | Record<string, string> = { createdAt: 'desc' };
     if (sort === 'price_asc' || sort === 'price_low') orderBy = { dailyPrice: 'asc' };
     else if (sort === 'price_desc' || sort === 'price_high') orderBy = { dailyPrice: 'desc' };
@@ -116,30 +121,38 @@ export async function GET(request: NextRequest) {
       db.product.count({ where }),
     ]);
 
-    return NextResponse.json({
+    return success({
       products,
       total,
       page,
       totalPages: Math.ceil(total / limit),
     });
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : 'Internal server error';
-    return NextResponse.json({ error: message }, { status: 500 });
+    return safeError(error, 'PRODUCTS_LIST');
   }
 }
 
 export async function POST(request: NextRequest) {
+  const clientIp = getClientIp(request);
+
   try {
     const session = await getSession(request);
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const rl = rateLimiters.api.check(session?.userId || clientIp);
+    if (rl.limited) return rateLimitResponse(rl.retryAfterMs);
+
+    if (!session) return unauthorized();
+
+    // Role check: only OWNER, ADMIN, or SUPER_ADMIN can create products
+    const user = await db.user.findUnique({ where: { id: session.userId }, select: { role: true } });
+    if (!user || !['OWNER', 'ADMIN', 'SUPER_ADMIN'].includes(user.role)) {
+      return forbidden('Owner account required to list items');
     }
 
     const body = await request.json();
     const parsed = createProductSchema.safeParse(body);
 
     if (!parsed.success) {
-      return NextResponse.json({ error: parsed.error.issues[0].message }, { status: 400 });
+      return validationError(parsed.error.issues[0].message);
     }
 
     const data = parsed.data;
@@ -187,9 +200,10 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    return NextResponse.json({ product }, { status: 201 });
+    securityLogger.info('PRODUCT_CREATED', 'Product', session.userId, { productId: product.id, ip: clientIp });
+
+    return success({ product }, 201);
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : 'Internal server error';
-    return NextResponse.json({ error: message }, { status: 500 });
+    return safeError(error, 'PRODUCT_CREATE');
   }
 }

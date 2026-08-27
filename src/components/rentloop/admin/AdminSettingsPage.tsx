@@ -131,6 +131,7 @@ export default function AdminSettingsPage() {
   const handleToggle = (settingKey: string, checked: boolean) => {
     // Check if disabling would leave no methods enabled
     if (!checked) {
+      if (!window.confirm('Are you sure you want to disable this payment method?')) return;
       const otherEnabled = Object.entries(settings).some(([key, val]) => key !== settingKey && val);
       if (!otherEnabled) {
         toast.error('At least one payment method must remain enabled');

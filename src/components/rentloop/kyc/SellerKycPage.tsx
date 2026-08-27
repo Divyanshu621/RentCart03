@@ -382,7 +382,7 @@ export default function SellerKycPage() {
       // Refresh user data
       try {
         const meData = await api.me();
-        setUser(meData as unknown as UserType);
+        setUser((meData as Record<string, unknown>).user as unknown as UserType);
       } catch {}
       // Refresh KYC
       const data = await api.getKycStatus();
@@ -696,10 +696,14 @@ export default function SellerKycPage() {
           <div className="max-w-3xl mx-auto flex items-center gap-3">
             <Button
               variant="outline"
-              onClick={() => {
-                saveDraft();
-                toast.success('Draft saved');
-                navigate('dashboard');
+              onClick={async () => {
+                try {
+                  await saveDraft();
+                  toast.success('Draft saved');
+                  navigate('dashboard');
+                } catch {
+                  toast.error('Failed to save draft. Please try again.');
+                }
               }}
               className="h-11 flex-1 sm:flex-none sm:px-6"
             >

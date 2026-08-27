@@ -1,11 +1,18 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
+import { z } from 'zod';
 import { db } from '@/lib/db';
+import { rateLimiters, getClientIp, rateLimitResponse } from '@/lib/rate-limiter';
+import { safeError, validationError, notFound, success } from '@/lib/secure-handler';
 
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const ip = getClientIp(request);
+    const rl = rateLimiters.search.check(ip);
+    if (rl.limited) return rateLimitResponse(rl.retryAfterMs);
+
     const { id: productId } = await params;
     const { searchParams } = new URL(request.url);
 
@@ -13,26 +20,33 @@ export async function GET(
     const endDateStr = searchParams.get('endDate');
 
     if (!startDateStr || !endDateStr) {
-      return NextResponse.json({ error: 'startDate and endDate are required' }, { status: 400 });
+      return validationError('startDate and endDate are required');
+    }
+
+    const dateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be in YYYY-MM-DD format');
+
+    const startDateParsed = dateSchema.safeParse(startDateStr);
+    const endDateParsed = dateSchema.safeParse(endDateStr);
+    if (!startDateParsed.success || !endDateParsed.success) {
+      return validationError('Invalid date format');
     }
 
     const startDate = new Date(startDateStr);
     const endDate = new Date(endDateStr);
 
     if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
-      return NextResponse.json({ error: 'Invalid date format' }, { status: 400 });
+      return validationError('Invalid date format');
     }
 
     if (endDate <= startDate) {
-      return NextResponse.json({ error: 'endDate must be after startDate' }, { status: 400 });
+      return validationError('endDate must be after startDate');
     }
 
     const product = await db.product.findUnique({ where: { id: productId } });
     if (!product) {
-      return NextResponse.json({ error: 'Product not found' }, { status: 404 });
+      return notFound('Product not found');
     }
 
-    // Find overlapping rentals
     const overlappingRentals = await db.rental.findMany({
       where: {
         productId,
@@ -54,12 +68,11 @@ export async function GET(
       }
     }
 
-    return NextResponse.json({
+    return success({
       available: overlappingRentals.length === 0,
       unavailableDates,
     });
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : 'Internal server error';
-    return NextResponse.json({ error: message }, { status: 500 });
+    return safeError(error, 'PRODUCT_AVAILABILITY');
   }
 }

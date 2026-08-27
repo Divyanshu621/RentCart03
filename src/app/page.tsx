@@ -27,6 +27,11 @@ import AdminRentalsPage from '@/components/rentloop/admin/AdminRentalsPage';
 import AdminDisputesPage from '@/components/rentloop/admin/AdminDisputesPage';
 import AdminSettingsPage from '@/components/rentloop/admin/AdminSettingsPage';
 import SellerKycPage from '@/components/rentloop/kyc/SellerKycPage';
+import HelpCenterPage from '@/components/rentloop/common/HelpCenterPage';
+import ContactPage from '@/components/rentloop/common/ContactPage';
+import PrivacyPolicyPage from '@/components/rentloop/common/PrivacyPolicyPage';
+import TermsOfServicePage from '@/components/rentloop/common/TermsOfServicePage';
+import CookiesPolicyPage from '@/components/rentloop/common/CookiesPolicyPage';
 import type { User, State, Category } from '@/types';
 
 export default function Home() {
@@ -54,7 +59,7 @@ export default function Home() {
     const init = async () => {
       try {
         const data = await api.me();
-        setUser(data as unknown as User);
+        setUser((data as Record<string, unknown>).user as unknown as User);
       } catch {
         setUser(null);
       } finally {
@@ -122,6 +127,16 @@ export default function Home() {
         return <AdminSettingsPage />;
       case 'seller-kyc':
         return <SellerKycPage />;
+      case 'help-center':
+        return <HelpCenterPage />;
+      case 'contact':
+        return <ContactPage />;
+      case 'privacy-policy':
+        return <PrivacyPolicyPage />;
+      case 'terms-of-service':
+        return <TermsOfServicePage />;
+      case 'cookies-policy':
+        return <CookiesPolicyPage />;
       default:
         return <MarketplacePage />;
     }

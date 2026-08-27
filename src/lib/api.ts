@@ -30,7 +30,7 @@ export const api = {
   logout: () =>
     request<{ success: boolean }>('/api/auth/logout', { method: 'POST' }),
 
-  googleAuth: (data: { email: string; name: string; avatarUrl?: string }) =>
+  googleAuth: (data: { credential?: string; email?: string; name?: string; avatarUrl?: string }) =>
     request<{ user: Record<string, unknown>; message: string }>('/api/auth/google', { method: 'POST', body: JSON.stringify(data) }),
 
   getGoogleConfig: () =>
@@ -64,8 +64,9 @@ export const api = {
 
   uploadImages: (files: File[]) => {
     const formData = new FormData();
-    files.forEach(f => formData.append('files', f));
-    return request<{ urls: string[] }>('/api/upload', {
+    files.forEach(f => formData.append('file', f));
+    formData.append('category', 'product');
+    return request<{ url: string; originalName: string; size: number; type: string }>('/api/upload', {
       method: 'POST',
       body: formData,
       headers: {},
@@ -117,6 +118,9 @@ export const api = {
 
   cancelRental: (id: string, reason?: string) =>
     request<Record<string, unknown>>(`/api/rentals/${id}/cancel`, { method: 'POST', body: JSON.stringify({ reason }) }),
+
+  acceptRental: (id: string) =>
+    request<Record<string, unknown>>(`/api/rentals/${id}`, { method: 'PATCH', body: JSON.stringify({ status: 'OWNER_ACCEPTED' }) }),
 
   rejectRental: (id: string, reason?: string) =>
     request<Record<string, unknown>>(`/api/rentals/${id}`, { method: 'PATCH', body: JSON.stringify({ status: 'OWNER_REJECTED', cancellationReason: reason || 'Owner rejected the rental request' }) }),

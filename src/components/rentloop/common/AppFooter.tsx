@@ -1,13 +1,20 @@
 'use client';
 
 import { useAppStore } from '@/store';
-import { Store, Mail, Phone, MapPin, Facebook, Twitter, Instagram, Linkedin, Youtube } from 'lucide-react';
+import {
+  Store, Mail, Phone, MapPin, Facebook, Twitter, Instagram, Linkedin, Youtube,
+} from 'lucide-react';
+import { toast } from 'sonner';
 
 export default function AppFooter() {
   const navigate = useAppStore((s) => s.navigate);
   const currentView = useAppStore((s) => s.currentView);
 
   if (currentView === 'landing') return null;
+
+  const handleSocialClick = (platform: string) => {
+    toast.info(`${platform} page coming soon!`);
+  };
 
   return (
     <footer className="bg-[#0f172a] text-gray-300 mt-auto pb-20 md:pb-0">
@@ -33,15 +40,41 @@ export default function AppFooter() {
 
             {/* Social links */}
             <div className="flex items-center gap-3 mt-5">
-              {[Facebook, Twitter, Instagram, Linkedin, Youtube].map((Icon, i) => (
-                <button
-                  key={i}
-                  className="w-9 h-9 rounded-lg bg-white/5 hover:bg-[#059669] flex items-center justify-center text-gray-400 hover:text-white transition-colors"
-                  aria-label="Social link"
-                >
-                  <Icon className="w-4 h-4" />
-                </button>
-              ))}
+              <button
+                onClick={() => handleSocialClick('Facebook')}
+                className="w-9 h-9 rounded-lg bg-white/5 hover:bg-[#059669] flex items-center justify-center text-gray-400 hover:text-white transition-colors"
+                aria-label="Facebook"
+              >
+                <Facebook className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => handleSocialClick('Twitter')}
+                className="w-9 h-9 rounded-lg bg-white/5 hover:bg-[#059669] flex items-center justify-center text-gray-400 hover:text-white transition-colors"
+                aria-label="Twitter"
+              >
+                <Twitter className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => handleSocialClick('Instagram')}
+                className="w-9 h-9 rounded-lg bg-white/5 hover:bg-[#059669] flex items-center justify-center text-gray-400 hover:text-white transition-colors"
+                aria-label="Instagram"
+              >
+                <Instagram className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => handleSocialClick('LinkedIn')}
+                className="w-9 h-9 rounded-lg bg-white/5 hover:bg-[#059669] flex items-center justify-center text-gray-400 hover:text-white transition-colors"
+                aria-label="LinkedIn"
+              >
+                <Linkedin className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => handleSocialClick('YouTube')}
+                className="w-9 h-9 rounded-lg bg-white/5 hover:bg-[#059669] flex items-center justify-center text-gray-400 hover:text-white transition-colors"
+                aria-label="YouTube"
+              >
+                <Youtube className="w-4 h-4" />
+              </button>
             </div>
           </div>
 
@@ -55,18 +88,18 @@ export default function AppFooter() {
                 </button>
               </li>
               <li>
-                <button onClick={() => navigate('marketplace')} className="text-sm text-gray-400 hover:text-[#10b981] transition-colors">
+                <button onClick={() => navigate('landing')} className="text-sm text-gray-400 hover:text-[#10b981] transition-colors">
                   How It Works
                 </button>
               </li>
               <li>
-                <button onClick={() => navigate('marketplace')} className="text-sm text-gray-400 hover:text-[#10b981] transition-colors">
+                <button onClick={() => navigate('help-center')} className="text-sm text-gray-400 hover:text-[#10b981] transition-colors">
                   Safety Guide
                 </button>
               </li>
               <li>
-                <button onClick={() => navigate('marketplace')} className="text-sm text-gray-400 hover:text-[#10b981] transition-colors">
-                  Pricing
+                <button onClick={() => navigate('help-center')} className="text-sm text-gray-400 hover:text-[#10b981] transition-colors">
+                  Pricing & Fees
                 </button>
               </li>
               <li>
@@ -102,7 +135,7 @@ export default function AppFooter() {
                 </button>
               </li>
               <li>
-                <button onClick={() => navigate('dashboard')} className="text-sm text-gray-400 hover:text-[#10b981] transition-colors">
+                <button onClick={() => navigate('help-center')} className="text-sm text-gray-400 hover:text-[#10b981] transition-colors">
                   Trust & Verification
                 </button>
               </li>
@@ -113,13 +146,23 @@ export default function AppFooter() {
           <div>
             <h3 className="text-sm font-semibold text-white uppercase tracking-wider mb-4">Support</h3>
             <ul className="space-y-3">
-              <li className="flex items-center gap-2 text-sm text-gray-400">
-                <Mail className="w-4 h-4 shrink-0" />
-                <span>support@rentcart.in</span>
+              <li>
+                <button
+                  onClick={() => navigate('contact')}
+                  className="flex items-center gap-2 text-sm text-gray-400 hover:text-[#10b981] transition-colors"
+                >
+                  <Mail className="w-4 h-4 shrink-0" />
+                  <span>support@rentcart.in</span>
+                </button>
               </li>
-              <li className="flex items-center gap-2 text-sm text-gray-400">
-                <Phone className="w-4 h-4 shrink-0" />
-                <span>+91 1800-736-8227</span>
+              <li>
+                <button
+                  onClick={() => navigate('contact')}
+                  className="flex items-center gap-2 text-sm text-gray-400 hover:text-[#10b981] transition-colors"
+                >
+                  <Phone className="w-4 h-4 shrink-0" />
+                  <span>+91 1800-736-8227</span>
+                </button>
               </li>
               <li className="flex items-center gap-2 text-sm text-gray-400">
                 <MapPin className="w-4 h-4 shrink-0" />
@@ -127,13 +170,22 @@ export default function AppFooter() {
               </li>
             </ul>
             <div className="mt-4 space-y-2">
-              <button className="block text-sm text-gray-400 hover:text-[#10b981] transition-colors">
+              <button
+                onClick={() => navigate('help-center')}
+                className="block text-sm text-gray-400 hover:text-[#10b981] transition-colors"
+              >
                 Help Center
               </button>
-              <button className="block text-sm text-gray-400 hover:text-[#10b981] transition-colors">
+              <button
+                onClick={() => navigate('privacy-policy')}
+                className="block text-sm text-gray-400 hover:text-[#10b981] transition-colors"
+              >
                 Privacy Policy
               </button>
-              <button className="block text-sm text-gray-400 hover:text-[#10b981] transition-colors">
+              <button
+                onClick={() => navigate('terms-of-service')}
+                className="block text-sm text-gray-400 hover:text-[#10b981] transition-colors"
+              >
                 Terms of Service
               </button>
             </div>
@@ -146,11 +198,26 @@ export default function AppFooter() {
             &copy; {new Date().getFullYear()} RentCart. All rights reserved.
           </p>
           <div className="flex items-center gap-4 text-xs text-gray-500">
-            <button className="hover:text-gray-300 transition-colors">Privacy</button>
+            <button
+              onClick={() => navigate('privacy-policy')}
+              className="hover:text-gray-300 transition-colors"
+            >
+              Privacy
+            </button>
             <span className="text-gray-700">|</span>
-            <button className="hover:text-gray-300 transition-colors">Terms</button>
+            <button
+              onClick={() => navigate('terms-of-service')}
+              className="hover:text-gray-300 transition-colors"
+            >
+              Terms
+            </button>
             <span className="text-gray-700">|</span>
-            <button className="hover:text-gray-300 transition-colors">Cookies</button>
+            <button
+              onClick={() => navigate('cookies-policy')}
+              className="hover:text-gray-300 transition-colors"
+            >
+              Cookies
+            </button>
           </div>
         </div>
       </div>

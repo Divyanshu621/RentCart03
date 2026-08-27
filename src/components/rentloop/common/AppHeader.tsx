@@ -348,8 +348,8 @@ export default function AppHeader() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full flex items-center justify-between">
           <span>India&apos;s #1 Rental Marketplace</span>
           <div className="flex items-center gap-4">
-            <button className="hover:text-white transition-colors">Help Center</button>
-            <button className="hover:text-white transition-colors">Contact</button>
+            <button onClick={() => navigate('help-center')} className="hover:text-white transition-colors">Help Center</button>
+            <button onClick={() => navigate('contact')} className="hover:text-white transition-colors">Contact</button>
           </div>
         </div>
       </div>
@@ -738,7 +738,14 @@ export default function AppHeader() {
         onOpenChange={setShowMobile}
         user={user}
         isAdmin={isAdmin}
-        onNavigate={(view) => { navigate(view); setShowMobile(false); }}
+        onNavigate={(view) => {
+          if (view === 'list-item') {
+            requireAuth(() => { navigate(view); setShowMobile(false); });
+          } else {
+            navigate(view);
+            setShowMobile(false);
+          }
+        }}
         onAuth={(view) => { setAuthModalView(view); setAuthModalOpen(true); setShowMobile(false); }}
         onLogout={() => { handleLogout(); setShowMobile(false); }}
       />

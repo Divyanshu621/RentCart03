@@ -141,6 +141,12 @@ export default function RentalDetailDialog({ rentalId, open, onClose }: RentalDe
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const acceptMutation = useMutation({
+    mutationFn: (id: string) => api.acceptRental(id),
+    onSuccess: () => { toast.success('Rental accepted!'); queryClient.invalidateQueries({ queryKey: ['rental', rentalId] }); queryClient.invalidateQueries({ queryKey: ['rentals'] }); onClose(); },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   const rejectMutation = useMutation({
     mutationFn: (id: string) => api.rejectRental(id),
     onSuccess: () => { toast.success('Rental rejected'); queryClient.invalidateQueries({ queryKey: ['rental', rentalId] }); queryClient.invalidateQueries({ queryKey: ['rentals'] }); onClose(); },
@@ -455,9 +461,14 @@ export default function RentalDetailDialog({ rentalId, open, onClose }: RentalDe
                 </>
               )}
               {rental.status === 'OWNER_PENDING' && isOwner && (
-                <Button variant="outline" className="border-red-200 text-red-600 hover:bg-red-50" disabled={rejectMutation.isPending} onClick={() => rejectMutation.mutate(rental.id)}>
-                  {rejectMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <X className="h-4 w-4 mr-2" />}Reject
-                </Button>
+                <>
+                  <Button className="bg-emerald-600 hover:bg-emerald-700 text-white" disabled={acceptMutation.isPending} onClick={() => acceptMutation.mutate(rental.id)}>
+                    {acceptMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <CheckCircle2 className="h-4 w-4 mr-2" />}Accept Request
+                  </Button>
+                  <Button variant="outline" className="border-red-200 text-red-600 hover:bg-red-50" disabled={rejectMutation.isPending} onClick={() => rejectMutation.mutate(rental.id)}>
+                    {rejectMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <X className="h-4 w-4 mr-2" />}Reject
+                  </Button>
+                </>
               )}
               {rental.status === 'OWNER_PENDING' && isCustomer && (
                 <Button variant="outline" className="border-red-200 text-red-600 hover:bg-red-50" onClick={() => setCancelDialogOpen(true)}>

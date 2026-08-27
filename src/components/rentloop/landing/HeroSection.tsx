@@ -53,14 +53,13 @@ const stats = [
   { label: 'Products', value: 10000, suffix: '+', prefix: '' },
   { label: 'Users', value: 5000, suffix: '+', prefix: '' },
   { label: 'Cities', value: 50, suffix: '+', prefix: '' },
-  { label: 'Rating', value: 4.8, suffix: '/5', prefix: '' },
+  { label: 'Rating', value: 48, suffix: '/10', prefix: '' },
 ];
 
 /* ─── Component ─────────────────────────────────────────────── */
 
 export default function HeroSection() {
   const navigate = useAppStore((s) => s.navigate);
-  const user = useAppStore((s) => s.user);
   const categories = useAppStore((s) => s.categories);
   const setCategories = useAppStore((s) => s.setCategories);
 
@@ -252,18 +251,11 @@ export default function HeroSection() {
               {stats.map((stat) => (
                 <div key={stat.label} className="text-center">
                   <div className="text-2xl sm:text-3xl font-bold text-white">
-                    {stat.value === 4.8 ? (
-                      <>
-                        <AnimatedCounter target={stat.value * 10} />
-                        <span className="text-base text-emerald-200/60">/10</span>
-                      </>
-                    ) : (
-                      <AnimatedCounter
-                        target={stat.value}
-                        suffix={stat.suffix}
-                        prefix={stat.prefix}
-                      />
-                    )}
+                    <AnimatedCounter
+                      target={stat.value}
+                      suffix={stat.suffix}
+                      prefix={stat.prefix}
+                    />
                   </div>
                   <div className="text-sm text-emerald-200/60 mt-1">{stat.label}</div>
                 </div>

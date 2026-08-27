@@ -202,6 +202,7 @@ export interface Conversation {
   productId?: string;
   lastMessage?: string;
   lastMessageAt?: string;
+  unreadCount?: number;
   user1?: Pick<User, 'id' | 'name' | 'avatarUrl'>;
   user2?: Pick<User, 'id' | 'name' | 'avatarUrl'>;
   product?: Pick<Product, 'id' | 'title' | 'images'>;
@@ -361,4 +362,9 @@ export type AppView =
   | 'admin-products'
   | 'admin-rentals'
   | 'admin-disputes'
-  | 'admin-settings';
+  | 'admin-settings'
+  | 'help-center'
+  | 'contact'
+  | 'privacy-policy'
+  | 'terms-of-service'
+  | 'cookies-policy';

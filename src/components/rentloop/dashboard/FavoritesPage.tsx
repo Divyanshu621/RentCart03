@@ -87,8 +87,8 @@ const conditionColors: Record<string, string> = {
 
 function FavoriteCard({ product, onRemove }: { product: Product; onRemove: (id: string) => void }) {
   const navigate = useAppStore((s) => s.navigate);
-  const Icon = categoryIcons[product.category.slug] || Camera;
-  const gradient = gradientMap[product.category.slug] || 'from-slate-400 to-gray-300';
+  const Icon = categoryIcons[product.category?.slug] || Camera;
+  const gradient = gradientMap[product.category?.slug] || 'from-slate-400 to-gray-300';
 
   return (
     <motion.div
@@ -120,7 +120,7 @@ function FavoriteCard({ product, onRemove }: { product: Product; onRemove: (id: 
           )}
           <div className="absolute top-3 left-3">
             <Badge variant="secondary" className="bg-white/90 backdrop-blur-sm text-slate-700 text-xs font-medium border-0">
-              {product.category.name}
+              {product.category?.name}
             </Badge>
           </div>
           <div className="absolute bottom-3 left-3">
@@ -184,7 +184,7 @@ function FavoriteCard({ product, onRemove }: { product: Product; onRemove: (id: 
                 {product.state?.name ? `, ${product.state.name}` : ''}
               </span>
             </div>
-            {product.owner.isVerified && (
+            {product.owner?.isVerified && (
               <ShieldCheck className="h-4 w-4 text-emerald-500 shrink-0" />
             )}
           </div>

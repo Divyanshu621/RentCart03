@@ -1,25 +1,29 @@
-import { NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { db } from '@/lib/db';
+import { rateLimiters, getClientIp, rateLimitResponse } from '@/lib/rate-limiter';
+import { safeError, notFound, success } from '@/lib/secure-handler';
 
 export async function GET(
-  _request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const ip = getClientIp(request);
+    const rl = rateLimiters.search.check(ip);
+    if (rl.limited) return rateLimitResponse(rl.retryAfterMs);
+
     const { id: productId } = await params;
 
     const product = await db.product.findUnique({ where: { id: productId } });
     if (!product) {
-      return NextResponse.json({ error: 'Product not found' }, { status: 404 });
+      return notFound('Product not found');
     }
 
-    // Calculate the 90-day window
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const futureDate = new Date(today);
     futureDate.setDate(futureDate.getDate() + 90);
 
-    // Find all active rentals that overlap with the next 90 days
     const activeRentals = await db.rental.findMany({
       where: {
         productId,
@@ -50,9 +54,8 @@ export async function GET(
       }
     }
 
-    return NextResponse.json({ unavailableDates });
+    return success({ unavailableDates });
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : 'Internal server error';
-    return NextResponse.json({ error: message }, { status: 500 });
+    return safeError(error, 'PRODUCT_CALENDAR_AVAILABILITY');
   }
 }

@@ -1,18 +1,29 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { db } from '@/lib/db';
 import { getSession } from '@/lib/auth';
+import { rateLimiters, getClientIp, rateLimitResponse } from '@/lib/rate-limiter';
+import { unauthorized, forbidden, safeError, success } from '@/lib/secure-handler';
+import { securityLogger } from '@/lib/security-logger';
 
 export async function GET(request: NextRequest) {
   try {
+    const clientIp = getClientIp(request);
+    const rl = rateLimiters.admin.check(clientIp);
+    if (rl.limited) return rateLimitResponse(rl.retryAfterMs);
+
     const session = await getSession(request);
     if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      securityLogger.warn('ADMIN_DASHBOARD_UNAUTHORIZED', 'AdminDashboard', null, { ip: clientIp });
+      return unauthorized();
     }
 
     const user = await db.user.findUnique({ where: { id: session.userId } });
     if (!user || (user.role !== 'ADMIN' && user.role !== 'SUPER_ADMIN')) {
-      return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
+      securityLogger.error('ADMIN_DASHBOARD_FORBIDDEN', 'AdminDashboard', session.userId, { role: user?.role, ip: clientIp });
+      return forbidden('Admin access required');
     }
+
+    securityLogger.info('ADMIN_DASHBOARD_ACCESS', 'AdminDashboard', session.userId);
 
     const now = new Date();
 
@@ -98,7 +109,7 @@ export async function GET(request: NextRequest) {
       count: p._count,
     }));
 
-    return NextResponse.json({
+    return success({
       totalUsers,
       totalOwners,
       totalListings,
@@ -115,7 +126,6 @@ export async function GET(request: NextRequest) {
       productsByCategory: productsByCategoryEnriched,
     });
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : 'Internal server error';
-    return NextResponse.json({ error: message }, { status: 500 });
+    return safeError(error, 'ADMIN_DASHBOARD');
   }
 }

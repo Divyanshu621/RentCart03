@@ -1,65 +1,67 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { z } from 'zod';
 import { db } from '@/lib/db';
 import { getSession } from '@/lib/auth';
+import { rateLimiters, getClientIp, rateLimitResponse } from '@/lib/rate-limiter';
+import { safeError, validationError, unauthorized, success } from '@/lib/secure-handler';
 
 const validateSchema = z.object({
-  code: z.string().min(1, 'Coupon code is required'),
-  userId: z.string().optional(),
+  code: z.string().min(1, 'Coupon code is required').max(50, 'Coupon code must be at most 50 characters'),
   orderAmount: z.number().min(0).optional(),
-});
+}).strict();
 
 export async function POST(request: NextRequest) {
   try {
+    const ip = getClientIp(request);
     const session = await getSession(request);
+    const rl = rateLimiters.coupon.check(session?.userId || ip);
+    if (rl.limited) return rateLimitResponse(rl.retryAfterMs);
+
+    if (!session) return unauthorized();
+
     const body = await request.json();
     const parsed = validateSchema.safeParse(body);
 
     if (!parsed.success) {
-      return NextResponse.json({ error: parsed.error.issues[0].message }, { status: 400 });
+      return validationError(parsed.error.issues[0].message);
     }
 
-    const { code, userId, orderAmount } = parsed.data;
+    const { code, orderAmount } = parsed.data;
     const couponCode = code.toUpperCase();
 
     const coupon = await db.coupon.findUnique({ where: { code: couponCode } });
 
     if (!coupon) {
-      return NextResponse.json({ valid: false, error: 'Coupon not found' });
+      return success({ valid: false, error: 'Coupon not found' });
     }
 
     if (!coupon.isActive) {
-      return NextResponse.json({ valid: false, error: 'Coupon is inactive' });
+      return success({ valid: false, error: 'Coupon is inactive' });
     }
 
     const now = new Date();
     if (coupon.validFrom > now) {
-      return NextResponse.json({ valid: false, error: 'Coupon is not yet valid' });
+      return success({ valid: false, error: 'Coupon is not yet valid' });
     }
     if (coupon.validUntil && coupon.validUntil < now) {
-      return NextResponse.json({ valid: false, error: 'Coupon has expired' });
+      return success({ valid: false, error: 'Coupon has expired' });
     }
 
     if (coupon.usageLimit && coupon.timesUsed >= coupon.usageLimit) {
-      return NextResponse.json({ valid: false, error: 'Coupon usage limit reached' });
+      return success({ valid: false, error: 'Coupon usage limit reached' });
     }
 
-    // Check per-user limit
-    const effectiveUserId = session?.userId || userId;
-    if (effectiveUserId) {
-      const userUsages = await db.couponUsage.count({
-        where: { couponId: coupon.id, userId: effectiveUserId },
-      });
-      if (userUsages >= coupon.perUserLimit) {
-        return NextResponse.json({ valid: false, error: 'You have already used this coupon' });
-      }
+    const userUsages = await db.couponUsage.count({
+      where: { couponId: coupon.id, userId: session.userId },
+    });
+    if (userUsages >= coupon.perUserLimit) {
+      return success({ valid: false, error: 'You have already used this coupon' });
     }
 
-    // Calculate discount
     let discountAmount = 0;
     if (orderAmount !== undefined) {
       if (orderAmount < coupon.minOrder) {
-        return NextResponse.json({ valid: false, error: `Minimum order amount is ₹${coupon.minOrder}` });
+        return success({ valid: false, error: `Minimum order amount is ₹${coupon.minOrder}` });
       }
 
       if (coupon.type === 'PERCENTAGE') {
@@ -72,7 +74,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    return NextResponse.json({
+    return success({
       valid: true,
       coupon: {
         id: coupon.id,
@@ -85,7 +87,6 @@ export async function POST(request: NextRequest) {
       discountAmount,
     });
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : 'Internal server error';
-    return NextResponse.json({ error: message }, { status: 500 });
+    return safeError(error, 'COUPON_VALIDATE');
   }
 }

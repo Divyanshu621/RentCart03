@@ -1,12 +1,20 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { getSession } from '@/lib/auth';
 import { db } from '@/lib/db';
+import { rateLimiters, getClientIp, rateLimitResponse } from '@/lib/rate-limiter';
+import { unauthorized, notFound, safeError, success } from '@/lib/secure-handler';
+import { securityLogger } from '@/lib/security-logger';
 
 export async function GET(request: NextRequest) {
   try {
+    const clientIp = getClientIp(request);
+    const rl = rateLimiters.api.check(clientIp);
+    if (rl.limited) return rateLimitResponse(rl.retryAfterMs);
+
     const session = await getSession(request);
     if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      securityLogger.warn('AUTH_ME_UNAUTHORIZED', 'Session', null, { ip: clientIp });
+      return unauthorized();
     }
 
     const user = await db.user.findUnique({
@@ -18,14 +26,14 @@ export async function GET(request: NextRequest) {
     });
 
     if (!user) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+      securityLogger.warn('AUTH_ME_USER_NOT_FOUND', 'User', session.userId);
+      return notFound('User not found');
     }
 
     const { passwordHash: _, ...userWithoutPassword } = user;
 
-    return NextResponse.json(userWithoutPassword);
+    return success({ user: userWithoutPassword });
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : 'Internal server error';
-    return NextResponse.json({ error: message }, { status: 500 });
+    return safeError(error, 'AUTH_ME');
   }
 }

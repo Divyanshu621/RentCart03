@@ -45,7 +45,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Calendar, CalendarDayButton } from '@/components/ui/calendar';
-import { DayButton } from 'react-day-picker';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useAppStore } from '@/store';
 import { api } from '@/lib/api';
@@ -107,7 +106,7 @@ const conditionColors: Record<string, string> = {
 // Module-level ref holder for availability calendar (safe in 'use client')
 const _calendarUnavailable = { current: new Set<string>() };
 
-function AvailabilityDayButton({ day, modifiers, ...props }: React.ComponentProps<typeof DayButton>) {
+function AvailabilityDayButton({ day, modifiers, ...props }: React.ComponentProps<typeof CalendarDayButton>) {
   const dateStr = format(day.date, 'yyyy-MM-dd');
   const isUnavailable = _calendarUnavailable.current.has(dateStr);
   const isDisabled = modifiers.disabled;
@@ -133,6 +132,7 @@ export default function ProductDetailPage() {
   const navigate = useAppStore((s) => s.navigate);
   const user = useAppStore((s) => s.user);
   const setAuthModalOpen = useAppStore((s) => s.setAuthModalOpen);
+  const n = useAppStore((s) => s.n);
   const viewData = useAppStore((s) => s.viewData);
 
   const productId = viewData.productId as string;
@@ -332,15 +332,6 @@ export default function ProductDetailPage() {
     return breakdown;
   }, [reviews]);
 
-  const disabledDays = useMemo(() => {
-    if (!product?.minRentalDays) return undefined;
-    return (date: Date) => {
-      const d = format(date, 'yyyy-MM-dd');
-      if (unavailableDates.includes(d)) return true;
-      return false;
-    };
-  }, [unavailableDates, product?.minRentalDays]);
-
   // --- Loading Skeleton ---
   if (isLoading || !product) {
     return (
@@ -465,7 +456,14 @@ export default function ProductDetailPage() {
                   </div>
                 </div>
                 <button
-                  onClick={() => user && favMutation.mutate()}
+                  onClick={() => {
+                    if (!user) {
+                      n('login');
+                      setAuthModalOpen(true);
+                      return;
+                    }
+                    favMutation.mutate();
+                  }}
                   className="p-2 rounded-full border border-slate-200 hover:bg-red-50 transition-colors"
                   aria-label="Toggle favorite"
                 >
@@ -1003,7 +1001,7 @@ export default function ProductDetailPage() {
           deliveryFee: rentalCalc.deliveryFee,
           discount: rentalCalc.discount,
           securityDeposit: rentalCalc.securityDeposit,
-          rentalDays: rentalCalc.rentalDays,
+          rentalDays: rentalCalc.days,
           dailyRate: rentalCalc.dailyRate,
           startDate: format(startDate, 'yyyy-MM-dd'),
           endDate: format(endDate, 'yyyy-MM-dd'),

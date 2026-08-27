@@ -13,7 +13,6 @@ import {
   Loader2,
   ImageIcon,
   IndianRupee,
-  GripVertical,
   ImagePlus,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -177,10 +176,10 @@ export default function ListItemPage() {
 
         setImages(prev => {
           const updated = [...prev];
-          if (updated[itemIdx] && result.urls && result.urls[0]) {
+          if (updated[itemIdx] && result.url) {
             updated[itemIdx] = {
               ...updated[itemIdx],
-              serverUrl: result.urls[0],
+              serverUrl: result.url,
               uploading: false,
               progress: 100,
             };

@@ -1,5 +1,5 @@
-import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
+import { safeError } from '@/lib/secure-handler';
 
 export async function GET() {
   try {
@@ -20,9 +20,8 @@ export async function GET() {
       orderBy: { name: 'asc' },
     });
 
-    return NextResponse.json(states);
+    return Response.json(states);
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : 'Internal server error';
-    return NextResponse.json({ error: message }, { status: 500 });
+    return safeError(error, 'STATES');
   }
 }

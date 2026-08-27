@@ -216,21 +216,22 @@ export default function ProductCard({
     >
       {/* ─── Image Section ──────────────────────────────── */}
       <div className="relative aspect-[4/3] overflow-hidden">
-        {/* Actual image or gradient placeholder */}
+        {/* Actual image */}
         {product.images && product.images.length > 0 && product.images[0].url ? (
           <img
             src={product.images[0].url}
             alt={product.title}
             className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-            onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; (e.target as HTMLImageElement).nextElementSibling?.classList.remove('hidden'); }}
           />
         ) : null}
-        {/* Fallback gradient with icon (hidden when image loads) */}
-        <div
-          className={`absolute inset-0 bg-gradient-to-br ${gradient} flex items-center justify-center transition-transform duration-500 group-hover:scale-105 ${product.images && product.images.length > 0 && product.images[0].url ? '' : ''}`}
-        >
-          <Icon className="h-14 w-14 text-white/70" strokeWidth={1.5} />
-        </div>
+        {/* Fallback gradient with icon (only shown when NO image) */}
+        {!product.images || product.images.length === 0 || !product.images[0].url ? (
+          <div
+            className={`absolute inset-0 bg-gradient-to-br ${gradient} flex items-center justify-center transition-transform duration-500 group-hover:scale-105`}
+          >
+            <Icon className="h-14 w-14 text-white/70" strokeWidth={1.5} />
+          </div>
+        ) : null}
 
         {/* Bottom gradient overlay for readability */}
         <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/40 to-transparent pointer-events-none" />

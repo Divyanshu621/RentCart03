@@ -18,7 +18,7 @@ export default function LandingPage() {
   }, []);
 
   return (
-    <main className="smooth-scroll">
+    <main className="scroll-smooth">
       <LandingNavbar />
       <HeroSection />
       <CategoriesSection />

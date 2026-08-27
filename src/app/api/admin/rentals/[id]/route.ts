@@ -1,20 +1,52 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
+import { z } from 'zod';
 import { db } from '@/lib/db';
 import { getSession } from '@/lib/auth';
+import { rateLimiters, getClientIp, rateLimitResponse } from '@/lib/rate-limiter';
+import { unauthorized, forbidden, notFound, validationError, safeError, success } from '@/lib/secure-handler';
+import { securityLogger } from '@/lib/security-logger';
+
+const validRentalStatuses = [
+  'PENDING', 'CONFIRMED', 'ACTIVE', 'COMPLETED',
+  'CANCELLED', 'OVERDUE', 'DISPUTED', 'RETURNED',
+] as const;
+
+const updateRentalSchema = z.object({
+  action: z.enum(['refund', 'resolve_dispute']).optional(),
+  status: z.enum(validRentalStatuses).optional(),
+  refundAmount: z.number().positive().optional(),
+  notes: z.string().max(1000).optional(),
+  adminNotes: z.string().max(1000).optional(),
+}).refine(
+  (data) => {
+    // If action is refund, refundAmount is required
+    if (data.action === 'refund' && !data.refundAmount) return false;
+    return true;
+  },
+  { message: 'refundAmount is required when action is refund', path: ['refundAmount'] }
+);
 
 export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  let adminUserId: string | null = null;
   try {
+    const clientIp = getClientIp(request);
+    const rl = rateLimiters.admin.check(clientIp);
+    if (rl.limited) return rateLimitResponse(rl.retryAfterMs);
+
     const session = await getSession(request);
     if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      securityLogger.warn('ADMIN_RENTAL_UPDATE_UNAUTHORIZED', 'AdminRental', null, { ip: clientIp });
+      return unauthorized();
     }
+    adminUserId = session.userId;
 
     const currentUser = await db.user.findUnique({ where: { id: session.userId } });
     if (!currentUser || (currentUser.role !== 'ADMIN' && currentUser.role !== 'SUPER_ADMIN')) {
-      return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
+      securityLogger.error('ADMIN_RENTAL_UPDATE_FORBIDDEN', 'AdminRental', session.userId, { role: currentUser?.role, ip: clientIp });
+      return forbidden('Admin access required');
     }
 
     const { id } = await params;
@@ -29,11 +61,17 @@ export async function PATCH(
     });
 
     if (!rental) {
-      return NextResponse.json({ error: 'Rental not found' }, { status: 404 });
+      return notFound('Rental not found');
     }
 
     const body = await request.json();
-    const { action, status: newStatus, refundAmount, notes } = body;
+    const parsed = updateRentalSchema.safeParse(body);
+
+    if (!parsed.success) {
+      return validationError('Invalid request parameters');
+    }
+
+    const { action, status: newStatus, refundAmount, notes, adminNotes } = parsed.data;
 
     const updateData: Record<string, unknown> = {};
     let auditAction = '';
@@ -61,7 +99,7 @@ export async function PATCH(
     if (action === 'resolve_dispute') {
       await db.dispute.updateMany({
         where: { rentalId: id, status: { in: ['OPEN', 'UNDER_REVIEW'] } },
-        data: { status: 'RESOLVED', resolution: notes || 'Resolved by admin', adminNotes: body.adminNotes },
+        data: { status: 'RESOLVED', resolution: notes || 'Resolved by admin', adminNotes },
       });
       auditAction = 'ADMIN_RESOLVE_DISPUTE';
     }
@@ -88,6 +126,12 @@ export async function PATCH(
       },
     });
 
+    securityLogger.info('ADMIN_RENTAL_UPDATE_SUCCESS', 'AdminRental', session.userId, {
+      rentalId: id,
+      action: auditAction,
+      newStatus: newStatus || undefined,
+    });
+
     // Notify affected users
     if (newStatus) {
       await db.notification.create({
@@ -108,9 +152,8 @@ export async function PATCH(
       });
     }
 
-    return NextResponse.json({ rental: updated });
+    return success({ rental: updated });
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : 'Internal server error';
-    return NextResponse.json({ error: message }, { status: 500 });
+    return safeError(error, 'ADMIN_RENTAL_UPDATE', adminUserId);
   }
 }
