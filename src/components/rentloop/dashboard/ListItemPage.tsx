@@ -349,10 +349,16 @@ export default function ListItemPage() {
       }
       return api.createProduct(payload);
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       toast.success(isEditing ? 'Listing updated successfully!' : 'Listing created successfully!');
       queryClient.invalidateQueries({ queryKey: ['my-products'] });
       queryClient.invalidateQueries({ queryKey: ['products'] });
+      // Refresh user data (role may have been upgraded to OWNER)
+      try {
+        const data = await api.me();
+        const store = useAppStore.getState();
+        store.setUser(data.user as any);
+      } catch {}
       navigate('my-listings');
     },
     onError: (e: Error) => toast.error(e.message),
@@ -390,6 +396,7 @@ export default function ListItemPage() {
           </div>
         ) : (
           <motion.form
+            noValidate
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             onSubmit={handleSubmit(onSubmit)}

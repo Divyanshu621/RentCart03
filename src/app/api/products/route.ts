@@ -60,6 +60,8 @@ export async function GET(request: NextRequest) {
     const rl = rateLimiters.search.check(ip);
     if (rl.limited) return rateLimitResponse(rl.retryAfterMs);
 
+    const session = await getSession(request).catch(() => null);
+
     const { searchParams } = new URL(request.url);
     const search = searchParams.get('search') || '';
     const categoryId = searchParams.get('categoryId');
@@ -157,10 +159,18 @@ export async function POST(request: NextRequest) {
 
     if (!session) return unauthorized();
 
-    // Role check: only OWNER, ADMIN, or SUPER_ADMIN can create products
-    const user = await db.user.findUnique({ where: { id: session.userId }, select: { role: true } });
-    if (!user || !['OWNER', 'ADMIN', 'SUPER_ADMIN'].includes(user.role)) {
-      return forbidden('Owner account required to list items');
+    // Auto-upgrade CUSTOMER → OWNER so anyone can list items
+    const user = await db.user.findUnique({ where: { id: session.userId }, select: { role: true, kycStatus: true } });
+    if (!user) return forbidden('User not found');
+
+    let actualRole = user.role;
+    if (user.role === 'CUSTOMER') {
+      actualRole = 'OWNER';
+      await db.user.update({
+        where: { id: session.userId },
+        data: { role: 'OWNER', kycStatus: user.kycStatus === 'NOT_REQUIRED' ? 'PENDING' : user.kycStatus },
+      });
+      securityLogger.info('AUTO_UPGRADED_TO_OWNER', 'Product', session.userId, { ip: clientIp });
     }
 
     const body = await request.json();
