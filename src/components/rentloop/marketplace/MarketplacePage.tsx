@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { motion } from 'framer-motion';
 import {
   SlidersHorizontal,
@@ -78,8 +78,8 @@ export default function MarketplacePage() {
   const [page, setPage] = useState(1);
   const [filtersOpen, setFiltersOpen] = useState(false);
 
-  const [initialSearchDone, setInitialSearchDone] = useState(false);
-  const [initialCategoryDone, setInitialCategoryDone] = useState(false);
+  const lastSyncedSearch = useRef('');
+  const lastSyncedCategory = useRef('');
 
   const ITEMS_PER_PAGE = 12;
 
@@ -113,36 +113,38 @@ export default function MarketplacePage() {
     staleTime: 1000 * 60 * 10,
   });
 
-  // Sync search query from navigation (e.g. hero search)
+  // Sync search query from navigation (e.g. hero search / header search)
   useEffect(() => {
-    if (!initialSearchDone && viewData?.searchQuery && typeof viewData.searchQuery === 'string') {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- sync viewData to local state on first load
-      setSearch(viewData.searchQuery);
-      setDebouncedSearch(viewData.searchQuery);
-      setInitialSearchDone(true);
+    const query = viewData?.searchQuery;
+    if (query && typeof query === 'string' && query !== lastSyncedSearch.current) {
+      lastSyncedSearch.current = query;
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- sync viewData to local state on navigation
+      setSearch(query);
+      setDebouncedSearch(query);
+      setPage(1);
     }
-  }, [viewData?.searchQuery, initialSearchDone]);
+  }, [viewData?.searchQuery]);
 
   // Sync category from navigation (e.g. landing page category click)
   useEffect(() => {
-    if (!initialCategoryDone) {
-      const catId = viewData?.categoryId as string | undefined;
-      if (catId) {
-        // eslint-disable-next-line react-hooks/set-state-in-effect -- sync viewData to local state on first load
-        setSelectedCategory(catId);
-        setInitialCategoryDone(true);
-      } else if (viewData?.category && typeof viewData.category === 'string') {
-        // Map slug to category ID
-        const allCats = (categoriesData ?? categories) as Category[];
-        const match = allCats.find((c) => (c as unknown as { slug?: string }).slug === viewData.category);
-        if (match) {
-          // eslint-disable-next-line react-hooks/set-state-in-effect -- sync viewData to local state on first load
-          setSelectedCategory(match.id);
-        }
-        setInitialCategoryDone(true);
+    const catId = viewData?.categoryId as string | undefined;
+    const catSlug = viewData?.category as string | undefined;
+    if (catId && catId !== lastSyncedCategory.current) {
+      lastSyncedCategory.current = catId;
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- sync viewData to local state on navigation
+      setSelectedCategory(catId);
+      setPage(1);
+    } else if (catSlug && !catId) {
+      // Map slug to category ID
+      const allCats = (categoriesData ?? categories) as Category[];
+      const match = allCats.find((c) => (c as unknown as { slug?: string }).slug === catSlug);
+      if (match && match.id !== lastSyncedCategory.current) {
+        lastSyncedCategory.current = match.id;
+        setSelectedCategory(match.id);
+        setPage(1);
       }
     }
-  }, [viewData?.categoryId, viewData?.category, initialCategoryDone, categoriesData, categories]);
+  }, [viewData?.categoryId, viewData?.category, categoriesData, categories]);
 
   const { data: productsResponse, isLoading, isError, error } = useQuery({
     queryKey: ['products', debouncedSearch, selectedCategory, condition, minPrice, maxPrice, deliveryOnly, selectedState?.id, selectedCity?.id, selectedArea?.id, sort, page],

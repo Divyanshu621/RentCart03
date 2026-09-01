@@ -1476,3 +1476,22 @@ Stage Summary:
 - Modified: /src/app/api/products/route.ts (auto-upgrade CUSTOMER→OWNER, fixed session bug in GET)
 - Modified: /src/components/rentloop/dashboard/ListItemPage.tsx (noValidate, user refresh on success)
 - Verified: POST /api/products 201, AUTO_UPGRADED_TO_OWNER security log, PRODUCT_CREATED security log
+
+---
+Task ID: 2
+Agent: Main
+Task: Fix second search not working on marketplace
+
+Work Log:
+- Investigated the search flow: HeroSection/AppHeader → navigate('marketplace', {searchQuery}) → MarketplacePage useEffect syncs viewData to local state
+- Found root cause: `initialSearchDone` boolean flag in MarketplacePage was set to true after first search sync, blocking all subsequent searches from viewData
+- When navigating to marketplace while already on marketplace, the component doesn't unmount/remount, so `initialSearchDone` stays true permanently
+- Replaced `initialSearchDone` flag with `lastSyncedSearch` ref that compares incoming value with last synced value
+- Also fixed category sync with same pattern using `lastSyncedCategory` ref
+- Cleared header search input after navigating so it doesn't appear stale
+- Added `useRef` to imports
+
+Stage Summary:
+- Modified: /src/components/rentloop/marketplace/MarketplacePage.tsx (replaced one-time boolean flag with ref-based comparison)
+- Modified: /src/components/rentloop/common/AppHeader.tsx (clear search input after navigate)
+- Lint passes clean (0 errors, 0 warnings)

@@ -203,6 +203,7 @@ export default function AppHeader() {
   const handleSearchNavigate = useCallback(() => {
     if (searchQuery.trim()) {
       navigate('marketplace', { searchQuery: searchQuery.trim() });
+      setSearchQuery('');
     } else {
       navigate('marketplace');
     }
