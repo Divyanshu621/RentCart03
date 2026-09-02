@@ -1,0 +1,367 @@
+   200→  1199→  1199→  14. MyRentalsPage.tsx: Dead imports `ExtensionRequest`, `Payment` removed
+   201→  1200→  1200→  15. AuthModal.tsx: Stale Google GSI callback closure - moved handler inside useEffect, added `onSuccess` dep, added cleanup
+   202→  1201→  1201→  16. AuthModal.tsx: Duplicate "Rental Agreement" link pointing to terms-of-service removed
+   203→  1202→  1202→  17. AuthModal.tsx: Missing script `onerror` handler and cleanup - both added
+   204→  1203→  1203→  18. ProductCard.tsx: Weekly price with misleading `line-through` - changed to "or ₹X/week"
+   205→  1204→  1204→  19. DashboardPage.tsx: Duplicate `h-14` CSS class removed
+   206→  1205→  1205→  20. NotificationsPanel.tsx: Properly typed navigation with `AppView` import
+   207→  1206→  1206→
+   208→  1207→  1207→---
+   209→  1208→  1208→Task ID: 2-a
+   210→  1209→  1209→Agent: Sub-agent
+   211→  1210→  1210→Task: Fix DashboardPage call sites after api.ts unwrapping change
+   212→  1211→  1211→
+   213→  1212→  1212→Work Log:
+   214→  1213→  1213→- Read worklog for context on api.ts change (strips `{ success: true, ...data }` wrappers)
+   215→  1214→  1214→- Read DashboardPage.tsx lines 215-275 to identify affected code
+   216→  1215→  1215→- Confirmed `useState` defaults for `customerRentals` and `ownerRentals` already set to `[]` (defensive)
+   217→  1216→  1216→- Changed lines 234-235: `custRes.value` and `ownRes.value` now extract `.rentals` property with `Array.isArray()` guard
+   218→  1217→  1217→- Verified derived `.filter()` calls at lines 252+ are safe since state always holds an array
+   219→  1218→  1218→
+   220→  1219→  1219→Stage Summary:
+   221→  1220→  1220→- DashboardPage.tsx: Updated `setCustomerRentals` and `setOwnerRentals` to extract `.rentals` from the unwrapped response object `{ rentals: [...] }` instead of treating the whole response as `Rental[]`
+   222→  1221→  1221→- Added `Array.isArray()` defensive check so setters always receive an array, preventing crashes in downstream `.filter()` calls
+   223→  1222→  1222→- No other changes needed — `useState` defaults were already `[]`
+   224→  1223→  1223→
+   225→  1224→  1224→---
+   226→  1225→  1225→Task ID: 2-b
+   227→  1226→  1226→Agent: Sub-agent (fix-myrentals-callsites)
+   228→  1227→  1227→Task: Fix MyRentalsPage call sites for new api.getRentals() return shape
+   229→  1228→  1228→
+   230→  1229→  1229→Work Log:
+   231→  1230→  1230→- Read worklog to understand prior API layer changes
+   232→  1231→  1231→- Read MyRentalsPage.tsx and identified two `api.getRentals()` calls at lines 391 and 401
+   233→  1232→  1232→- Changed both `queryFn` return statements from `return data as unknown as Rental[]` to `return Array.isArray((data as any).rentals) ? (data as any).rentals as Rental[] : []`
+   234→  1233→  1233→- Audited all other api calls in the file: `api.payRental`, `api.cancelRental`, `api.acceptRental`, `api.rejectRental`, `api.returnRental` — all used as mutation functions with no response property access, so no changes needed
+   235→  1234→  1234→
+   236→  1235→  1235→Stage Summary:
+   237→  1236→  1236→- MyRentalsPage.tsx: Updated both `api.getRentals()` calls (customer and owner) to extract `.rentals` from the new `{ rentals: [...] }` response shape
+   238→  1237→  1237→- Added `Array.isArray()` defensive guard matching the pattern used in DashboardPage.tsx
+   239→  1238→  1238→- No other api calls in the file required changes
+   240→  1239→  1239→
+   241→  1240→  1240→---
+   242→  1241→  1241→Task ID: 2-c
+   243→  1242→  1242→Agent: Sub-agent
+   244→  1243→  1243→Task: Fix AppHeader + NotificationsPanel call sites for new getNotifications() response shape
+   245→  1244→  1244→
+   246→  1245→  1245→Work Log:
+   247→  1246→  1246→- Read AppHeader.tsx (line 97-101): changed `data as unknown as Notification[]` to `Array.isArray((data as any).notifications) ? (data as any).notifications as Notification[] : []`
+   248→  1247→  1247→- Read NotificationsPanel.tsx (line 63): changed `api.getNotifications() as Promise<Notification[]>` to `api.getNotifications().then((data: any) => Array.isArray(data?.notifications) ? data.notifications as Notification[] : [])`
+   249→  1248→  1248→
+   250→  1249→  1249→Stage Summary:
+   251→  1250→  1250→- AppHeader.tsx: Updated `.then()` handler to extract `.notifications` from the new `{ notifications: [...] }` response shape with Array.isArray guard
+   252→  1251→  1251→- NotificationsPanel.tsx: Updated react-query `queryFn` to extract `.notifications` from the response with same defensive pattern
+   253→  1252→  1252→- Both files now correctly handle the wrapped response from `api.getNotifications()`
+   254→  1253→  1253→
+   255→  1254→  1254→---
+   256→  1255→  1255→Task ID: 2-d
+   257→  1256→  1256→Agent: Sub-agent
+   258→  1257→  1257→Task: Fix MessagesPage + RentalDetailDialog + remaining call sites for new API response shapes
+   259→  1258→  1258→
+   260→  1259→  1259→Work Log:
+   261→  1260→  1260→- Audited all 12 files listed in the task brief
+   262→  1261→  1261→- MessagesPage.tsx (line 49): changed `api.getConversations() as Promise<Conversation[]>` to `.then((data: any) => Array.isArray(data?.conversations) ? data.conversations as Conversation[] : [])`
+   263→  1262→  1262→- MessagesPage.tsx (line 55-56): changed `api.getMessages(...) as Promise<ChatMessage[]>` to `.then((data: any) => Array.isArray(data?.messages) ? data.messages as ChatMessage[] : [])`
+   264→  1263→  1263→- RentalDetailDialog.tsx (line 123-124): changed `return data as unknown as Rental` to `return (data as any)?.rental as Rental`
+   265→  1264→  1264→- AdminDisputesPage.tsx (line 68): changed `api.getDisputes() as Promise<Dispute[]>` to `.then((data: any) => Array.isArray(data?.disputes) ? data.disputes as Dispute[] : [])`
+   266→  1265→  1265→- No `createConversation` call found in MessagesPage.tsx (conversations are created elsewhere)
+   267→  1266→  1266→
+   268→  1267→  1267→Files audited with NO changes needed:
+   269→  1268→  1268→- ProductDetailPage.tsx: `api.createRental()` already accesses `res.rental` (line 204); no createConversation or createReview calls present
+   270→  1269→  1269→- ListItemPage.tsx: `api.createProduct()` and `api.updateProduct()` are fire-and-forget mutations
+   271→  1270→  1270→- MyListingsPage.tsx: `api.deleteProduct()` is fire-and-forget; no updateProduct call present
+   272→  1271→  1271→- PaymentCheckoutModal.tsx: No `api.createRental()` call; only `api.verifyPayment()` and `api.createPaymentOrder()` which are not in the changed API list
+   273→  1272→  1272→- AdminRentalsPage.tsx: `api.getAdminRentals()` and `api.updateAdminRental()` are not in the changed API list
+   274→  1273→  1273→- AdminUsersPage.tsx: `api.getAdminUsers()` and `api.updateAdminUser()` are not in the changed API list
+   275→  1274→  1274→- AdminProductsPage.tsx: `api.getAdminProducts()` and `api.updateAdminProduct()` are not in the changed API list
+   276→  1275→  1275→- AuthModal.tsx: login/register/googleAuth already correctly access `res.user`
+   277→  1276→  1276→- FavoritesPage.tsx: `api.toggleFavorite()` result not used in onSuccess; `api.getProducts()` already handled with optional chaining
+   278→  1277→  1277→
+   279→  1278→  1278→Stage Summary:
+   280→  1279→  1279→- 3 files changed, 4 call sites fixed (getConversations, getMessages, getRental, getDisputes)
+   281→  1280→  1280→- All extractions use `Array.isArray()` guard for arrays and optional chaining for objects
+   282→  1281→  1281→- 9 files audited and confirmed no changes needed
+   283→  1282→  1282→- All remaining files either already handled the new shapes, used fire-and-forget patterns, or called non-changed API methods
+   284→  1283→  1283→
+   285→  1284→  1284→---
+   286→  1285→  1285→Task ID: 5-a
+   287→  1286→  1286→Agent: Sub-agent (audit-landing)
+   288→  1287→  1287→Task: Audit landing page components for broken buttons, missing onClick handlers, wrong navigation targets, and non-functional elements
+   289→  1288→  1288→
+   290→  1289→  1289→Work Log:
+   291→  1290→  1290→- Read and fully audited all 11 landing page component files
+   292→  1291→  1291→- Traced all navigate() calls from landing components to the store and verified against the AppView type
+   293→  1292→  1292→- Traced all viewData keys passed via navigate() and checked consumption in MarketplacePage
+   294→  1293→  1293→- Verified all auth modal triggers (setAuthModalOpen, setAuthModalView) exist in the store
+   295→  1294→  1294→- Verified all interactive elements (buttons, clickable cards) have onClick handlers
+   296→  1295→  1295→- Confirmed the Accordion in FAQSection uses shadcn UI which handles toggle internally
+   297→  1296→  1296→
+   298→  1297→  1297→Files audited (NO bugs found):
+   299→  1298→  1298→- LandingPage.tsx: Pure composition, no interactive elements. OK.
+   300→  1299→  1299→- LandingNavbar.tsx: All nav links, auth buttons, user dropdown, mobile sheet buttons have correct onClick handlers. Navigation targets all valid AppViews. Auth flow checks user state correctly. OK.
+   301→  1300→  1300→- HeroSection.tsx: Search button has onClick, Enter key handled, category dropdown toggle works, popular links navigate to marketplace with searchQuery. OK.
+   302→  1301→  1301→- HowItWorksSection.tsx: Static display section, no interactive elements. OK.
+   303→  1302→  1302→- CategoriesSection.tsx: Each category card has onClick calling navigate('marketplace', { category: slug }). **BUG: MarketplacePage does not read viewData.category or viewData.categoryId — see bug #1 below.**
+   304→  1303→  1303→- TrendingSection.tsx: "View All" buttons (desktop + mobile) navigate to marketplace. Product cards delegate to ProductCard. OK.
+   305→  1304→  1304→- ReviewsSection.tsx: Static display section, no interactive elements. OK.
+   306→  1305→  1305→- TrustSection.tsx: Static display section, no interactive elements. OK.
+   307→  1306→  1306→- WhyRentSection.tsx: Static display section, no interactive elements. OK.
+   308→  1307→  1307→- CTASection.tsx: "Browse Rentals" navigates to marketplace. "List Your Item" checks user state, shows auth modal if not logged in, sets returnUrl correctly. OK.
+   309→  1308→  1308→- FAQSection.tsx: Uses shadcn Accordion with collapsible mode, handles open/close internally. OK.
+   310→  1309→  1309→
+   311→  1310→  1310→Bugs Found:
+   312→  1311→  1311→
+   313→  1312→  1312→**Bug #1: Category navigation from landing page is silently lost (2 call sites affected)**
+   314→  1313→  1313→- CategoriesSection.tsx line 90: passes `{ category: slug }` (e.g. `{ category: 'electronics' }`)
+   315→  1314→  1314→- HeroSection.tsx line 93-96: passes `{ categoryId: selectedCategory }` when a category is selected in the search dropdown
+   316→  1315→  1315→- MarketplacePage.tsx lines 83-90: only reads `viewData.searchQuery` — never reads `viewData.category` or `viewData.categoryId`
+   317→  1316→  1316→- Impact: Clicking a category card on the landing page, or searching with a category filter from the hero, navigates to the marketplace page but does NOT pre-filter by that category. The user lands on the unfiltered marketplace.
+   318→  1317→  1317→- Fix needed: Add a useEffect in MarketplacePage.tsx to read `viewData.category` or `viewData.categoryId` on mount and set `selectedCategory` state accordingly. Also, the category cards in CategoriesSection pass a slug but MarketplacePage expects a category ID (string UUID) — this mismatch means even after the useEffect fix, the slug would need to be mapped to an ID, or the CategoriesSection should pass the category ID instead.
+   319→  1318→  1318→
+   320→  1319→  1319→Stage Summary:
+   321→  1320→  1320→- 11 files audited, 1 actual bug found (category navigation data not consumed by MarketplacePage)
+   322→  1321→  1321→- All buttons have onClick handlers
+   323→  1322→  1322→- All navigation targets are valid AppViews
+   324→  1323→  1323→- Auth gating works correctly (checks user, opens modal, sets returnUrl)
+   325→  1324→  1324→- No missing or non-functional interactive elements
+   326→  1325→  1325→---
+   327→  1326→  1326→Task ID: 5-b
+   328→  1327→  1327→Agent: Sub-agent (audit-auth-dashboard-kyc-payment)
+   329→  1328→  1328→Task: Audit auth + dashboard + kyc + payment files for broken functionality, missing onClick handlers, wrong navigation, API misuse, or crashes
+   330→  1329→  1329→
+   331→  1330→  1330→Work Log:
+   332→  1331→  1331→- Read worklog for context on prior API unwrapping changes and bug fixes
+   333→  1332→  1332→- Read all 8 target files in full:
+   334→  1333→  1333→  - AuthModal.tsx (631 lines)
+   335→  1334→  1334→  - LoginPage.tsx (513 lines)
+   336→  1335→  1335→  - DashboardPage.tsx (659 lines)
+   337→  1336→  1336→  - FavoritesPage.tsx (309 lines)
+   338→  1337→  1337→  - ListItemPage.tsx (732 lines)
+   339→  1338→  1338→  - MyListingsPage.tsx (418 lines)
+   340→  1339→  1339→  - SellerKycPage.tsx (744 lines)
+   341→  1340→  1340→  - PaymentCheckoutModal.tsx (985 lines)
+   342→  1341→  1341→- Read api.ts to verify response shapes for all API calls used
+   343→  1342→  1342→- Read /api/states, /api/categories, /api/dashboard, /api/products routes to verify server response format
+   344→  1343→  1343→- Traced all navigate() calls to AppView type union — all valid
+   345→  1344→  1344→- Traced all API call return shapes against frontend consumption patterns
+   346→  1345→  1345→- Verified FavoritesPage query parameter support in backend products route
+   347→  1346→  1346→- Verified PaymentCheckoutModal Razorpay flow for stuck-state scenarios
+   348→  1347→  1347→
+   349→  1348→  1348→Files audited with NO bugs found:
+   350→  1349→  1349→- AuthModal.tsx: API response shapes correct (getStates returns array, getGoogleConfig returns object, login/register/googleAuth all access .user correctly). All onClick handlers present. Navigation targets valid.
+   351→  1350→  1350→- LoginPage.tsx: All API calls correct. Google auth demo mode works. All onClick handlers present. Navigation targets valid.
+   352→  1351→  1351→- DashboardPage.tsx: getDashboard returns flat stats object (cast to DashboardStats). getRentals correctly extracts .rentals with Array.isArray guard. All onClick handlers present. Navigation targets valid.
+   353→  1352→  1352→- ListItemPage.tsx: Zod schema valid. getCategories/getStates return arrays correctly. Form submission and navigation correct. All onClick handlers present.
+   354→  1353→  1353→- MyListingsPage.tsx: getProducts returns { products: [...], total } correctly consumed. Delete mutation with confirmation dialog works. All onClick handlers present.
+   355→  1354→  1354→- SellerKycPage.tsx: getKycStatus returns { kycStatus, kyc } correctly consumed. submitKyc and saveKyc API calls correct. All form inputs and navigation correct.
+   356→  1355→  1355→
+   357→  1356→  1356→Bugs Found:
+   358→  1357→  1357→
+   359→  1358→  1358→**Bug #1: FavoritesPage shows ALL products instead of user's favorites**
+   360→  1359→  1359→- FavoritesPage.tsx line 213: `api.getProducts({ favorited: 'true' })` sends `?favorited=true` to `/api/products`
+   361→  1360→  1360→- `/api/products` route (route.ts lines 57-133) only handles: search, categoryId, stateId, cityId, minPrice, maxPrice, condition, sort, page, limit, ownerId
+   362→  1361→  1361→- The `favorited` parameter is silently ignored — no error, just not filtered
+   363→  1362→  1362→- No separate `/api/favorites` endpoint exists in the codebase
+   364→  1363→  1363→- Impact: The Favorites page displays ALL approved marketplace products instead of only the user's favorited items. The remove-from-favorites optimistic update works visually, but on page reload all products reappear.
+   365→  1364→  1364→- Fix needed: Either add `favorited` filter support to `/api/products` GET route (join with Favorite table where userId = session user), or create a dedicated `/api/favorites` endpoint.
+   366→  1365→  1365→
+   367→  1366→  1366→**Bug #2: PaymentCheckoutModal traps user on "Processing..." screen when Razorpay modal is dismissed**
+   368→  1367→  1367→- PaymentCheckoutModal.tsx lines 290-332: When Razorpay is selected, `processing` is set to `true` and the function returns early (line 332) without setting up any cleanup for modal dismissal
+   369→  1368→  1368→- If the user closes the Razorpay modal without completing payment (clicks X, presses Escape, or clicks outside), Razorpay does NOT fire any callback (neither `handler` nor `payment.failed`)
+   370→  1369→  1369→- `processing` remains `true` permanently
+   371→  1370→  1370→- Lines 971-976: The Dialog blocks closing via `onInteractOutside` and `onEscapeKeyDown` when `processing` is true. The X button at line 885 has `disabled={processing}`.
+   372→  1371→  1371→- Impact: User is permanently stuck on the "Processing..." overlay with no way to dismiss it except refreshing the browser tab. Only manifests when Razorpay is actually configured (RAZORPAY_KEY_ID env var set).
+   373→  1372→  1372→- Fix needed: Listen for Razorpay modal close. Razorpay doesn't expose a close event directly, but the `payment.failed` event can be used as a catch-all. Alternatively, add a timeout or allow the user to cancel during the Razorpay phase.
+   374→  1373→  1373→
+   375→  1374→  1374→Stage Summary:
+   376→  1375→  1375→- 8 files audited, 2 actual bugs found
+   377→  1376→  1376→- No missing onClick handlers, no invalid navigation targets, no crashes from null/undefined access
+   378→  1377→  1377→- All API response extractions match the current unwrapped shapes
+   379→  1378→  1378→
+   380→  1379→  1379→---
+   381→  1380→  1380→Task ID: 5-c
+   382→  1381→  1381→Agent: Sub-agent (audit-marketplace-rentals-admin-mobile)
+   383→  1382→  1382→Task: Audit marketplace + rentals + admin + mobile files for broken functionality
+   384→  1383→  1383→
+   385→  1384→  1384→Work Log:
+   386→  1385→  1385→- Read worklog for context on prior API unwrapping changes and bug fixes (tasks 2-a through 5-b)
+   387→  1386→  1386→- Read all 15 target files in full
+   388→  1387→  1387→- Read api.ts to verify the unwrapping logic and return type of every API method used by these files
+   389→  1388→  1388→- Read secure-handler.ts `success()` helper to confirm backend response shape
+   390→  1389→  1389→- Read Prisma schema to verify Rental.product is a required relation (onDelete defaults to RESTRICT)
+   391→  1390→  1390→- Cross-referenced every API call site in each file against the actual api.ts type signatures and backend route implementations
+   392→  1391→  1391→- Verified all admin pages correctly extract nested arrays (`.users`, `.products`, `.rentals`, `.disputes`, `.notifications`, `.conversations`, `.messages`, `.rental`) from unwrapped responses
+   393→  1392→  1392→- Verified AdminSettingsPage correctly accesses `res.enabledMethods` (backend `success({ enabledMethods })` → unwrapped to `{ enabledMethods }`)
+   394→  1393→  1393→- Verified AdminDashboardPage uses multi-key object directly (no `.xxx` extraction needed)
+   395→  1394→  1394→- Verified MobileNav properly types all AppView values and has auth guards
+   396→  1395→  1395→- Verified all mutations (cancel, accept, reject, return, pay, send message, update dispute, etc.) are fire-and-forget or correctly typed
+   397→  1396→  1396→- Verified Prisma schema confirms `rental.product` is a required relation (not nullable), so accessing `rental.product.title` without optional chaining is safe
+   398→  1397→  1397→
+   399→  1398→  1398→Files audited with NO bugs found (14 files):
+   400→  1399→  1399→- ProductCard.tsx: Optional chaining on `product.category?.slug`, `product.category?.name`. Image/fallback rendering correct. `api.toggleFavorite()` response consumed correctly.
+   401→  1400→  1400→- MyRentalsPage.tsx: Both `api.getRentals()` calls extract `.rentals` with Array.isArray guard. All mutations are fire-and-forget. Accept mutation passed as `isAccepting` prop.
+   402→  1401→  1401→- RentalDetailDialog.tsx: `api.getRental()` extracts `.rental` with optional chaining. All status-specific action buttons correctly gated by `isOwner`/`isCustomer`.
+   403→  1402→  1402→- CancelRentalDialog.tsx: Uses `effectiveStep` derived variable (not setState during render). Close guard prevents closing during pending mutation.
+   404→  1403→  1403→- MessagesPage.tsx: `api.getConversations()` extracts `.conversations`, `api.getMessages()` extracts `.messages`. Mobile/desktop split works via resize listener. Optimistic message send with rollback on error.
+   405→  1404→  1404→- MobileNav.tsx: All views properly typed as AppView. Auth guard on protected views (list-item, my-rentals, dashboard). Hidden on landing page.
+   406→  1405→  1405→- NotificationsPanel.tsx: `api.getNotifications()` extracts `.notifications`. Navigation uses allowlist (rental→my-rentals, product→product, messages→messages). markAll uses `api.markNotificationsRead(undefined, true)`.
+   407→  1406→  1406→- AdminDashboardPage.tsx: `api.getAdminDashboard()` returns multi-key object used directly. Charts consume `stats.monthlyRevenue`, `stats.rentalsByStatus`. Recent rentals table uses optional chaining on nested relations.
+   408→  1407→  1407→- AdminUsersPage.tsx: Extracts `.users`, `.total`, `.totalPages`. Role/status filters work. Mobile card and desktop table layouts. Action dropdown with confirm.
+   409→  1408→  1408→- AdminProductsPage.tsx: Extracts `.products`, `.total`, `.totalPages`. Status filter, approve/reject/suspend/reinstate with window.confirm for destructive actions.
+   410→  1409→  1409→- AdminRentalsPage.tsx: Extracts `.rentals`, `.total`, `.totalPages`. Status filter, detail dialog with status update and window.confirm.
+   411→  1410→  1410→- AdminDisputesPage.tsx: Extracts `.disputes`. Expandable cards with resolution form. Status select + notes textarea for resolving.
+   412→  1411→  1411→- AdminSettingsPage.tsx: `api.getPaymentSettings()` returns `{ enabledMethods }` after unwrap. Key mapping from API keys (razorpay/cash) to setting keys (razorpayEnabled/cashOnPickupEnabled). Save reverses mapping. Toggle guard prevents disabling last method.
+   413→  1412→  1412→
+   414→  1413→  1413→Known issue NOT re-reported (already documented in task 5-a, NOT fixed):
+   415→  1414→  1414→- MarketplacePage.tsx lines 83-90: `viewData.category`/`viewData.categoryId` are never read — only `viewData.searchQuery` is consumed. Category clicks from landing page navigate to marketplace but don't pre-filter. This was found and documented in task 5-a but no code fix was applied.
+   416→  1415→  1415→
+   417→  1416→  1416→Stage Summary:
+   418→  1417→  1417→- 15 files audited, 0 NEW bugs found
+   419→  1418→  1418→- All API response extractions correctly match the unwrapped `{ success: true, ...data }` shapes
+   420→  1419→  1419→- All admin pages properly extract nested arrays/objects
+   421→  1420→  1420→- All mutations are correctly typed and handle errors
+   422→  1421→  1421→- No crashes, no wrong data display, no non-functional UI elements
+   423→  1422→  1422→- 1 pre-existing unfixed bug (MarketplacePage category navigation) confirmed still present but was already documented
+   424→  1423→  1423→
+   425→  1424→  1424→---
+   426→  1425→  1425→Task ID: 1
+   427→  1426→  1426→Agent: Main
+   428→  1427→  1427→Task: Fix all issues causing website to not work properly
+   429→  1428→  1428→
+   430→  1429→  1429→Work Log:
+   431→  1430→  1430→- Analyzed 4 user screenshots with VLM to identify crashes and visual bugs
+   432→  1431→  1431→- Identified ROOT CAUSE: api.ts request() returns raw { success: true, ...data } but callers expect unwrapped data
+   433→  1432→  1432→- Fixed api.ts request() to strip { success: true } wrapper from all API responses
+   434→  1433→  1433→- Updated 15+ API type definitions in api.ts (getRentals, getNotifications, getConversations, getMessages, getDisputes, getRental, createRental, createProduct, updateProduct, createReview, createConversation, acceptRental, rejectRental, returnRental, extendRental, createDispute, updateDispute)
+   435→  1434→  1434→- Fixed DashboardPage.tsx - extract .rentals from response with Array.isArray guard
+   436→  1435→  1435→- Fixed MyRentalsPage.tsx - extract .rentals from response with Array.isArray guard
+   437→  1436→  1436→- Fixed AppHeader.tsx - extract .notifications from response with Array.isArray guard
+   438→  1437→  1437→- Fixed NotificationsPanel.tsx - extract .notifications from response with Array.isArray guard
+   439→  1438→  1438→- Fixed MessagesPage.tsx - extract .conversations and .messages with Array.isArray guard
+   440→  1439→  1439→- Fixed RentalDetailDialog.tsx - extract .rental with optional chaining
+   441→  1440→  1440→- Fixed AdminDisputesPage.tsx - extract .disputes with Array.isArray guard
+   442→  1441→  1441→- Added rating clamping (0-5) in ProductCard.tsx StarRating component
+   443→  1442→  1442→- Added safeRating() helper in ProductDetailPage.tsx, applied to all 4 rating displays
+   444→  1443→  1443→- Fixed MarketplacePage.tsx to read categoryId/category from viewData for category navigation
+   445→  1444→  1444→- Added favorited filter support to /api/products backend route
+   446→  1445→  1445→- Added deliveryAvailable filter support to /api/products backend route
+   447→  1446→  1446→- Fixed PaymentCheckoutModal Razorpay dismiss detection (polling for modal close)
+   448→  1447→  1447→- Reordered hooks in MarketplacePage to fix declaration order lint error
+   449→  1448→  1448→
+   450→  1449→  1449→Stage Summary:
+   451→  1450→  1450→- 3 critical runtime crashes fixed (DashboardPage, MyRentalsPage, AppHeader notifications)
+   452→  1451→  1451→- Rating display bug fixed (clamped to 0-5 range)
+   453→  1452→  1452→- 6 additional bugs fixed (category navigation, favorites filter, Razorpay trap, delivery filter)
+   454→  1453→  1453→- Lint passes clean (0 errors, 1 harmless warning)
+   455→  1454→  1454→- Browser verification: no JavaScript console errors, all API responses correctly formatted
+   456→  1455→  1455→
+   457→  1456→  1456→---
+   458→  1457→  1457→Task ID: 1
+   459→  1458→  1458→Agent: Main
+   460→  1459→  1459→Task: Fix "Create Listing" button not working
+   461→  1460→  1460→
+   462→  1461→  1461→Work Log:
+   463→  1462→  1462→- Investigated AppHeader, MobileNav, DashboardPage, CTASection for "List Item" buttons
+   464→  1463→  1463→- Confirmed navigation wiring (AppView type, page.tsx switch case, navigate calls) all correct
+   465→  1464→  1464→- Checked dev.log and found two critical backend issues:
+   466→  1465→  1465→  - POST /api/products returns 403 (backend requires OWNER role, but users register as CUSTOMER)
+   467→  1466→  1466→  - POST /api/upload returns 404 (upload route does not exist)
+   468→  1467→  1467→- Created /api/upload/route.ts with image upload support (PNG, JPG, WEBP, 5MB limit, 5 files max)
+   469→  1468→  1468→- Modified POST /api/products handler to auto-upgrade CUSTOMER → OWNER when creating a listing
+   470→  1469→  1469→- Added noValidate to ListItemPage form to prevent HTML5 validation conflicts with react-hook-form
+   471→  1470→  1470→- Fixed undefined session variable bug in GET /api/products handler (used for favorites filter)
+   472→  1471→  1471→- Updated ListItemPage onSuccess to refresh user data after role upgrade
+   473→  1472→  1472→- Browser-verified full end-to-end flow: button click → form → submit → product created → user upgraded → redirect to My Listings
+   474→  1473→  1473→
+   475→  1474→  1474→Stage Summary:
+   476→  1475→  1475→- Created: /src/app/api/upload/route.ts (new image upload endpoint)
+   477→  1476→  1476→- Modified: /src/app/api/products/route.ts (auto-upgrade CUSTOMER→OWNER, fixed session bug in GET)
+   478→  1477→  1477→- Modified: /src/components/rentloop/dashboard/ListItemPage.tsx (noValidate, user refresh on success)
+   479→  1478→  1478→- Verified: POST /api/products 201, AUTO_UPGRADED_TO_OWNER security log, PRODUCT_CREATED security log
+   480→  1479→  1479→
+   481→  1480→  1480→---
+   482→  1481→  1481→Task ID: 2
+   483→  1482→  1482→Agent: Main
+   484→  1483→  1483→Task: Fix second search not working on marketplace
+   485→  1484→  1484→
+   486→  1485→  1485→Work Log:
+   487→  1486→  1486→- Investigated the search flow: HeroSection/AppHeader → navigate('marketplace', {searchQuery}) → MarketplacePage useEffect syncs viewData to local state
+   488→  1487→  1487→- Found root cause: `initialSearchDone` boolean flag in MarketplacePage was set to true after first search sync, blocking all subsequent searches from viewData
+   489→  1488→  1488→- When navigating to marketplace while already on marketplace, the component doesn't unmount/remount, so `initialSearchDone` stays true permanently
+   490→  1489→  1489→- Replaced `initialSearchDone` flag with `lastSyncedSearch` ref that compares incoming value with last synced value
+   491→  1490→  1490→- Also fixed category sync with same pattern using `lastSyncedCategory` ref
+   492→  1491→  1491→- Cleared header search input after navigating so it doesn't appear stale
+   493→  1492→  1492→- Added `useRef` to imports
+   494→  1493→  1493→
+   495→  1494→  1494→Stage Summary:
+   496→  1495→  1495→- Modified: /src/components/rentloop/marketplace/MarketplacePage.tsx (replaced one-time boolean flag with ref-based comparison)
+   497→  1496→  1496→- Modified: /src/components/rentloop/common/AppHeader.tsx (clear search input after navigate)
+   498→  1497→  1497→- Lint passes clean (0 errors, 0 warnings)
+   499→  1498→  1498→
+   500→  1499→  1499→---
+   501→  1500→  1500→Task ID: 3
+   502→  1501→  1501→Agent: Main
+   503→  1502→  1502→Task: Fix Vercel deployment error - restore missing /api/upload route
+   504→  1503→  1503→
+   505→  1504→  1504→Work Log:
+   506→  1505→  1505→- Analyzed screenshot showing Vercel deployment failures with commits "remove upload file" and "updated file"
+   507→  1506→  1506→- Found /src/app/api/upload/route.ts was deleted but still referenced by api.ts uploadImages(), ListItemPage, and SellerKycPage
+   508→  1507→  1507→- Recreated /src/app/api/upload/route.ts with full validation, auth, rate limiting
+   509→  1508→  1508→- Verified route responds correctly (429 rate limit = route is loaded)
+   510→  1509→  1509→- Lint passes clean
+   511→  1510→  1510→
+   512→  1511→  1511→Stage Summary:
+   513→  1512→  1512→- Created: /src/app/api/upload/route.ts (restored image upload endpoint)
+   514→  1513→  1513→- Supports: PNG/JPG/WEBP, 5MB limit, 5 files max, categories: product/kyc/profile/chat
+   515→  1514→  1514→- Uses same patterns as other API routes (getSession, rateLimiters, secure-handler, securityLogger)
+   516→  1515→  1515→
+   517→  1516→  1516→---
+   518→  1517→  1517→Task ID: 4
+   519→  1518→  1518→Agent: Main
+   520→  1519→  1519→Task: Implement Razorpay payment mode with test keys
+   521→  1520→  1520→
+   522→  1521→  1521→Work Log:
+   523→  1522→  1522→- Read test keys from upload/rzp-test-key.csv
+   524→  1523→  1523→- Added RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET to .env
+   525→  1524→  1524→- Verified backend routes already exist and are solid: create-order, verify, webhook
+   526→  1525→  1525→- Updated razorpay.d.ts with proper TypeScript types (RazorpayOptions, RazorpayResponse, RazorpayInstance, RazorpayOrder)
+   527→  1526→  1526→- Removed duplicate 'declare global' from PaymentCheckoutModal.tsx (now in razorpay.d.ts)
+   528→  1527→  1527→- Changed Razorpay script strategy from 'lazyOnload' to 'afterInteractive' in layout.tsx
+   529→  1528→  1528→- Added Razorpay SDK load detection (polling) in PaymentCheckoutModal
+   530→  1529→  1529→- Added dynamic loadRazorpayScript() fallback if SDK not yet loaded
+   531→  1530→  1530→- Rewrote handlePayment() with proper Razorpay integration: load SDK → create order → open checkout → verify signature
+   532→  1531→  1531→- Fixed modal dismiss detection: uses useRef for timer, clears on handler fire, shows toast on cancel
+   533→  1532→  1532→- Added razorpayReady state: Pay button shows 'Loading Razorpay...' until SDK is ready
+   534→  1533→  1533→- Imported RazorpayResponse type for type-safe handler callback
+   535→  1534→  1534→
+   536→  1535→  1535→Stage Summary:
+   537→  1536→  1536→- .env: Added RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET from CSV
+   538→  1537→  1537→- layout.tsx: Changed script strategy to afterInteractive
+   539→  1538→  1538→- razorpay.d.ts: Comprehensive type definitions
+   540→  1539→  1539→- PaymentCheckoutModal.tsx: Full Razorpay integration with SDK load detection, dynamic fallback, dismiss handling
+   541→  1540→  1540→- Backend routes (create-order, verify, webhook) were already implemented and work correctly
+   542→  1541→  1541→- Lint passes clean (0 errors, 0 warnings)
+   543→  1542→  1542→
+   544→  1543→  1543→---
+   545→  1544→  1544→Task ID: 5
+   546→  1545→  1545→Agent: Main
+   547→  1546→  1546→Task: Fix KYC 'Submit for Verification' button not working
+   548→  1547→  1547→
+   549→  1548→  1548→Work Log:
+   550→  1549→  1549→- Analyzed screenshot showing KYC form on Step 3 (Business Info)
+   551→  1550→  1550→- Checked dev.log: multiple POST /api/kyc/submit 400 errors — submit IS called but backend rejects with validation errors
+   552→  1551→  1551→- Root cause: No client-side validation — user clicks submit from Step 3 without filling required fields in Steps 1 & 2, backend returns 400, toast may be hidden behind fixed bottom bar
+   553→  1552→  1552→- Added validateForm() function with all 8 required field checks (aadhaar, pan, 3 document photos, bank name, account, IFSC)
+   554→  1553→  1553→- Added scrollToStep() function that scrolls to first invalid section using data-kyc-step attributes
+   555→  1554→  1554→- Added hasRequiredFields computed boolean — disables submit button until all required fields are filled
+   556→  1555→  1555→- Added data-kyc-step='0'|'1'|'2' attributes to the 3 Card components
+   557→  1556→  1556→- Increased fixed bottom bar z-index from z-30 to z-40 so sonner toasts appear above it
+   558→  1557→  1557→- Fixed Aadhaar number normalization in submit (strips spaces, re-formats for backend regex)
+   559→  1558→  1558→
+   560→  1559→  1559→Stage Summary:
+   561→  1560→  1560→- Modified: /src/components/rentloop/kyc/SellerKycPage.tsx
+   562→  1561→  1561→- Submit button now disabled until all required fields filled
+   563→  1562→  1562→- Client-side validation with scroll-to-error on submit
+   564→  1563→  1563→- Clear error toast messages
+   565→  1564→  1564→- Lint passes clean
+   566→  1565→  1565→
