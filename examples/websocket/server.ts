@@ -28,7 +28,7 @@ interface Message {
 
 const users = new Map<string, User>()
 
-const generateMessageId = () => Math.random().toString(36).substr(2, 9)
+const generateMessageId = () => Math.random().toString(36).substring(2, 11)
 
 const createSystemMessage = (content: string): Message => ({
   id: generateMessageId(),
