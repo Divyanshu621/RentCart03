@@ -1539,3 +1539,26 @@ Stage Summary:
 - PaymentCheckoutModal.tsx: Full Razorpay integration with SDK load detection, dynamic fallback, dismiss handling
 - Backend routes (create-order, verify, webhook) were already implemented and work correctly
 - Lint passes clean (0 errors, 0 warnings)
+
+---
+Task ID: 5
+Agent: Main
+Task: Fix KYC 'Submit for Verification' button not working
+
+Work Log:
+- Analyzed screenshot showing KYC form on Step 3 (Business Info)
+- Checked dev.log: multiple POST /api/kyc/submit 400 errors — submit IS called but backend rejects with validation errors
+- Root cause: No client-side validation — user clicks submit from Step 3 without filling required fields in Steps 1 & 2, backend returns 400, toast may be hidden behind fixed bottom bar
+- Added validateForm() function with all 8 required field checks (aadhaar, pan, 3 document photos, bank name, account, IFSC)
+- Added scrollToStep() function that scrolls to first invalid section using data-kyc-step attributes
+- Added hasRequiredFields computed boolean — disables submit button until all required fields are filled
+- Added data-kyc-step='0'|'1'|'2' attributes to the 3 Card components
+- Increased fixed bottom bar z-index from z-30 to z-40 so sonner toasts appear above it
+- Fixed Aadhaar number normalization in submit (strips spaces, re-formats for backend regex)
+
+Stage Summary:
+- Modified: /src/components/rentloop/kyc/SellerKycPage.tsx
+- Submit button now disabled until all required fields filled
+- Client-side validation with scroll-to-error on submit
+- Clear error toast messages
+- Lint passes clean

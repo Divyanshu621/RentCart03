@@ -369,11 +369,51 @@ export default function SellerKycPage() {
     }
   }, [canEdit, aadhaarNumber, panNumber, gstNumber, aadhaarFront, aadhaarBack, panCard, bankAccountNo, bankIfsc, bankName, bankHolderName, passbook, businessName, businessType, businessAddress]);
 
+  // Client-side validation before submitting
+  const validateForm = (): string | null => {
+    const digits = aadhaarNumber.replace(/\D/g, '');
+    if (!digits || digits.length !== 12) return 'Please enter a valid 12-digit Aadhaar number';
+    if (!panNumber || !/^[A-Z]{5}[0-9]{4}[A-Z]$/.test(panNumber)) return 'Please enter a valid PAN number (e.g., ABCDE1234F)';
+    if (!aadhaarFront) return 'Please upload your Aadhaar card (front)';
+    if (!aadhaarBack) return 'Please upload your Aadhaar card (back)';
+    if (!panCard) return 'Please upload your PAN card';
+    if (!bankHolderName || !bankHolderName.trim()) return 'Please enter the account holder name';
+    if (!bankAccountNo || bankAccountNo.length < 8) return 'Please enter a valid bank account number';
+    if (!bankIfsc || !/^[A-Z]{4}0[A-Z0-9]{6}$/.test(bankIfsc)) return 'Please enter a valid IFSC code (e.g., SBIN0001234)';
+    return null;
+  };
+
+  const scrollToStep = (stepIndex: number) => {
+    setCurrentStep(stepIndex);
+    const cardEls = document.querySelectorAll('[data-kyc-step]');
+    if (cardEls[stepIndex]) {
+      cardEls[stepIndex].scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  };
+
+  const hasRequiredFields = !!(aadhaarNumber.replace(/\D/g, '').length === 12 && panNumber && aadhaarFront && aadhaarBack && panCard && bankHolderName?.trim() && bankAccountNo?.length >= 8 && bankIfsc);
+
   const handleSubmit = async () => {
+    // Validate and scroll to first invalid step
+    const error = validateForm();
+    if (error) {
+      // Determine which step has the error
+      const digits = aadhaarNumber.replace(/\D/g, '');
+      const panOk = panNumber && /^[A-Z]{5}[0-9]{4}[A-Z]$/.test(panNumber);
+      const docsOk = aadhaarFront && aadhaarBack && panCard;
+      const bankOk = bankHolderName?.trim() && bankAccountNo?.length >= 8 && bankIfsc && /^[A-Z]{4}0[A-Z0-9]{6}$/.test(bankIfsc);
+
+      if (!digits || !panOk || !docsOk) scrollToStep(0);
+      else if (!bankOk) scrollToStep(1);
+
+      toast.error(error);
+      return;
+    }
+
     setSubmitting(true);
     try {
       await api.submitKyc({
-        aadhaarNumber, panNumber, gstNumber,
+        aadhaarNumber: digits.replace(/(\d{4})(?=\d)/g, '$1 '), panNumber, gstNumber,
         aadhaarFrontUrl: aadhaarFront, aadhaarBackUrl: aadhaarBack, panCardUrl: panCard,
         bankAccountNo, bankIfsc, bankName, bankHolderName, passbookUrl: passbook,
         businessName, businessType: businessType || undefined, businessAddress,
@@ -453,7 +493,7 @@ export default function SellerKycPage() {
       <div className="mt-4 sm:mt-6 space-y-4 sm:space-y-6">
         {/* Step 1: Identity Documents */}
         {(canEdit || isLocked) && (
-          <Card className="border-gray-200">
+          <Card data-kyc-step="0" className="border-gray-200">
             <CardHeader className="pb-3">
               <div className="flex items-center gap-2">
                 <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center">
@@ -525,7 +565,7 @@ export default function SellerKycPage() {
 
         {/* Step 2: Bank Details */}
         {(canEdit || isLocked) && (
-          <Card className="border-gray-200">
+          <Card data-kyc-step="1" className="border-gray-200">
             <CardHeader className="pb-3">
               <div className="flex items-center gap-2">
                 <div className="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center">
@@ -598,7 +638,7 @@ export default function SellerKycPage() {
 
         {/* Step 3: Business Info */}
         {(canEdit || isLocked) && (
-          <Card className="border-gray-200">
+          <Card data-kyc-step="2" className="border-gray-200">
             <CardHeader className="pb-3">
               <div className="flex items-center gap-2">
                 <div className="w-8 h-8 rounded-lg bg-purple-50 flex items-center justify-center">
@@ -692,7 +732,7 @@ export default function SellerKycPage() {
 
       {/* Sticky Submit Buttons */}
       {canEdit && (
-        <div className="fixed bottom-16 left-0 right-0 md:bottom-0 bg-white/90 backdrop-blur-md border-t border-gray-200 p-3 sm:p-4 z-30 safe-area-bottom">
+        <div className="fixed bottom-16 left-0 right-0 md:bottom-0 bg-white/95 backdrop-blur-md border-t border-gray-200 p-3 sm:p-4 z-40 safe-area-bottom">
           <div className="max-w-3xl mx-auto flex items-center gap-3">
             <Button
               variant="outline"
@@ -711,8 +751,9 @@ export default function SellerKycPage() {
             </Button>
             <Button
               onClick={handleSubmit}
-              disabled={submitting}
+              disabled={submitting || !hasRequiredFields}
               className="h-11 flex-[2] sm:flex-none sm:px-8 bg-emerald-600 hover:bg-emerald-700 text-white font-medium"
+              title={!hasRequiredFields ? 'Fill all required fields (Identity & Bank Details) to submit' : undefined}
             >
               {submitting ? (
                 <><Loader2 className="w-4 h-4 animate-spin mr-2" /> Submitting...</>
@@ -726,7 +767,7 @@ export default function SellerKycPage() {
 
       {/* Verified - Go to Dashboard */}
       {kyc?.status === 'VERIFIED' && (
-        <div className="fixed bottom-16 left-0 right-0 md:bottom-0 bg-white/90 backdrop-blur-md border-t border-gray-200 p-3 sm:p-4 z-30 safe-area-bottom">
+        <div className="fixed bottom-16 left-0 right-0 md:bottom-0 bg-white/95 backdrop-blur-md border-t border-gray-200 p-3 sm:p-4 z-40 safe-area-bottom">
           <div className="max-w-3xl mx-auto">
             <Button
               onClick={() => navigate('dashboard')}
