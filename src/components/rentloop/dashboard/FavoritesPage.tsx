@@ -213,16 +213,16 @@ export default function FavoritesPage() {
     queryFn: () => api.getProducts({ favorited: 'true' }),
   });
 
-  const products = ((rawProducts as { products?: Product[] })?.products || []) as Product[];
+  const products = ((rawProducts as unknown as { products?: Product[] })?.products || []) as Product[];
 
   const removeMutation = useMutation({
     mutationFn: (productId: string) => api.toggleFavorite(productId),
     onMutate: async (productId) => {
       await queryClient.cancelQueries({ queryKey: ['products', { favorited: true }] });
-      const prev = queryClient.getQueryData(['products', { favorited: true }]);
-      const current = (prev as { products?: Product[] })?.products || [];
+      const prev = queryClient.getQueryData(['products', { favorited: true }]) as Record<string, unknown> | undefined;
+      const current = ((prev as { products?: Product[] })?.products || []) as Product[];
       queryClient.setQueryData(['products', { favorited: true }], {
-        ...prev,
+        ...(prev || {}),
         products: current.filter((p: Product) => p.id !== productId),
       });
       return { prev };

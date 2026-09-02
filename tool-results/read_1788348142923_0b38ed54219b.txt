@@ -1,0 +1,958 @@
+     1→'use client';
+     2→
+     3→import { useEffect, useRef, useState, useMemo, useCallback } from 'react';
+     4→import { useAppStore } from '@/store';
+     5→import { api } from '@/lib/api';
+     6→import { Button } from '@/components/ui/button';
+     7→import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+     8→import {
+     9→  DropdownMenu,
+    10→  DropdownMenuContent,
+    11→  DropdownMenuItem,
+    12→  DropdownMenuSeparator,
+    13→  DropdownMenuTrigger,
+    14→} from '@/components/ui/dropdown-menu';
+    15→import {
+    16→  Sheet,
+    17→  SheetContent,
+    18→  SheetHeader,
+    19→  SheetTitle,
+    20→} from '@/components/ui/sheet';
+    21→import { ScrollArea } from '@/components/ui/scroll-area';
+    22→import {
+    23→  Select,
+    24→  SelectContent,
+    25→  SelectItem,
+    26→  SelectTrigger,
+    27→  SelectValue,
+    28→} from '@/components/ui/select';
+    29→import {
+    30→  Search,
+    31→  Bell,
+    32→  Menu,
+    33→  User,
+    34→  LogOut,
+    35→  LayoutDashboard,
+    36→  Package,
+    37→  Heart,
+    38→  MessageCircle,
+    39→  Shield,
+    40→  Plus,
+    41→  MapPin,
+    42→  Store,
+    43→  ChevronDown,
+    44→} from 'lucide-react';
+    45→import type { State, City, Area, Notification, Category } from '@/types';
+    46→import { toast } from 'sonner';
+    47→
+    48→export default function AppHeader() {
+    49→  const {
+    50→    user, setUser, currentView, navigate, setAuthModalOpen, setAuthModalView,
+    51→    selectedState, setSelectedState,
+    52→    selectedCity, setSelectedCity,
+    53→    selectedArea, setSelectedArea,
+    54→    states, setStates,
+    55→    categories, setCategories,
+    56→    notifications, setNotifications, unreadCount, setUnreadCount,
+    57→  } = useAppStore();
+    58→
+    59→  const [showNotif, setShowNotif] = useState(false);
+    60→  const [showMobile, setShowMobile] = useState(false);
+    61→  const [showLocationMobile, setShowLocationMobile] = useState(false);
+    62→  const [searchQuery, setSearchQuery] = useState('');
+    63→  const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
+    64→  const [showLocationPopover, setShowLocationPopover] = useState(false);
+    65→  const notifRef = useRef<HTMLDivElement>(null);
+    66→  const categoryDropdownRef = useRef<HTMLDivElement>(null);
+    67→  const locationPopoverRef = useRef<HTMLDivElement>(null);
+    68→  const searchInputRef = useRef<HTMLInputElement>(null);
+    69→  const isAdmin = user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN';
+    70→
+    71→  const isLanding = currentView === 'landing';
+    72→  const isMarketplace = currentView === 'marketplace';
+    73→
+    74→
+    75→
+    76→  // Fetch states on mount
+    77→  useEffect(() => {
+    78→    api.getStates().then((data) => {
+    79→      const s = data as unknown as State[];
+    80→      setStates(s);
+    81→    }).catch(() => {});
+    82→  }, [setStates]);
+    83→
+    84→  // Fetch categories on mount
+    85→  useEffect(() => {
+    86→    if (categories.length === 0) {
+    87→      api.getCategories().then((data) => {
+    88→        const c = data as unknown as Category[];
+    89→        setCategories(c);
+    90→      }).catch(() => {});
+    91→    }
+    92→  }, [categories.length, setCategories]);
+    93→
+    94→  // Fetch notifications for logged-in users
+    95→  useEffect(() => {
+    96→    if (!user) return;
+    97→    api.getNotifications().then((data) => {
+    98→      const notifs = Array.isArray((data as any).notifications) ? (data as any).notifications as Notification[] : [];
+    99→      setNotifications(notifs);
+   100→      setUnreadCount(notifs.filter(n => !n.isRead).length);
+   101→    }).catch(() => {});
+   102→  }, [user, setNotifications, setUnreadCount]);
+   103→
+   104→  // Close dropdowns on outside click
+   105→  useEffect(() => {
+   106→    function handleClick(e: MouseEvent) {
+   107→      if (notifRef.current && !notifRef.current.contains(e.target as Node)) {
+   108→        setShowNotif(false);
+   109→      }
+   110→      if (categoryDropdownRef.current && !categoryDropdownRef.current.contains(e.target as Node)) {
+   111→        setShowCategoryDropdown(false);
+   112→      }
+   113→      if (locationPopoverRef.current && !locationPopoverRef.current.contains(e.target as Node)) {
+   114→        setShowLocationPopover(false);
+   115→      }
+   116→    }
+   117→    document.addEventListener('mousedown', handleClick);
+   118→    return () => document.removeEventListener('mousedown', handleClick);
+   119→  }, []);
+   120→
+   121→  const handleLogout = async () => {
+   122→    try {
+   123→      await api.logout();
+   124→      setUser(null);
+   125→      navigate('landing');
+   126→      toast.success('Logged out successfully');
+   127→    } catch {
+   128→      toast.error('Failed to logout');
+   129→    }
+   130→  };
+   131→
+   132→  const requireAuth = (action: () => void) => {
+   133→    if (!user) {
+   134→      setAuthModalView('login');
+   135→      setAuthModalOpen(true);
+   136→      return;
+   137→    }
+   138→    action();
+   139→  };
+   140→
+   141→  // Derived lists
+   142→  const cities = useMemo(() => {
+   143→    if (!selectedState) return [];
+   144→    return selectedState.cities?.filter((c: City) => c.isActive) ?? [];
+   145→  }, [selectedState]);
+   146→
+   147→  const areas = useMemo(() => {
+   148→    if (!selectedCity) return [];
+   149→    return selectedCity.areas?.filter((a: Area) => a.isActive) ?? [];
+   150→  }, [selectedCity]);
+   151→
+   152→  // Location label (most specific)
+   153→  const locationLabel = useMemo(() => {
+   154→    if (selectedArea) return selectedArea.name;
+   155→    if (selectedCity) return selectedCity.name;
+   156→    if (selectedState) return selectedState.name;
+   157→    return 'Location';
+   158→  }, [selectedState, selectedCity, selectedArea]);
+   159→
+   160→  const hasLocationSelection = !!(selectedState || selectedCity || selectedArea);
+   161→
+   162→  // First 8 active categories for the pills bar
+   163→  const displayCategories = useMemo(() => {
+   164→    return categories.filter((c) => c.isActive).slice(0, 8);
+   165→  }, [categories]);
+   166→
+   167→  const handleStateChange = (stateId: string) => {
+   168→    if (!stateId) {
+   169→      setSelectedState(null);
+   170→      setSelectedCity(null);
+   171→      setSelectedArea(null);
+   172→    } else {
+   173→      const st = states.find((s) => s.id === stateId);
+   174→      if (st) setSelectedState(st);
+   175→      setSelectedCity(null);
+   176→      setSelectedArea(null);
+   177→    }
+   178→    navigate('marketplace');
+   179→  };
+   180→
+   181→  const handleCityChange = (cityId: string) => {
+   182→    if (!cityId) {
+   183→      setSelectedCity(null);
+   184→      setSelectedArea(null);
+   185→    } else {
+   186→      const c = cities.find((c) => c.id === cityId);
+   187→      if (c) setSelectedCity(c);
+   188→      setSelectedArea(null);
+   189→    }
+   190→    navigate('marketplace');
+   191→  };
+   192→
+   193→  const handleAreaChange = (areaId: string) => {
+   194→    if (!areaId) {
+   195→      setSelectedArea(null);
+   196→    } else {
+   197→      const a = areas.find((a) => a.id === areaId);
+   198→      if (a) setSelectedArea(a);
+   199→    }
+   200→    navigate('marketplace');
+   201→  };
+   202→
+   203→  const handleSearchNavigate = useCallback(() => {
+   204→    if (searchQuery.trim()) {
+   205→      navigate('marketplace', { searchQuery: searchQuery.trim() });
+   206→      setSearchQuery('');
+   207→    } else {
+   208→      navigate('marketplace');
+   209→    }
+   210→  }, [searchQuery, navigate]);
+   211→
+   212→  const handleSearchKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
+   213→    if (e.key === 'Enter') {
+   214→      handleSearchNavigate();
+   215→    }
+   216→  }, [handleSearchNavigate]);
+   217→
+   218→  const handleCategoryPillClick = useCallback((catId: string) => {
+   219→    navigate('marketplace', { categoryId: catId });
+   220→  }, [navigate]);
+   221→
+   222→  // ─── LANDING PAGE HEADER ───────────────────────────────────
+   223→  if (isLanding) {
+   224→    return (
+   225→      <>
+   226→        <header className="sticky top-0 z-50 w-full bg-transparent">
+   227→          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+   228→            <div className="flex items-center justify-between h-16">
+   229→              {/* Logo */}
+   230→              <button
+   231→                onClick={() => navigate('landing')}
+   232→                className="flex items-center gap-2 group"
+   233→              >
+   234→                <div className="w-8 h-8 bg-white/20 backdrop-blur-sm rounded-lg flex items-center justify-center border border-white/30">
+   235→                  <Store className="w-5 h-5 text-white" />
+   236→                </div>
+   237→                <span className="text-xl font-bold tracking-tight text-white">
+   238→                  Rent<span className="text-emerald-300">Cart</span>
+   239→                </span>
+   240→              </button>
+   241→
+   242→              {/* Right section */}
+   243→              <div className="flex items-center gap-3">
+   244→                {user ? (
+   245→                  <>
+   246→                    {/* Notifications */}
+   247→                    <div ref={notifRef} className="relative">
+   248→                      <button
+   249→                        onClick={() => setShowNotif(!showNotif)}
+   250→                        className="p-2 rounded-lg text-white/80 hover:text-white hover:bg-white/10 transition-colors relative"
+   251→                      >
+   252→                        <Bell className="w-5 h-5" />
+   253→                        {unreadCount > 0 && (
+   254→                          <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1">
+   255→                            {unreadCount > 9 ? '9+' : unreadCount}
+   256→                          </span>
+   257→                        )}
+   258→                      </button>
+   259→                      <NotificationPanel
+   260→                        show={showNotif}
+   261→                        onClose={() => setShowNotif(false)}
+   262→                        notifications={notifications}
+   263→                        unreadCount={unreadCount}
+   264→                        onMarkAllRead={async () => {
+   265→                          try {
+   266→                            await api.markNotificationsRead(undefined, true);
+   267→                            setNotifications(notifications.map(n => ({ ...n, isRead: true })));
+   268→                            setUnreadCount(0);
+   269→                          } catch {}
+   270→                        }}
+   271→                        onViewAll={() => { setShowNotif(false); navigate('notifications'); }}
+   272→                        onNotifClick={() => setShowNotif(false)}
+   273→                      />
+   274→                    </div>
+   275→
+   276→                    {/* User Menu */}
+   277→                    <DropdownMenu>
+   278→                      <DropdownMenuTrigger asChild>
+   279→                        <button className="flex items-center gap-2 p-1 rounded-lg hover:bg-white/10 transition-colors">
+   280→                          <Avatar className="h-8 w-8 border-2 border-white/40">
+   281→                            <AvatarFallback className="bg-[#059669] text-white text-sm font-semibold">
+   282→                              {user.name?.charAt(0)?.toUpperCase() || 'U'}
+   283→                            </AvatarFallback>
+   284→                          </Avatar>
+   285→                          <span className="hidden sm:block text-sm font-medium text-white max-w-[100px] truncate">
+   286→                            {user.name?.split(' ')[0]}
+   287→                          </span>
+   288→                        </button>
+   289→                      </DropdownMenuTrigger>
+   290→                      <UserMenuContent
+   291→                        user={user}
+   292→                        isAdmin={isAdmin}
+   293→                        onNavigate={(view) => navigate(view)}
+   294→                        onLogout={handleLogout}
+   295→                      />
+   296→                    </DropdownMenu>
+   297→                  </>
+   298→                ) : (
+   299→                  <div className="flex items-center gap-2">
+   300→                    <Button
+   301→                      variant="ghost"
+   302→                      size="sm"
+   303→                      onClick={() => { setAuthModalView('login'); setAuthModalOpen(true); }}
+   304→                      className="text-white hover:text-white hover:bg-white/10"
+   305→                    >
+   306→                      Login
+   307→                    </Button>
+   308→                    <Button
+   309→                      size="sm"
+   310→                      onClick={() => { setAuthModalView('register'); setAuthModalOpen(true); }}
+   311→                      className="bg-orange-500 hover:bg-orange-600 text-white"
+   312→                    >
+   313→                      Sign Up
+   314→                    </Button>
+   315→                  </div>
+   316→                )}
+   317→
+   318→                {/* Mobile menu */}
+   319→                <button
+   320→                  onClick={() => setShowMobile(true)}
+   321→                  className="p-2 rounded-lg text-white hover:bg-white/10 md:hidden"
+   322→                >
+   323→                  <Menu className="w-5 h-5" />
+   324→                </button>
+   325→              </div>
+   326→            </div>
+   327→          </div>
+   328→        </header>
+   329→
+   330→        {/* Mobile Side Sheet */}
+   331→        <MobileSideSheet
+   332→          open={showMobile}
+   333→          onOpenChange={setShowMobile}
+   334→          user={user}
+   335→          isAdmin={isAdmin}
+   336→          onNavigate={(view) => { navigate(view); setShowMobile(false); }}
+   337→                  onAuth={(view) => { setAuthModalView(view); setAuthModalOpen(true); setShowMobile(false); }}
+   338→          onLogout={() => { handleLogout(); setShowMobile(false); }}
+   339→        />
+   340→      </>
+   341→    );
+   342→  }
+   343→
+   344→  // ─── NON-LANDING (MARKETPLACE / ALL OTHER VIEWS) HEADER ───
+   345→  return (
+   346→    <>
+   347→      {/* Top utility bar */}
+   348→      <div className="hidden md:block h-8 bg-[#1e3a5f] text-white/80 text-xs">
+   349→        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full flex items-center justify-between">
+   350→          <span>India&apos;s #1 Rental Marketplace</span>
+   351→          <div className="flex items-center gap-4">
+   352→            <button onClick={() => navigate('help-center')} className="hover:text-white transition-colors">Help Center</button>
+   353→            <button onClick={() => navigate('contact')} className="hover:text-white transition-colors">Contact</button>
+   354→          </div>
+   355→        </div>
+   356→      </div>
+   357→
+   358→      {/* Main header */}
+   359→      <header className="sticky top-0 z-50 w-full bg-white shadow-sm overflow-hidden">
+   360→        <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8">
+   361→          <div className="flex items-center gap-2 sm:gap-3 h-14 min-w-0">
+   362→            {/* Logo */}
+   363→            <button
+   364→              onClick={() => navigate('landing')}
+   365→              className="flex items-center gap-1.5 sm:gap-2 group shrink-0"
+   366→            >
+   367→              <div className="w-7 h-7 sm:w-8 sm:h-8 bg-[#059669] rounded-lg flex items-center justify-center">
+   368→                <Store className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
+   369→              </div>
+   370→              <span className="hidden sm:inline text-lg sm:text-xl font-bold tracking-tight text-[#0f172a]">
+   371→                Rent<span className="text-emerald-600">Cart</span>
+   372→              </span>
+   373→            </button>
+   374→
+   375→            {/* Desktop: Unified search bar */}
+   376→            <div className="hidden md:flex flex-1 max-w-xs lg:max-w-xl xl:max-w-2xl mx-2 lg:mx-6 min-w-0">
+   377→              <div className="flex items-center w-full border-2 border-emerald-500 rounded-lg h-10 overflow-hidden bg-white">
+   378→                {/* Category dropdown */}
+   379→                <div ref={categoryDropdownRef} className="relative">
+   380→                  <button
+   381→                    onClick={() => setShowCategoryDropdown(!showCategoryDropdown)}
+   382→                    className="w-[100px] lg:w-[140px] h-full flex items-center justify-between gap-1 px-2.5 lg:px-3 bg-gray-50 border-r border-gray-200 text-xs text-[#0f172a] font-medium hover:bg-gray-100 transition-colors shrink-0"
+   383→                  >
+   384→                    <span className="truncate">All Categories</span>
+   385→                    <ChevronDown className={`w-3.5 h-3.5 text-[#64748b] shrink-0 transition-transform ${showCategoryDropdown ? 'rotate-180' : ''}`} />
+   386→                  </button>
+   387→                  {showCategoryDropdown && (
+   388→                    <div className="absolute top-full left-0 mt-1 w-56 bg-white rounded-lg shadow-xl border border-gray-100 py-1 z-50 max-h-72 overflow-y-auto">
+   389→                      <button
+   390→                        onClick={() => { navigate('marketplace'); setShowCategoryDropdown(false); }}
+   391→                        className="w-full px-3 py-2 text-left text-sm text-[#0f172a] hover:bg-emerald-50 hover:text-emerald-700 transition-colors"
+   392→                      >
+   393→                        All Categories
+   394→                      </button>
+   395→                      {categories.filter((c) => c.isActive).map((cat) => (
+   396→                        <button
+   397→                          key={cat.id}
+   398→                          onClick={() => { navigate('marketplace', { categoryId: cat.id }); setShowCategoryDropdown(false); }}
+   399→                          className="w-full px-3 py-2 text-left text-sm text-[#64748b] hover:bg-emerald-50 hover:text-emerald-700 transition-colors"
+   400→                        >
+   401→                          {cat.name}
+   402→                        </button>
+   403→                      ))}
+   404→                    </div>
+   405→                  )}
+   406→                </div>
+   407→
+   408→                {/* Location display button (desktop popover) */}
+   409→                <div ref={locationPopoverRef} className="relative">
+   410→                  <button
+   411→                    onClick={() => setShowLocationPopover(!showLocationPopover)}
+   412→                    className={`w-[90px] lg:w-[130px] h-full flex items-center gap-1 px-2 lg:px-3 border-r border-gray-200 text-xs shrink-0 transition-colors ${
+   413→                      hasLocationSelection
+   414→                        ? 'text-[#0f172a] font-medium'
+   415→                        : 'text-[#94a3b8]'
+   416→                    }`}
+   417→                  >
+   418→                    <MapPin className={`w-3.5 h-3.5 shrink-0 ${hasLocationSelection ? 'text-[#059669]' : 'text-[#94a3b8]'}`} />
+   419→                    <span className="truncate">{locationLabel}</span>
+   420→                    <ChevronDown className={`w-3 h-3 shrink-0 transition-transform ${showLocationPopover ? 'rotate-180' : ''} hidden lg:block`} />
+   421→                  </button>
+   422→                  {showLocationPopover && (
+   423→                    <div className="absolute top-full left-0 mt-1 w-64 bg-white rounded-lg shadow-xl border border-gray-100 p-4 z-50">
+   424→                      <div className="space-y-3">
+   425→                        <div>
+   426→                          <label className="text-[10px] font-semibold text-[#94a3b8] uppercase tracking-wider mb-1 block">State</label>
+   427→                          <Select value={selectedState?.id ?? ''} onValueChange={handleStateChange}>
+   428→                            <SelectTrigger className="h-9 w-full text-xs border-gray-200">
+   429→                              <SelectValue placeholder="Select state" />
+   430→                            </SelectTrigger>
+   431→                            <SelectContent>
+   432→                              {states.map((s) => (
+   433→                                <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+   434→                              ))}
+   435→                            </SelectContent>
+   436→                          </Select>
+   437→                        </div>
+   438→
+   439→                        {selectedState && cities.length > 0 && (
+   440→                          <div>
+   441→                            <label className="text-[10px] font-semibold text-[#94a3b8] uppercase tracking-wider mb-1 block">City</label>
+   442→                            <Select value={selectedCity?.id ?? ''} onValueChange={handleCityChange}>
+   443→                              <SelectTrigger className="h-9 w-full text-xs border-gray-200">
+   444→                                <SelectValue placeholder="Select city" />
+   445→                              </SelectTrigger>
+   446→                              <SelectContent>
+   447→                                {cities.map((c) => (
+   448→                                  <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+   449→                                ))}
+   450→                              </SelectContent>
+   451→                            </Select>
+   452→                          </div>
+   453→                        )}
+   454→
+   455→                        {selectedCity && areas.length > 0 && (
+   456→                          <div>
+   457→                            <label className="text-[10px] font-semibold text-[#94a3b8] uppercase tracking-wider mb-1 block">Area</label>
+   458→                            <Select value={selectedArea?.id ?? ''} onValueChange={(val) => { handleAreaChange(val); setShowLocationPopover(false); }}>
+   459→                              <SelectTrigger className="h-9 w-full text-xs border-gray-200">
+   460→                                <SelectValue placeholder="Select area" />
+   461→                              </SelectTrigger>
+   462→                              <SelectContent>
+   463→                                {areas.map((a) => (
+   464→                                  <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>
+   465→                                ))}
+   466→                              </SelectContent>
+   467→                            </Select>
+   468→                          </div>
+   469→                        )}
+   470→
+   471→                        {hasLocationSelection && (
+   472→                          <button
+   473→                            onClick={() => {
+   474→                              setSelectedState(null);
+   475→                              setSelectedCity(null);
+   476→                              setSelectedArea(null);
+   477→                              setShowLocationPopover(false);
+   478→                              navigate('marketplace');
+   479→                            }}
+   480→                            className="text-xs text-[#059669] hover:text-emerald-700 font-medium"
+   481→                          >
+   482→                            Clear location
+   483→                          </button>
+   484→                        )}
+   485→                      </div>
+   486→                    </div>
+   487→                  )}
+   488→                </div>
+   489→
+   490→                {/* Search input */}
+   491→                <input
+   492→                  ref={searchInputRef}
+   493→                  type="text"
+   494→                  value={searchQuery}
+   495→                  onChange={(e) => setSearchQuery(e.target.value)}
+   496→                  onKeyDown={handleSearchKeyDown}
+   497→                  placeholder="Search for cameras, laptops, bikes..."
+   498→                  className="flex-1 h-full px-3 text-sm text-[#0f172a] placeholder:text-[#94a3b8] outline-none bg-transparent min-w-0"
+   499→                />
+   500→
+   501→                {/* Search button */}
+   502→                <button
+   503→                  onClick={handleSearchNavigate}
+   504→                  className="w-12 h-full bg-[#059669] hover:bg-[#10b981] text-white flex items-center justify-center transition-colors shrink-0"
+   505→                  aria-label="Search"
+   506→                >
+   507→                  <Search className="w-[18px] h-[18px]" />
+   508→                </button>
+   509→              </div>
+   510→            </div>
+   511→
+   512→            {/* Right actions */}
+   513→            <div className="flex items-center gap-1 sm:gap-2 shrink-0">
+   514→              {/* Mobile: Search icon */}
+   515→              <button
+   516→                onClick={() => navigate('marketplace')}
+   517→                className="p-2 rounded-lg text-[#64748b] hover:text-[#0f172a] hover:bg-gray-100 transition-colors md:hidden"
+   518→              >
+   519→                <Search className="w-5 h-5" />
+   520→              </button>
+   521→
+   522→              {/* Mobile: Location button */}
+   523→              <button
+   524→                onClick={() => setShowLocationMobile(true)}
+   525→                className={`md:hidden flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs border transition-colors ${
+   526→                  hasLocationSelection
+   527→                    ? 'border-emerald-200 bg-emerald-50 text-[#059669]'
+   528→                    : 'border-gray-200 text-[#64748b] hover:border-gray-300'
+   529→                }`}
+   530→              >
+   531→                <MapPin className="w-3.5 h-3.5" />
+   532→                <span className="max-w-[60px] truncate">{locationLabel}</span>
+   533→              </button>
+   534→
+   535→              {user ? (
+   536→                <>
+   537→                  {/* List Item Free - orange CTA */}
+   538→                  <Button
+   539→                    size="sm"
+   540→                    onClick={() => requireAuth(() => navigate('list-item'))}
+   541→                    className="hidden lg:flex bg-orange-500 hover:bg-orange-600 text-white rounded-full text-xs font-semibold px-3 lg:px-4 h-8 gap-1.5"
+   542→                  >
+   543→                    <Plus className="w-3.5 h-3.5" />
+   544→                    <span className="hidden xl:inline">List Item Free</span>
+   545→                    <span className="xl:hidden">List</span>
+   546→                  </Button>
+   547→
+   548→                  {/* Notifications */}
+   549→                  <div ref={notifRef} className="relative">
+   550→                    <button
+   551→                      onClick={() => setShowNotif(!showNotif)}
+   552→                      className="p-2 rounded-lg text-[#64748b] hover:text-[#0f172a] hover:bg-gray-100 transition-colors relative"
+   553→                    >
+   554→                      <Bell className="w-5 h-5" />
+   555→                      {unreadCount > 0 && (
+   556→                        <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1">
+   557→                          {unreadCount > 9 ? '9+' : unreadCount}
+   558→                        </span>
+   559→                      )}
+   560→                    </button>
+   561→                    <NotificationPanel
+   562→                      show={showNotif}
+   563→                      onClose={() => setShowNotif(false)}
+   564→                      notifications={notifications}
+   565→                      unreadCount={unreadCount}
+   566→                      onMarkAllRead={async () => {
+   567→                        try {
+   568→                          await api.markNotificationsRead(undefined, true);
+   569→                          setNotifications(notifications.map(n => ({ ...n, isRead: true })));
+   570→                          setUnreadCount(0);
+   571→                        } catch {}
+   572→                      }}
+   573→                      onViewAll={() => { setShowNotif(false); navigate('notifications'); }}
+   574→                      onNotifClick={() => setShowNotif(false)}
+   575→                    />
+   576→                  </div>
+   577→
+   578→                  {/* User Menu */}
+   579→                  <DropdownMenu>
+   580→                    <DropdownMenuTrigger asChild>
+   581→                      <button className="flex items-center gap-2 p-1 rounded-lg hover:bg-gray-100 transition-colors">
+   582→                        <Avatar className="h-8 w-8 border-2 border-emerald-100">
+   583→                          <AvatarFallback className="bg-emerald-100 text-[#059669] text-sm font-semibold">
+   584→                            {user.name?.charAt(0)?.toUpperCase() || 'U'}
+   585→                          </AvatarFallback>
+   586→                        </Avatar>
+   587→                        <span className="hidden lg:block text-sm font-medium text-[#0f172a] max-w-[80px] lg:max-w-[100px] truncate">
+   588→                          {user.name?.split(' ')[0]}
+   589→                        </span>
+   590→                      </button>
+   591→                    </DropdownMenuTrigger>
+   592→                    <UserMenuContent
+   593→                      user={user}
+   594→                      isAdmin={isAdmin}
+   595→                      onNavigate={(view) => navigate(view)}
+   596→                      onLogout={handleLogout}
+   597→                    />
+   598→                  </DropdownMenu>
+   599→                </>
+   600→              ) : (
+   601→                <div className="flex items-center gap-1.5 sm:gap-2">
+   602→                  <Button
+   603→                    variant="ghost"
+   604→                    size="sm"
+   605→                    onClick={() => { setAuthModalView('login'); setAuthModalOpen(true); }}
+   606→                    className="text-[#64748b] hover:text-[#0f172a] hover:bg-gray-100 text-xs sm:text-sm px-2 sm:px-3"
+   607→                  >
+   608→                    Login
+   609→                  </Button>
+   610→                  <Button
+   611→                    size="sm"
+   612→                    onClick={() => { setAuthModalView('register'); setAuthModalOpen(true); }}
+   613→                    className="bg-orange-500 hover:bg-orange-600 text-white text-xs sm:text-sm px-3 sm:px-4"
+   614→                  >
+   615→                    Sign Up
+   616→                  </Button>
+   617→                </div>
+   618→              )}
+   619→
+   620→              {/* Mobile menu hamburger */}
+   621→              <button
+   622→                onClick={() => setShowMobile(true)}
+   623→                className="p-2 rounded-lg text-[#64748b] hover:text-[#0f172a] hover:bg-gray-100 md:hidden"
+   624→              >
+   625→                <Menu className="w-5 h-5" />
+   626→              </button>
+   627→            </div>
+   628→          </div>
+   629→        </div>
+   630→      </header>
+   631→
+   632→      {/* Category pills bar - only on marketplace */}
+   633→      {isMarketplace && displayCategories.length > 0 && (
+   634→        <div className="bg-gray-50 border-b border-[#e2e8f0]">
+   635→          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+   636→            <div
+   637→              className="flex gap-2 overflow-x-auto py-2"
+   638→              style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+   639→            >
+   640→              <button
+   641→                onClick={() => navigate('marketplace')}
+   642→                className="shrink-0 px-4 py-1.5 rounded-full text-xs font-medium transition-colors bg-white text-[#64748b] border border-[#e2e8f0] hover:border-emerald-300 hover:text-emerald-600"
+   643→              >
+   644→                All
+   645→              </button>
+   646→              {displayCategories.map((cat) => (
+   647→                <button
+   648→                  key={cat.id}
+   649→                  onClick={() => handleCategoryPillClick(cat.id)}
+   650→                  className="shrink-0 px-4 py-1.5 rounded-full text-xs font-medium transition-colors text-[#64748b] hover:bg-emerald-50 hover:text-emerald-600 border border-transparent"
+   651→                >
+   652→                  {cat.name}
+   653→                </button>
+   654→              ))}
+   655→            </div>
+   656→          </div>
+   657→        </div>
+   658→      )}
+   659→
+   660→      {/* Mobile Location Picker Sheet */}
+   661→      <Sheet open={showLocationMobile} onOpenChange={setShowLocationMobile}>
+   662→        <SheetContent side="bottom" className="rounded-t-2xl">
+   663→          <SheetHeader className="p-4 pb-2">
+   664→            <SheetTitle className="flex items-center gap-2 text-base">
+   665→              <MapPin className="w-4 h-4 text-[#059669]" />
+   666→              Select Location
+   667→            </SheetTitle>
+   668→          </SheetHeader>
+   669→          <div className="px-4 pb-6 space-y-4">
+   670→            <div className="space-y-1.5">
+   671→              <label className="text-xs font-medium text-[#64748b]">State</label>
+   672→              <Select value={selectedState?.id ?? ''} onValueChange={(val) => { handleStateChange(val); }}>
+   673→                <SelectTrigger className="h-10 w-full">
+   674→                  <SelectValue placeholder="Select a state" />
+   675→                </SelectTrigger>
+   676→                <SelectContent>
+   677→                  {states.map((s) => (
+   678→                    <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+   679→                  ))}
+   680→                </SelectContent>
+   681→              </Select>
+   682→            </div>
+   683→
+   684→            {selectedState && cities.length > 0 && (
+   685→              <div className="space-y-1.5">
+   686→                <label className="text-xs font-medium text-[#64748b]">City</label>
+   687→                <Select value={selectedCity?.id ?? ''} onValueChange={(val) => { handleCityChange(val); }}>
+   688→                  <SelectTrigger className="h-10 w-full">
+   689→                    <SelectValue placeholder="Select a city" />
+   690→                  </SelectTrigger>
+   691→                  <SelectContent>
+   692→                    {cities.map((c) => (
+   693→                      <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+   694→                    ))}
+   695→                  </SelectContent>
+   696→                </Select>
+   697→              </div>
+   698→            )}
+   699→
+   700→            {selectedCity && areas.length > 0 && (
+   701→              <div className="space-y-1.5">
+   702→                <label className="text-xs font-medium text-[#64748b]">Area</label>
+   703→                <Select value={selectedArea?.id ?? ''} onValueChange={(val) => { handleAreaChange(val); setShowLocationMobile(false); }}>
+   704→                  <SelectTrigger className="h-10 w-full">
+   705→                    <SelectValue placeholder="Select an area" />
+   706→                  </SelectTrigger>
+   707→                  <SelectContent>
+   708→                    {areas.map((a) => (
+   709→                      <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>
+   710→                    ))}
+   711→                  </SelectContent>
+   712→                </Select>
+   713→              </div>
+   714→            )}
+   715→
+   716→            {(selectedState || selectedCity || selectedArea) && (
+   717→              <Button
+   718→                variant="ghost"
+   719→                size="sm"
+   720→                className="w-full text-sm text-[#64748b]"
+   721→                onClick={() => {
+   722→                  setSelectedState(null);
+   723→                  setSelectedCity(null);
+   724→                  setSelectedArea(null);
+   725→                  navigate('marketplace');
+   726→                  setShowLocationMobile(false);
+   727→                }}
+   728→              >
+   729→                Clear location selection
+   730→              </Button>
+   731→            )}
+   732→          </div>
+   733→        </SheetContent>
+   734→      </Sheet>
+   735→
+   736→      {/* Mobile Side Sheet */}
+   737→      <MobileSideSheet
+   738→        open={showMobile}
+   739→        onOpenChange={setShowMobile}
+   740→        user={user}
+   741→        isAdmin={isAdmin}
+   742→        onNavigate={(view) => {
+   743→          if (view === 'list-item') {
+   744→            requireAuth(() => { navigate(view); setShowMobile(false); });
+   745→          } else {
+   746→            navigate(view);
+   747→            setShowMobile(false);
+   748→          }
+   749→        }}
+   750→        onAuth={(view) => { setAuthModalView(view); setAuthModalOpen(true); setShowMobile(false); }}
+   751→        onLogout={() => { handleLogout(); setShowMobile(false); }}
+   752→      />
+   753→    </>
+   754→  );
+   755→}
+   756→
+   757→// ─── Notification Panel ────────────────────────────────────────
+   758→function NotificationPanel({
+   759→  show,
+   760→  onClose,
+   761→  notifications,
+   762→  unreadCount,
+   763→  onMarkAllRead,
+   764→  onViewAll,
+   765→  onNotifClick,
+   766→}: {
+   767→  show: boolean;
+   768→  onClose: () => void;
+   769→  notifications: Notification[];
+   770→  unreadCount: number;
+   771→  onMarkAllRead: () => void;
+   772→  onViewAll: () => void;
+   773→  onNotifClick: () => void;
+   774→}) {
+   775→  if (!show) return null;
+   776→  return (
+   777→    <div className="absolute right-0 top-full mt-2 w-80 bg-white rounded-xl shadow-2xl border border-gray-100 overflow-hidden z-50">
+   778→      <div className="p-3 border-b border-gray-100 flex items-center justify-between">
+   779→        <h3 className="font-semibold text-sm text-[#0f172a]">Notifications</h3>
+   780→        {unreadCount > 0 && (
+   781→          <button
+   782→            onClick={onMarkAllRead}
+   783→            className="text-xs text-[#059669] hover:text-emerald-700"
+   784→          >
+   785→            Mark all read
+   786→          </button>
+   787→        )}
+   788→      </div>
+   789→      <ScrollArea className="max-h-80">
+   790→        {notifications.length === 0 ? (
+   791→          <div className="p-6 text-center text-sm text-[#94a3b8]">No notifications</div>
+   792→        ) : (
+   793→          notifications.slice(0, 10).map(n => (
+   794→            <button
+   795→              key={n.id}
+   796→              onClick={onNotifClick}
+   797→              className={`w-full px-4 py-3 text-left hover:bg-gray-50 border-b border-gray-50 last:border-0 transition-colors ${!n.isRead ? 'bg-emerald-50/50' : ''}`}
+   798→            >
+   799→              <p className="text-sm font-medium text-[#0f172a]">{n.title}</p>
+   800→              <p className="text-xs text-[#64748b] mt-0.5 line-clamp-1">{n.message}</p>
+   801→            </button>
+   802→          ))
+   803→        )}
+   804→      </ScrollArea>
+   805→      <button
+   806→        onClick={onViewAll}
+   807→        className="w-full p-2.5 text-center text-xs font-medium text-[#059669] hover:bg-emerald-50 border-t border-gray-100 transition-colors"
+   808→      >
+   809→        View all notifications
+   810→      </button>
+   811→    </div>
+   812→  );
+   813→}
+   814→
+   815→// ─── User Menu Content ─────────────────────────────────────────
+   816→function UserMenuContent({
+   817→  user,
+   818→  isAdmin,
+   819→  onNavigate,
+   820→  onLogout,
+   821→}: {
+   822→  user: { name: string; email: string; state?: { name: string } | null };
+   823→  isAdmin: boolean;
+   824→  onNavigate: (view: string) => void;
+   825→  onLogout: () => void;
+   826→}) {
+   827→  const nav = onNavigate as (view: string) => void;
+   828→  return (
+   829→    <DropdownMenuContent align="end" className="w-56">
+   830→      <div className="px-3 py-2 border-b border-gray-100">
+   831→        <p className="text-sm font-semibold text-[#0f172a]">{user.name}</p>
+   832→        <p className="text-xs text-[#64748b]">{user.email}</p>
+   833→        {user.state && (
+   834→          <p className="text-xs text-[#94a3b8] mt-0.5">• {user.state.name}</p>
+   835→        )}
+   836→      </div>
+   837→      <DropdownMenuItem onClick={() => nav('dashboard')}>
+   838→        <LayoutDashboard className="w-4 h-4 mr-2" />
+   839→        Dashboard
+   840→      </DropdownMenuItem>
+   841→      <DropdownMenuItem onClick={() => nav('my-rentals')}>
+   842→        <Package className="w-4 h-4 mr-2" />
+   843→        My Rentals
+   844→      </DropdownMenuItem>
+   845→      <DropdownMenuItem onClick={() => nav('my-listings')}>
+   846→        <Store className="w-4 h-4 mr-2" />
+   847→        My Listings
+   848→      </DropdownMenuItem>
+   849→      <DropdownMenuItem onClick={() => nav('favorites')}>
+   850→        <Heart className="w-4 h-4 mr-2" />
+   851→        Favorites
+   852→      </DropdownMenuItem>
+   853→      <DropdownMenuItem onClick={() => nav('messages')}>
+   854→        <MessageCircle className="w-4 h-4 mr-2" />
+   855→        Messages
+   856→      </DropdownMenuItem>
+   857→      {isAdmin && (
+   858→        <>
+   859→          <DropdownMenuSeparator />
+   860→          <DropdownMenuItem onClick={() => nav('admin-dashboard')}>
+   861→            <Shield className="w-4 h-4 mr-2" />
+   862→            Admin Panel
+   863→          </DropdownMenuItem>
+   864→        </>
+   865→      )}
+   866→      <DropdownMenuSeparator />
+   867→      <DropdownMenuItem onClick={onLogout} className="text-red-600">
+   868→        <LogOut className="w-4 h-4 mr-2" />
+   869→        Logout
+   870→      </DropdownMenuItem>
+   871→    </DropdownMenuContent>
+   872→  );
+   873→}
+   874→
+   875→// ─── Mobile Side Sheet ─────────────────────────────────────────
+   876→function MobileSideSheet({
+   877→  open,
+   878→  onOpenChange,
+   879→  user,
+   880→  isAdmin,
+   881→  onNavigate,
+   882→  onAuth,
+   883→  onLogout,
+   884→}: {
+   885→  open: boolean;
+   886→  onOpenChange: (v: boolean) => void;
+   887→  user: { name?: string } | null;
+   888→  isAdmin: boolean;
+   889→  onNavigate: (view: string) => void;
+   890→  onAuth: (view: 'login' | 'register') => void;
+   891→  onLogout: () => void;
+   892→}) {
+   893→  const nav = onNavigate as (view: string) => void;
+   894→  return (
+   895→    <Sheet open={open} onOpenChange={onOpenChange}>
+   896→      <SheetContent side="right" className="w-72 p-0">
+   897→        <SheetHeader className="p-4 border-b border-[#e2e8f0]">
+   898→          <SheetTitle className="flex items-center gap-2">
+   899→            <div className="w-7 h-7 bg-[#059669] rounded-lg flex items-center justify-center">
+   900→              <Store className="w-4 h-4 text-white" />
+   901→            </div>
+   902→            <span className="text-[#0f172a]">
+   903→              Rent<span className="text-emerald-600">Cart</span>
+   904→            </span>
+   905→          </SheetTitle>
+   906→        </SheetHeader>
+   907→        <ScrollArea className="flex-1">
+   908→          <div className="p-3 space-y-1">
+   909→            <MobileNavItem icon={<Search className="w-4 h-4" />} label="Explore" onClick={() => nav('marketplace')} />
+   910→            {user ? (
+   911→              <>
+   912→                <MobileNavItem icon={<Plus className="w-4 h-4" />} label="List Item Free" onClick={() => nav('list-item')} />
+   913→                <MobileNavItem icon={<LayoutDashboard className="w-4 h-4" />} label="Dashboard" onClick={() => nav('dashboard')} />
+   914→                <MobileNavItem icon={<Package className="w-4 h-4" />} label="My Rentals" onClick={() => nav('my-rentals')} />
+   915→                <MobileNavItem icon={<Store className="w-4 h-4" />} label="My Listings" onClick={() => nav('my-listings')} />
+   916→                <MobileNavItem icon={<Heart className="w-4 h-4" />} label="Favorites" onClick={() => nav('favorites')} />
+   917→                <MobileNavItem icon={<MessageCircle className="w-4 h-4" />} label="Messages" onClick={() => nav('messages')} />
+   918→                {isAdmin && (
+   919→                  <MobileNavItem icon={<Shield className="w-4 h-4" />} label="Admin Panel" onClick={() => nav('admin-dashboard')} />
+   920→                )}
+   921→              </>
+   922→            ) : (
+   923→              <>
+   924→                <MobileNavItem icon={<User className="w-4 h-4" />} label="Login" onClick={() => onAuth('login')} />
+   925→                <MobileNavItem icon={<User className="w-4 h-4" />} label="Sign Up" onClick={() => onAuth('register')} />
+   926→              </>
+   927→            )}
+   928→          </div>
+   929→        </ScrollArea>
+   930→        {user && (
+   931→          <div className="p-3 border-t border-[#e2e8f0]">
+   932→            <button
+   933→              onClick={onLogout}
+   934→              className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-red-600 hover:bg-red-50 transition-colors"
+   935→            >
+   936→              <LogOut className="w-4 h-4" />
+   937→              Logout
+   938→            </button>
+   939→          </div>
+   940→        )}
+   941→      </SheetContent>
+   942→    </Sheet>
+   943→  );
+   944→}
+   945→
+   946→// ─── Mobile Nav Item ───────────────────────────────────────────
+   947→function MobileNavItem({ icon, label, onClick }: { icon: React.ReactNode; label: string; onClick: () => void }) {
+   948→  return (
+   949→    <button
+   950→      onClick={onClick}
+   951→      className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-[#0f172a] hover:bg-gray-100 transition-colors"
+   952→    >
+   953→      {icon}
+   954→      {label}
+   955→    </button>
+   956→  );
+   957→}
+   958→

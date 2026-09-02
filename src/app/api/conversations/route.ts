@@ -29,10 +29,19 @@ export async function GET(request: NextRequest) {
       include: {
         user1: { select: { id: true, name: true, avatarUrl: true } },
         user2: { select: { id: true, name: true, avatarUrl: true } },
-        product: { select: { id: true, title: true, images: { orderBy: { sortOrder: 'asc' }, take: 1 } } },
       },
       orderBy: { lastMessageAt: 'desc' },
     });
+
+    // Fetch product previews for all conversations that have a productId
+    const productIds = conversations.map(c => c.productId).filter((id): id is string => !!id);
+    const products = productIds.length > 0
+      ? await db.product.findMany({
+          where: { id: { in: productIds } },
+          select: { id: true, title: true, images: { orderBy: { sortOrder: 'asc' }, take: 1 } },
+        })
+      : [];
+    const productMap = new Map(products.map(p => [p.id, p]));
 
     const enriched = conversations.map((conv) => {
       const isUser1 = conv.user1Id === session.userId;
@@ -40,6 +49,7 @@ export async function GET(request: NextRequest) {
       return {
         ...conv,
         otherUser,
+        product: conv.productId ? productMap.get(conv.productId) ?? null : null,
       };
     });
 
@@ -87,9 +97,17 @@ export async function POST(request: NextRequest) {
       include: {
         user1: { select: { id: true, name: true, avatarUrl: true } },
         user2: { select: { id: true, name: true, avatarUrl: true } },
-        product: { select: { id: true, title: true, images: { orderBy: { sortOrder: 'asc' }, take: 1 } } },
       },
     });
+
+    // Fetch product preview if conversation has a productId
+    let product: { id: string; title: string; images: { id: string; createdAt: Date; productId: string; url: string; altText: string | null; sortOrder: number }[] } | null = null;
+    if (productId) {
+      product = await db.product.findUnique({
+        where: { id: productId },
+        select: { id: true, title: true, images: { orderBy: { sortOrder: 'asc' }, take: 1 } },
+      });
+    }
 
     if (!conversation) {
       conversation = await db.conversation.create({
@@ -101,13 +119,12 @@ export async function POST(request: NextRequest) {
         include: {
           user1: { select: { id: true, name: true, avatarUrl: true } },
           user2: { select: { id: true, name: true, avatarUrl: true } },
-          product: { select: { id: true, title: true, images: { orderBy: { sortOrder: 'asc' }, take: 1 } } },
         },
       });
     }
 
     securityLogger.info('CONVERSATION_CREATED', 'Conversation', session.userId);
-    return success({ conversation });
+    return success({ conversation: { ...conversation, product } });
   } catch (error: unknown) {
     return safeError(error, 'CONVERSATION_CREATE');
   }

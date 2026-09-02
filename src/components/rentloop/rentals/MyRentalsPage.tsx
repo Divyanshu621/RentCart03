@@ -201,7 +201,7 @@ function RentalCard({
   const user = useAppStore((s) => s.user);
   const isOwner = user?.id === rental.ownerId;
   const isCustomer = user?.id === rental.customerId;
-  const categorySlug = rental.product?.category?.slug || '';
+  const categorySlug = ((rental.product as unknown as Record<string, unknown>)?.category as Record<string, unknown> | undefined)?.slug as string || '';
   const Icon = categoryIcons[categorySlug] || Camera;
   const gradient = gradientMap[categorySlug] || 'from-slate-400 to-gray-300';
 

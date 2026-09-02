@@ -7,10 +7,9 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
     ...options?.headers,
   };
   const res = await fetch(`${API_BASE}${path}`, {
+    ...options,
     headers,
     credentials: 'include',
-    ...options,
-    headers, // ensure our headers take precedence
   });
   if (!res.ok) {
     const err = await res.json().catch(() => ({ error: 'Request failed' }));

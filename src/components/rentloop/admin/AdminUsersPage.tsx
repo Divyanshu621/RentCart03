@@ -104,9 +104,9 @@ export default function AdminUsersPage() {
     queryFn: () => api.getAdminUsers(params),
   });
 
-  const users = ((data as { users?: User[] })?.users || []) as User[];
-  const total = (data as { total?: number })?.total || 0;
-  const totalPages = (data as { totalPages?: number })?.totalPages || 1;
+  const users = ((data as unknown as { users?: User[] })?.users || []) as User[];
+  const total = (data as unknown as { total?: number })?.total || 0;
+  const totalPages = (data as unknown as { totalPages?: number })?.totalPages || 1;
 
   const updateMutation = useMutation({
     mutationFn: ({ id, data }: { id: string; data: Record<string, unknown> }) =>

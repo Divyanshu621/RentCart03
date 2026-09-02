@@ -100,7 +100,7 @@ export default function AdminDashboardPage() {
 
   const { data, isLoading } = useQuery({
     queryKey: ['admin-dashboard'],
-    queryFn: () => api.getAdminDashboard() as Promise<AdminDashboard>,
+    queryFn: () => api.getAdminDashboard() as unknown as Promise<AdminDashboard>,
   });
 
   const stats = data || {

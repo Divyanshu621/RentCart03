@@ -48,7 +48,7 @@ import { Calendar, CalendarDayButton } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useAppStore } from '@/store';
 import { api } from '@/lib/api';
-import type { Product, Review } from '@/types';
+import type { Product, Review, AppView } from '@/types';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import PaymentCheckoutModal from '@/components/rentloop/payment/PaymentCheckoutModal';
@@ -462,7 +462,7 @@ export default function ProductDetailPage() {
                 <button
                   onClick={() => {
                     if (!user) {
-                      n('login');
+                      navigate('login' as AppView);
                       setAuthModalOpen(true);
                       return;
                     }
@@ -752,10 +752,10 @@ export default function ProductDetailPage() {
                       <span className="text-slate-600">Security Deposit</span>
                       <span className="font-medium text-slate-900">₹{rentalCalc.securityDeposit.toLocaleString('en-IN')}</span>
                     </div>
-                    {couponApplied && rentalCalc.discount > 0 && (
+                    {couponApplied && (rentalCalc.discount ?? 0) > 0 && (
                       <div className="flex justify-between text-sm text-emerald-600">
                         <span className="font-medium">Coupon Discount</span>
-                        <span className="font-medium">-₹{rentalCalc.discount.toLocaleString('en-IN')}</span>
+                        <span className="font-medium">-₹{(rentalCalc.discount ?? 0).toLocaleString('en-IN')}</span>
                       </div>
                     )}
                     <Separator />
@@ -850,7 +850,6 @@ export default function ProductDetailPage() {
               <CardContent>
                 <div className="flex justify-center">
                   <Calendar
-                    mode="default"
                     disabled={[{ before: today }]}
                     className="rounded-md border"
                     components={{
@@ -1003,7 +1002,7 @@ export default function ProductDetailPage() {
           platformFee: rentalCalc.platformFee,
           tax: rentalCalc.tax,
           deliveryFee: rentalCalc.deliveryFee,
-          discount: rentalCalc.discount,
+          discount: rentalCalc.discount ?? 0,
           securityDeposit: rentalCalc.securityDeposit,
           rentalDays: rentalCalc.days,
           dailyRate: rentalCalc.dailyRate,

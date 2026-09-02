@@ -412,6 +412,7 @@ export default function SellerKycPage() {
 
     setSubmitting(true);
     try {
+      const digits = aadhaarNumber.replace(/\D/g, '');
       await api.submitKyc({
         aadhaarNumber: digits.replace(/(\d{4})(?=\d)/g, '$1 '), panNumber, gstNumber,
         aadhaarFrontUrl: aadhaarFront, aadhaarBackUrl: aadhaarBack, panCardUrl: panCard,

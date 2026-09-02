@@ -89,9 +89,9 @@ export default function AdminRentalsPage() {
     queryFn: () => api.getAdminRentals(params),
   });
 
-  const rentals = ((data as { rentals?: Rental[] })?.rentals || []) as Rental[];
-  const total = (data as { total?: number })?.total || 0;
-  const totalPages = (data as { totalPages?: number })?.totalPages || 1;
+  const rentals = ((data as unknown as { rentals?: Rental[] })?.rentals || []) as Rental[];
+  const total = (data as unknown as { total?: number })?.total || 0;
+  const totalPages = (data as unknown as { totalPages?: number })?.totalPages || 1;
 
   const updateMutation = useMutation({
     mutationFn: ({ id, data }: { id: string; data: Record<string, unknown> }) =>

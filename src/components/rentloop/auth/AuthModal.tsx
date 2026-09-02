@@ -42,7 +42,7 @@ const registerSchema = z.object({
   cityId: z.string().min(1, 'Please select a city'),
   pinCode: z.string().min(1, 'PIN code is required'),
   address: z.string().min(1, 'Address is required'),
-  agreeTerms: z.literal(true, { errorMap: () => ({ message: 'You must agree to the terms' }) }),
+  agreeTerms: z.literal(true, { error: 'You must agree to the terms' }),
 });
 
 type LoginFormData = z.infer<typeof loginSchema>;

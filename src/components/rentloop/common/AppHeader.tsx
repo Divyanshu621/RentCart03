@@ -42,7 +42,7 @@ import {
   Store,
   ChevronDown,
 } from 'lucide-react';
-import type { State, City, Area, Notification, Category } from '@/types';
+import type { State, City, Area, Notification, Category, AppView } from '@/types';
 import { toast } from 'sonner';
 
 export default function AppHeader() {
@@ -821,10 +821,10 @@ function UserMenuContent({
 }: {
   user: { name: string; email: string; state?: { name: string } | null };
   isAdmin: boolean;
-  onNavigate: (view: string) => void;
+  onNavigate: (view: AppView) => void;
   onLogout: () => void;
 }) {
-  const nav = onNavigate as (view: string) => void;
+  const nav = onNavigate as (view: AppView) => void;
   return (
     <DropdownMenuContent align="end" className="w-56">
       <div className="px-3 py-2 border-b border-gray-100">
@@ -886,11 +886,11 @@ function MobileSideSheet({
   onOpenChange: (v: boolean) => void;
   user: { name?: string } | null;
   isAdmin: boolean;
-  onNavigate: (view: string) => void;
+  onNavigate: (view: AppView) => void;
   onAuth: (view: 'login' | 'register') => void;
   onLogout: () => void;
 }) {
-  const nav = onNavigate as (view: string) => void;
+  const nav = onNavigate as (view: AppView) => void;
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="right" className="w-72 p-0">

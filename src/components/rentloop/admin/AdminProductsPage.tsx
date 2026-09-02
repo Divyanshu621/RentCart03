@@ -118,9 +118,9 @@ export default function AdminProductsPage() {
     queryFn: () => api.getAdminProducts(params),
   });
 
-  const products = ((data as { products?: Product[] })?.products || []) as Product[];
-  const total = (data as { total?: number })?.total || 0;
-  const totalPages = (data as { totalPages?: number })?.totalPages || 1;
+  const products = ((data as unknown as { products?: Product[] })?.products || []) as Product[];
+  const total = (data as unknown as { total?: number })?.total || 0;
+  const totalPages = (data as unknown as { totalPages?: number })?.totalPages || 1;
 
   const updateMutation = useMutation({
     mutationFn: ({ id, status }: { id: string; status: string }) =>

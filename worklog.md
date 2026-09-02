@@ -1593,3 +1593,43 @@ Stage Summary:
 - Backend API correctly processes KYC submission
 - Post-submit UI correctly locks the form and shows review status
 - No remaining issues
+
+---
+Task ID: 3-a
+Agent: Sub-agent (fix-admin-ts-errors)
+Task: Fix TypeScript errors in 4 admin component files
+
+Work Log:
+- Read worklog for context: api.ts returns `Record<string, unknown>` but components cast to specific types
+- Fixed AdminDashboardPage.tsx:103 — changed `as Promise<AdminDashboard>` to `as unknown as Promise<AdminDashboard>`
+- Fixed AdminProductsPage.tsx:121-123 — changed `as { products?: Product[] }`, `as { total?: number }`, `as { totalPages?: number }` to use `as unknown as` intermediary
+- Fixed AdminRentalsPage.tsx:92-94 — changed `as { rentals?: Rental[] }`, `as { total?: number }`, `as { totalPages?: number }` to use `as unknown as` intermediary
+- Fixed AdminUsersPage.tsx:107-109 — changed `as { users?: User[] }`, `as { total?: number }`, `as { totalPages?: number }` to use `as unknown as` intermediary
+- Verified with `npx tsc --noEmit 2>&1 | rg 'Admin'` — no admin-related errors remain (rg exit code 1 = no matches)
+
+Stage Summary:
+- All 4 admin pages fixed: AdminDashboardPage, AdminProductsPage, AdminRentalsPage, AdminUsersPage
+- Only type assertions changed (added `as unknown` intermediary); no logic changes
+- Zero admin-related TypeScript errors confirmed
+---
+Task ID: 3-b
+Agent: Sub-agent
+Task: Fix all remaining TypeScript errors across 9 files
+
+Work Log:
+- Ran `npx tsc --noEmit` to identify all errors (28 errors across 9 files, excluding skills/)
+- Fixed src/lib/api.ts: Removed duplicate `headers` property in fetch call (TS1117)
+- Fixed src/components/rentloop/common/AppHeader.tsx: Changed `onNavigate` prop type from `(view: string) => void` to `(view: AppView) => void` in UserMenuContent and MobileSideSheet, imported AppView
+- Fixed src/components/rentloop/dashboard/DashboardPage.tsx: Added `as const` to `ease: 'easeOut'` in itemVariants to narrow string literal type for Framer Motion Variants
+- Fixed src/components/rentloop/dashboard/FavoritesPage.tsx: Added `as unknown` intermediary cast for rawProducts type assertion; cast prev to Record<string, unknown> to enable spread
+- Fixed src/components/rentloop/kyc/SellerKycPage.tsx: Declared `const digits` in try block scope before use (was only defined in if-block)
+- Fixed src/components/rentloop/landing/CategoriesSection.tsx: Added `as const` to `ease: 'easeOut'` in cardVariants
+- Fixed src/components/rentloop/landing/LandingNavbar.tsx: Cast `link.target as AppView` when calling navigate, imported AppView
+- Fixed src/components/rentloop/product/ProductDetailPage.tsx: Replaced `n('login')` with `navigate('login' as AppView)`; used `?? 0` for rentalCalc.discount (possibly undefined); removed invalid `mode="default"` from Calendar; imported AppView
+- Fixed src/components/rentloop/rentals/MyRentalsPage.tsx: Cast rental.product to access category via Record<string, unknown> chain
+- Verified: Zero non-skills/ TypeScript errors remain
+
+Stage Summary:
+- All 28 TypeScript errors fixed across 9 files
+- Common patterns applied: `as AppView` casts for navigation, `as const` for Framer Motion ease, `as unknown` intermediary for complex type assertions, `?? 0` for optional number fields
+- No logic changes, only type fixes

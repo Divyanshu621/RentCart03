@@ -128,7 +128,7 @@ export async function POST(request: NextRequest) {
     const deliveryFee = product.deliveryAvailable ? product.deliveryFee : 0;
     let discount = 0;
 
-    let couponUsed: Record<string, unknown> | null = null;
+    let couponUsed: any = null;
     if (couponCode) {
       const coupon = await db.coupon.findUnique({ where: { code: couponCode.toUpperCase() } });
       if (!coupon || !coupon.isActive) {

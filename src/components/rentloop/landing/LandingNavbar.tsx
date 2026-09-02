@@ -14,6 +14,7 @@ import {
   DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import type { AppView } from '@/types';
 
 const navLinks = [
   { label: 'Browse Rentals', action: 'navigate', target: 'marketplace' as const },
@@ -44,7 +45,7 @@ export default function LandingNavbar() {
   const handleNavClick = (link: (typeof navLinks)[number]) => {
     setMobileOpen(false);
     if (link.action === 'navigate') {
-      navigate(link.target);
+      navigate(link.target as AppView);
     } else {
       scrollToSection(link.target);
     }
