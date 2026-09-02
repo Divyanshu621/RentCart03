@@ -1495,3 +1495,20 @@ Stage Summary:
 - Modified: /src/components/rentloop/marketplace/MarketplacePage.tsx (replaced one-time boolean flag with ref-based comparison)
 - Modified: /src/components/rentloop/common/AppHeader.tsx (clear search input after navigate)
 - Lint passes clean (0 errors, 0 warnings)
+
+---
+Task ID: 3
+Agent: Main
+Task: Fix Vercel deployment error - restore missing /api/upload route
+
+Work Log:
+- Analyzed screenshot showing Vercel deployment failures with commits "remove upload file" and "updated file"
+- Found /src/app/api/upload/route.ts was deleted but still referenced by api.ts uploadImages(), ListItemPage, and SellerKycPage
+- Recreated /src/app/api/upload/route.ts with full validation, auth, rate limiting
+- Verified route responds correctly (429 rate limit = route is loaded)
+- Lint passes clean
+
+Stage Summary:
+- Created: /src/app/api/upload/route.ts (restored image upload endpoint)
+- Supports: PNG/JPG/WEBP, 5MB limit, 5 files max, categories: product/kyc/profile/chat
+- Uses same patterns as other API routes (getSession, rateLimiters, secure-handler, securityLogger)
