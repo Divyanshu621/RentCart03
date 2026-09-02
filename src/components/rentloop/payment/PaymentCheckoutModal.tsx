@@ -1,16 +1,6 @@
 'use client';
 
-declare global {
-  interface Window {
-    Razorpay: new (options: Record<string, unknown>) => {
-      open: () => void;
-      on: (event: string, handler: () => void) => void;
-      close: () => void;
-    };
-  }
-}
-
-import { useState, useMemo, useCallback, useEffect } from 'react';
+import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   X, CreditCard, Smartphone, Building2, Wallet, Truck,
@@ -27,6 +17,7 @@ import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
 import { useIsMobile } from '@/hooks/use-mobile';
+import type { RazorpayResponse } from '@/types/razorpay';
 
 interface PaymentCheckoutModalProps {
   open: boolean;
@@ -162,6 +153,8 @@ export default function PaymentCheckoutModal({
   const [step, setStep] = useState<'checkout' | 'processing' | 'success'>('checkout');
   const [txnId, setTxnId] = useState('');
   const [summaryExpanded, setSummaryExpanded] = useState(false);
+  const [razorpayReady, setRazorpayReady] = useState(false);
+  const dismissTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Fetch enabled payment methods from backend
   useEffect(() => {
@@ -185,6 +178,37 @@ export default function PaymentCheckoutModal({
     });
     return () => { cancelled = true; };
   }, [open]);
+
+  // Detect when Razorpay checkout.js is loaded
+  useEffect(() => {
+    if (!open) return;
+    const check = () => {
+      if (typeof window !== 'undefined' && window.Razorpay) {
+        setRazorpayReady(true);
+      }
+    };
+    check();
+    const timer = setInterval(check, 300);
+    return () => clearInterval(timer);
+  }, [open]);
+
+  // Cleanup dismiss timer on unmount
+  useEffect(() => {
+    return () => { if (dismissTimerRef.current) clearInterval(dismissTimerRef.current); };
+  }, []);
+
+  /** Load Razorpay script dynamically as fallback */
+  const loadRazorpayScript = (): Promise<void> => {
+    return new Promise((resolve, reject) => {
+      if (window.Razorpay) { resolve(); return; }
+      const script = document.createElement('script');
+      script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+      script.async = true;
+      script.onload = () => { setRazorpayReady(true); resolve(); };
+      script.onerror = () => reject(new Error('Failed to load Razorpay SDK'));
+      document.head.appendChild(script);
+    });
+  };
 
   // Filter payment methods based on backend settings
   const paymentMethods = useMemo(() => {
@@ -220,7 +244,7 @@ export default function PaymentCheckoutModal({
   const getPaymentButtonLabel = () => {
     const amount = `₹${rentalData ? formatCurrency(rentalData.totalAmount) : '0'}`;
     switch (selectedMethod) {
-      case 'razorpay': return `Pay ${amount} with Razorpay`;
+      case 'razorpay': return razorpayReady ? `Pay ${amount} with Razorpay` : 'Loading Razorpay...';
       case 'upi': return `Pay ${amount} via UPI`;
       case 'card': return `Pay ${amount} via Card`;
       case 'netbanking': return `Pay ${amount} via Net Banking`;
@@ -232,6 +256,8 @@ export default function PaymentCheckoutModal({
 
   const isPayDisabled = () => {
     if (processing) return true;
+    // Wait for Razorpay SDK if using razorpay method and backend is configured for it
+    if (selectedMethod === 'razorpay' && !razorpayReady) return true;
     switch (selectedMethod) {
       case 'upi': return !validateUPI(upiId);
       case 'card': return !validateCard();
@@ -254,6 +280,7 @@ export default function PaymentCheckoutModal({
     setStep('checkout');
     setTxnId('');
     setSummaryExpanded(false);
+    if (dismissTimerRef.current) { clearInterval(dismissTimerRef.current); dismissTimerRef.current = null; }
   }, []);
 
   const handlePaymentSuccess = useCallback((transactionId: string) => {
@@ -277,6 +304,7 @@ export default function PaymentCheckoutModal({
     setStep('processing');
 
     try {
+      // ── Cash on Pickup ──────────────────────────────────────
       if (selectedMethod === 'cash') {
         await api.verifyPayment({
           rentalId,
@@ -287,18 +315,23 @@ export default function PaymentCheckoutModal({
         return;
       }
 
-      // Create order
+      // ── Create Razorpay Order ──────────────────────────────
       const orderData = await api.createPaymentOrder(rentalId, selectedMethod.toUpperCase()) as Record<string, unknown>;
 
-      if (orderData.method === 'razorpay' && typeof window !== 'undefined' && window.Razorpay) {
-        // Real Razorpay mode
-        const rzpOptions: Record<string, unknown> = {
-          key: orderData.key,
+      // ── Real Razorpay Checkout ─────────────────────────────
+      if (orderData.method === 'razorpay') {
+        // Ensure Razorpay SDK is loaded
+        if (typeof window === 'undefined' || !window.Razorpay) {
+          await loadRazorpayScript();
+        }
+
+        const rzp = new window.Razorpay({
+          key: orderData.key as string,
           amount: Math.round((orderData.amount as number) * 100),
-          currency: orderData.currency,
+          currency: orderData.currency as string,
           name: 'RentCart',
           description: `Rental: ${rentalData.productTitle || 'Item'}`,
-          order_id: orderData.orderId,
+          order_id: orderData.orderId as string,
           prefill: {
             name: (orderData.customer as Record<string, string>)?.name || '',
             email: (orderData.customer as Record<string, string>)?.email || '',
@@ -306,7 +339,9 @@ export default function PaymentCheckoutModal({
           },
           theme: { color: '#059669' },
           modal: !isMobile,
-          handler: async (response: Record<string, string>) => {
+          handler: async (response: RazorpayResponse) => {
+            // Clear dismiss poll immediately on handler fire
+            if (dismissTimerRef.current) { clearInterval(dismissTimerRef.current); dismissTimerRef.current = null; }
             try {
               await api.verifyPayment({
                 rentalId,
@@ -319,31 +354,31 @@ export default function PaymentCheckoutModal({
               handlePaymentError();
             }
           },
-        };
-
-        const rzp = new window.Razorpay(rzpOptions);
+        });
 
         rzp.on('payment.failed', () => {
+          if (dismissTimerRef.current) { clearInterval(dismissTimerRef.current); dismissTimerRef.current = null; }
           handlePaymentError();
         });
 
         rzp.open();
-        // Don't reset processing here — the handler callbacks will do it
-        // Fallback: if user dismisses the Razorpay modal, reset processing after a timeout check
-        const dismissCheck = setInterval(() => {
-          const razorpayContainer = document.getElementById('razorpay-container');
-          if (!razorpayContainer || razorpayContainer.style.display === 'none') {
-            clearInterval(dismissCheck);
-            setProcessing(false);
-            setStep('checkout');
+
+        // Poll for modal dismiss — user may close without paying
+        dismissTimerRef.current = setInterval(() => {
+          const container = document.getElementById('razorpay-container');
+          if (!container || container.style.display === 'none') {
+            if (dismissTimerRef.current) { clearInterval(dismissTimerRef.current); dismissTimerRef.current = null; }
+            // Only reset if still in processing state (handler hasn't fired)
+            setProcessing((prev) => {
+              if (prev) { setStep('checkout'); toast.info('Payment was cancelled'); }
+              return false;
+            });
           }
-        }, 1000);
-        // Auto-clear the interval after 30 seconds to avoid memory leak
-        setTimeout(() => clearInterval(dismissCheck), 30000);
+        }, 800);
         return;
       }
 
-      // Simulated/demo mode — add a short delay to mimic real payment
+      // ── Simulated / Demo Mode ──────────────────────────────
       await new Promise((resolve) => setTimeout(resolve, 2000));
       await api.verifyPayment({
         rentalId,

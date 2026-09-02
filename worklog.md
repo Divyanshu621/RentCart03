@@ -1512,3 +1512,30 @@ Stage Summary:
 - Created: /src/app/api/upload/route.ts (restored image upload endpoint)
 - Supports: PNG/JPG/WEBP, 5MB limit, 5 files max, categories: product/kyc/profile/chat
 - Uses same patterns as other API routes (getSession, rateLimiters, secure-handler, securityLogger)
+
+---
+Task ID: 4
+Agent: Main
+Task: Implement Razorpay payment mode with test keys
+
+Work Log:
+- Read test keys from upload/rzp-test-key.csv
+- Added RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET to .env
+- Verified backend routes already exist and are solid: create-order, verify, webhook
+- Updated razorpay.d.ts with proper TypeScript types (RazorpayOptions, RazorpayResponse, RazorpayInstance, RazorpayOrder)
+- Removed duplicate 'declare global' from PaymentCheckoutModal.tsx (now in razorpay.d.ts)
+- Changed Razorpay script strategy from 'lazyOnload' to 'afterInteractive' in layout.tsx
+- Added Razorpay SDK load detection (polling) in PaymentCheckoutModal
+- Added dynamic loadRazorpayScript() fallback if SDK not yet loaded
+- Rewrote handlePayment() with proper Razorpay integration: load SDK → create order → open checkout → verify signature
+- Fixed modal dismiss detection: uses useRef for timer, clears on handler fire, shows toast on cancel
+- Added razorpayReady state: Pay button shows 'Loading Razorpay...' until SDK is ready
+- Imported RazorpayResponse type for type-safe handler callback
+
+Stage Summary:
+- .env: Added RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET from CSV
+- layout.tsx: Changed script strategy to afterInteractive
+- razorpay.d.ts: Comprehensive type definitions
+- PaymentCheckoutModal.tsx: Full Razorpay integration with SDK load detection, dynamic fallback, dismiss handling
+- Backend routes (create-order, verify, webhook) were already implemented and work correctly
+- Lint passes clean (0 errors, 0 warnings)
