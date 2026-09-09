@@ -4,7 +4,7 @@ services:
     runtime: node
     plan: free
     buildCommand: npm run build
-    startCommand: npm run start
+    startCommand: bash start.sh
     healthCheckPath: /
     envVars:
       - key: NODE_ENV
@@ -17,5 +17,3 @@ services:
         value: https://rentcart03.onrender.com
       - key: APP_URL
         value: https://rentcart03.onrender.com
-      - key: COOKIE_DOMAIN
-        value: .onrender.com
