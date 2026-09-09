@@ -38,7 +38,10 @@ yarn-error.log*
 /db/*.db
 /db/*.db-journal
 /db/*.db-wal
+/db/*.db-shm
 prisma/*.db
+prisma/*.db-journal
+prisma/*.db-wal
 
 # Uploaded files (may contain PII)
 /public/uploads/kyc/
@@ -76,3 +79,18 @@ prompt
 server.log
 # Skills directory
 /skills/
+
+# Screenshot files in root
+/*.png
+
+# Upload directory
+/upload/
+
+# Agent context
+/agent-ctx/
+
+# Tool results
+/tool-results/
+
+# Download directory
+/download/

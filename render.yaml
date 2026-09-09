@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: rentcart
+    runtime: node
+    plan: free
+    buildCommand: npm run build
+    startCommand: npm run start
+    healthCheckPath: /
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        value: file:./db/production.db
+      - key: AUTH_SECRET
+        generateValue: true
+      - key: NEXTAUTH_URL
+        value: https://rentcart03.onrender.com
+      - key: APP_URL
+        value: https://rentcart03.onrender.com
+      - key: COOKIE_DOMAIN
+        value: .onrender.com

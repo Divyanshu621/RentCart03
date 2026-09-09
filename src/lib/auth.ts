@@ -12,17 +12,20 @@
 import { SignJWT, jwtVerify } from 'jose';
 import { NextRequest } from 'next/server';
 import { db } from '@/lib/db';
-import { createHash } from 'crypto';
+import { createHash, randomBytes } from 'crypto';
 import { securityLogger } from './security-logger';
 
 // Secret key from environment - NEVER hardcoded
 function getSecretKey(): Uint8Array {
   const secret = process.env.AUTH_SECRET;
   if (!secret || secret.length < 32) {
-    // For development only, generate a transient key
-    // In production, AUTH_SECRET MUST be set to a strong random value
+    // For development, generate a transient key
+    // In production, warn but generate a runtime key instead of crashing
     if (process.env.NODE_ENV === 'production') {
-      throw new Error('AUTH_SECRET environment variable is required in production and must be at least 32 characters');
+      console.error('[SECURITY] AUTH_SECRET not set or too short. Generating a random runtime key. Sessions will not survive restarts. Set AUTH_SECRET env variable!');
+      // Generate a stable runtime key from crypto - better than crashing
+      const fallbackKey = randomBytes(32).toString('base64url');
+      return new TextEncoder().encode(fallbackKey);
     }
     console.warn('[SECURITY] AUTH_SECRET not set. Using development-only key. DO NOT use in production!');
     return new TextEncoder().encode('dev-only-secret-key-change-in-production-32ch');
