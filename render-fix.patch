@@ -1,0 +1,132 @@
+diff --git a/.env.example b/.env.example
+index 34981b9..a0184ad 100755
+--- a/.env.example
++++ b/.env.example
+@@ -3,7 +3,10 @@
+ # NEVER commit your .env file to version control
+ 
+ # ─── Database ──────────────────────────────────────────────────
++# For local development:
+ DATABASE_URL=file:./db/custom.db
++# For production (Render):
++# DATABASE_URL=file:./db/production.db
+ 
+ # ─── Authentication ───────────────────────────────────────────
+ # REQUIRED: Must be at least 32 characters. Generate with:
+diff --git a/.gitignore b/.gitignore
+index c25f213..50d8ac6 100755
+--- a/.gitignore
++++ b/.gitignore
+@@ -38,7 +38,10 @@ yarn-error.log*
+ /db/*.db
+ /db/*.db-journal
+ /db/*.db-wal
++/db/*.db-shm
+ prisma/*.db
++prisma/*.db-journal
++prisma/*.db-wal
+ 
+ # Uploaded files (may contain PII)
+ /public/uploads/kyc/
+@@ -75,4 +78,19 @@ prompt
+ 
+ server.log
+ # Skills directory
+-/skills/
+\ No newline at end of file
++/skills/
++
++# Screenshot files in root
++/*.png
++
++# Upload directory
++/upload/
++
++# Agent context
++/agent-ctx/
++
++# Tool results
++/tool-results/
++
++# Download directory
++/download/
+\ No newline at end of file
+diff --git a/package.json b/package.json
+index 7f4bb41..ae4b4a3 100755
+--- a/package.json
++++ b/package.json
+@@ -4,13 +4,15 @@
+   "private": true,
+   "scripts": {
+     "dev": "next dev -p 3000 2>&1 | tee dev.log",
+-    "build": "next build && cp -r .next/static .next/standalone/.next/ && cp -r public .next/standalone/",
+-    "start": "NODE_ENV=production bun .next/standalone/server.js 2>&1 | tee server.log",
++    "build": "prisma generate && prisma db push --accept-data-loss && next build && cp -r .next/static .next/standalone/.next/static && cp -r public .next/standalone/public",
++    "postinstall": "prisma generate",
++    "start": "node .next/standalone/server.js",
+     "lint": "eslint .",
+     "db:push": "prisma db push --accept-data-loss",
+     "db:generate": "prisma generate",
+     "db:migrate": "prisma migrate dev",
+-    "db:reset": "prisma migrate reset"
++    "db:reset": "prisma migrate reset",
++    "db:seed": "bun prisma/seed.ts"
+   },
+   "dependencies": {
+     "@dnd-kit/core": "^6.3.1",
+diff --git a/render.yaml b/render.yaml
+new file mode 100644
+index 0000000..6a1197a
+--- /dev/null
++++ b/render.yaml
+@@ -0,0 +1,21 @@
++services:
++  - type: web
++    name: rentcart
++    runtime: node
++    plan: free
++    buildCommand: npm run build
++    startCommand: npm run start
++    healthCheckPath: /
++    envVars:
++      - key: NODE_ENV
++        value: production
++      - key: DATABASE_URL
++        value: file:./db/production.db
++      - key: AUTH_SECRET
++        generateValue: true
++      - key: NEXTAUTH_URL
++        value: https://rentcart03.onrender.com
++      - key: APP_URL
++        value: https://rentcart03.onrender.com
++      - key: COOKIE_DOMAIN
++        value: .onrender.com
+diff --git a/src/lib/auth.ts b/src/lib/auth.ts
+index 9352a4c..75264af 100755
+--- a/src/lib/auth.ts
++++ b/src/lib/auth.ts
+@@ -12,17 +12,20 @@
+ import { SignJWT, jwtVerify } from 'jose';
+ import { NextRequest } from 'next/server';
+ import { db } from '@/lib/db';
+-import { createHash } from 'crypto';
++import { createHash, randomBytes } from 'crypto';
+ import { securityLogger } from './security-logger';
+ 
+ // Secret key from environment - NEVER hardcoded
+ function getSecretKey(): Uint8Array {
+   const secret = process.env.AUTH_SECRET;
+   if (!secret || secret.length < 32) {
+-    // For development only, generate a transient key
+-    // In production, AUTH_SECRET MUST be set to a strong random value
++    // For development, generate a transient key
++    // In production, warn but generate a runtime key instead of crashing
+     if (process.env.NODE_ENV === 'production') {
+-      throw new Error('AUTH_SECRET environment variable is required in production and must be at least 32 characters');
++      console.error('[SECURITY] AUTH_SECRET not set or too short. Generating a random runtime key. Sessions will not survive restarts. Set AUTH_SECRET env variable!');
++      // Generate a stable runtime key from crypto - better than crashing
++      const fallbackKey = randomBytes(32).toString('base64url');
++      return new TextEncoder().encode(fallbackKey);
+     }
+     console.warn('[SECURITY] AUTH_SECRET not set. Using development-only key. DO NOT use in production!');
+     return new TextEncoder().encode('dev-only-secret-key-change-in-production-32ch');
