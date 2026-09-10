@@ -1,3 +1,9 @@
+databases:
+  - name: rentcart-db
+    plan: free
+    databaseName: rentcart
+    user: rentcart_user
+
 services:
   - type: web
     name: rentcart
@@ -10,7 +16,9 @@ services:
       - key: NODE_ENV
         value: production
       - key: DATABASE_URL
-        value: file:./db/production.db
+        fromDatabase:
+          name: rentcart-db
+          property: connectionString
       - key: AUTH_SECRET
         generateValue: true
       - key: NEXTAUTH_URL
