@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev -p 3000 2>&1 | tee dev.log",
-    "build": "prisma generate && next build && cp -r .next/static .next/standalone/.next/static && cp -r public .next/standalone/public",
+    "build": "prisma generate && next build && cp -r .next/static .next/standalone/.next/static && cp -r public .next/standalone/public && cp -r prisma .next/standalone/prisma && cp start.sh .next/standalone/start.sh",
     "postinstall": "prisma generate",
     "start": "bash start.sh",
     "lint": "eslint .",
