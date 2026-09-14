@@ -35,15 +35,14 @@ export function middleware(request: NextRequest) {
   // -----------------------------------------
   const nonce = Buffer.from(crypto.randomUUID()).toString('base64');
 
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set('x-nonce', nonce);
+
   const response = NextResponse.next({
     request: {
-      headers: new Headers(request.headers),
+      headers: requestHeaders,
     },
   });
-
-  // Pass nonce to Next.js
-  response.request.headers.set('x-nonce', nonce);
-
   // -----------------------------------------
   // Security headers
   // -----------------------------------------
